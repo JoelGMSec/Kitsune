@@ -1,0 +1,6 @@
+Kitsune Commands
+================
+- clear: Clears the current tab
+- close: Closes the current tab
+- exit: Disconnect current session
+- help: Displays this help message

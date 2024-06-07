@@ -1,0 +1,6 @@
+HTTP-Shell Commands
+===================
+- upload: Upload a file from local to remote computer
+- download: Download a file from remote to local computer
+- import-ps1: Import PowerShell script on Windows hosts
+- kill: Kill client connection

@@ -1,0 +1,11 @@
+NetExec WMI Commands
+====================
+LOW PRIVILEGE MODULES
+- ioxidresolver: This module helps you to identify hosts that have additional active interfaces
+- spooler: Detect if print spooler is enabled or not
+- zerologon: Module to check if the DC is vulnerable to Zerologon aka CVE-2020-1472
+
+HIGH PRIVILEGE MODULES (requires admin privs)
+- enum_dns: Uses WMI to dump DNS from an AD DNS Server
+- get_netconnections: Uses WMI to query network connections
+- rdp: Enables/Disables RDP

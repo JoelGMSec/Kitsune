@@ -1,0 +1,4 @@
+PyShell Commands
+================
+- upload: Upload a file from local to remote computer
+- download: Download a file from remote to local computer

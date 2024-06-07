@@ -1,0 +1,9 @@
+Evil-WinRM Commands
+===================
+- dll-loader: Allows loading dll libraries in memory
+- donut-loader: Allows to inject x64 payloads generated with awesome donut technique
+- invoke-binary: Allows .Net assemblies to be executed in memory
+- bypass-amsi: Patchs AMSI protection using Bypass-4MSI function
+- services: List all services showing if there your account has permissions over each one
+- upload: Upload a file from local to remote computer
+- download: Download a file from remote to local computer

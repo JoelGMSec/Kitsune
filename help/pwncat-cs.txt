@@ -1,0 +1,14 @@
+PwnCat-CS Commands
+==================
+- alias: Alias an existing command with a new name
+- bind: Create key aliases for when in raw mode
+- download: Download a file from the remote host to the local host
+- escalate: Attempt privilege escalation in the current session
+- lcd: Change the local current working directory
+- leave: Leave a layer of execution from this session
+- load: Load modules from the specified directory
+- local: Run a local shell command on your attacking machine
+- lpwd: Print the local current working directory
+- reset: Reset the remote terminal to the standard pwncat
+- set: Set variable runtime variable parameters for pwncat
+- upload: Upload a file from the local host to the remote host
