@@ -1,7 +1,7 @@
-<p align="center"><img width=550 alt="HTTP-Shell" src="https://github.com/JoelGMSec/Kitsune/blob/main/themes/images/Kitsune.png"></p>
+<p align="center"><img width=360 alt="HTTP-Shell" src="https://github.com/JoelGMSec/Kitsune/blob/main/themes/images/Kitsune.png"></p>
 
 # Kitsune
-**Kitsune** is Polymorphic Command & Control. This tool allows you to get a graphical version of your favourite hacking tools, such as NetExec, Villain or Evil-WinRM among others. In addition, brings many improvements such as automatic reconnection, reports, history and some extra functions in each of the implemented tools.
+**Kitsune** is a Polymorphic Command & Control. This tool allows you to get a graphical version of your favourite hacking tools, such as NetExec, Villain or Evil-WinRM among others. In addition, brings many improvements such as automatic reconnection, reports, history and some extra functions in each of the implemented tools.
 
 Its use is very similar to other C2 like Cobalt Strike or Havoc, making use of listeners, payload generator, delivery over HTTP/S and much more. Its simple, modern and responsive graphical interface has been created to be easy to use and speed up the work of hackers.
 
@@ -25,6 +25,7 @@ git clone https://github.com/JoelGMSec/Kitsune
 # Usage
 ```
 python3 ./Kitsune.py
+
            _ _                                                                                  
       /\ /(_) |_ ___ _   _ _ __   ___                                                           
      / //_/ | __/ __| | | | '_ \ / _ \                                                          
