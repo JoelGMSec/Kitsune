@@ -329,6 +329,33 @@ def execute_command(app, event):
                                 time.sleep(3)
                                 output = read_output_dnscat2(current_session.session_data, command)
 
+                        elif "Villain" in str(current_session.session_data):
+                            if command == "upload*":
+                                current_session.session_data.sendline("exit")
+                                time.sleep(3)
+                                current_session.session_data.sendline("sessions")
+                                current_session.session_data.expect("Windows", timeout=None)
+                                villain_id = session_data.before.decode()
+                                current_session.session_data.sendline(command + " " + villain_id)
+                                time.sleep(3)
+                                output = read_output_nonblocking(current_session.session_data, command)
+                                current_session.session_data.sendline(shell + " " + villain_id)
+
+                            if command == "kill":
+                                current_session.session_data.sendline("exit")
+                                time.sleep(3)
+                                current_session.session_data.sendline("sessions")
+                                current_session.session_data.expect("Windows", timeout=None)
+                                villain_id = session_data.before.decode()
+                                current_session.session_data.sendline(kill + " " + villain_id)
+                                time.sleep(3)
+                                output = "Session terminated."
+                                disable_session = True
+
+                            else:
+                                current_session.session_data.write(command + "\n")  
+                                output = read_output_nonblocking(current_session.session_data, command)
+
                         else:
                             if command != "help":
                                 current_session.session_data.write(command + "\n")  
