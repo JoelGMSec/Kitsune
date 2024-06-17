@@ -84,19 +84,20 @@ def save_project(settings_window, name_entry, app):
 
 def clear_logs(app):
     profiles_path = "reports"
-    if app.confirm_dialog() == "yes":   
+    if app.confirm_dialog() == "yes":
         if os.path.exists(profiles_path) and os.path.isdir(profiles_path):
             try:
                 for folder_name in os.listdir(profiles_path):
                     folder_path = os.path.join(profiles_path, folder_name)
                     if os.path.isdir(folder_path):
                         shutil.rmtree(folder_path)
+                    elif os.path.isfile(folder_path):
+                        os.remove(folder_path)
+                app.report_deleted_success()
             except Exception as e:
                 print(f"Error deleting logs: {e}")
         else:
-            print("The 'profiles' directory does not exist.")
-    
-        app.report_deleted_success()
+            print("The 'reports' directory does not exist.")
 
 def json_to_html(json_file_path, html_file_path):
     with open(json_file_path, 'r') as file:

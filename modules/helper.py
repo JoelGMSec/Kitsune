@@ -65,6 +65,13 @@ def command_help(session_data):
         except FileNotFoundError:
             tail_help = "No se pudo cargar la ayuda específica."
 
+    if "Villain" in str(session_data):
+        try:
+            with open("help/villain.txt", "r") as file:
+                tail_help = file.read()
+        except FileNotFoundError:
+            tail_help = "No se pudo cargar la ayuda específica."
+
     if tail_help != "":
         command_help_text = str(general_help + "\n" + tail_help.strip())
 

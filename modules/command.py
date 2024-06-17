@@ -193,7 +193,6 @@ def read_output_nonblocking(session_data, command):
         output = read_buffer(session_data)
         attempts += 1
     output = output.decode("utf-8").replace("\r", "")
-
     output = re.sub(r'\n.*\ue0b0', '', output)
     output = re.sub(r'\[.*\ue0b0', '', output)
 
@@ -209,6 +208,9 @@ def read_output_nonblocking(session_data, command):
     output = pwncat_prompt_pattern.sub('', output)
     pwncat_msg_pattern = re.compile(r'\(local\) .*.')
     output = pwncat_msg_pattern.sub('', output)
+
+    villain_prompt_pattern = re.compile(r'(.*\\.*> )')
+    output = villain_prompt_pattern.sub('', output)
 
     lines = output.split("\n")
     while lines and lines[0].strip() == "":

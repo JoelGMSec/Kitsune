@@ -53,7 +53,7 @@ def check_updates(app):
 
     def check_version():
         try:
-            response = requests.get("http://localhost/version.txt")
+            response = requests.get("https://raw.githubusercontent.com/JoelGMSec/Kitsune/main/version.txt")
             response.raise_for_status()  
             remote_version = response.text.strip()
 
