@@ -45,6 +45,8 @@ def save_message(log_entry):
 def receive_message(client_socket):
     try:
         message_header = client_socket.recv(HEADER_LENGTH)
+        if not len(message_header):
+            return False
         message_length = int(message_header.decode('utf-8').strip())
         return {'header': message_header, 'data': client_socket.recv(message_length)}
     except:
@@ -63,14 +65,16 @@ def server_loop(app):
     server_socket.listen()
     sockets_list = [server_socket]
     clients = {}
-    time.sleep(1)
 
     while True:
+        time.sleep(1)
         read_sockets, _, exception_sockets = select.select(sockets_list, [], sockets_list)
         for notified_socket in read_sockets:
             if notified_socket == server_socket:
                 client_socket, client_address = server_socket.accept()
                 user = receive_message(client_socket)
+                if user is False:
+                    continue
                 sockets_list.append(client_socket)
                 clients[client_socket] = user
                 username = user['data'].decode('utf-8')
@@ -90,23 +94,26 @@ def server_loop(app):
             else:
                 message = receive_message(notified_socket)
                 if message is False:
-                    username = clients[notified_socket]['data'].decode('utf-8')
-                    disconnection_message = f"*{username} has left #Kitsune"
-                    log_entry = {
-                        "text": disconnection_message,
-                        "tag": "notification",
-                        "color": notification_color
-                    }
-                    save_message(log_entry)
-                    app.team_chat_tab.display_message(disconnection_message, notification_color)
-                    sockets_list.remove(notified_socket)
-                    del clients[notified_socket]
-                    message_header = f"{len(disconnection_message):<{HEADER_LENGTH}}".encode('utf-8')
-                    for client_socket in clients:
-                        client_socket.send(user['header'] + user['data'] + message_header + disconnection_message.encode('utf-8'))
+                    if notified_socket in clients:
+                        username = clients[notified_socket]['data'].decode('utf-8')
+                        disconnection_message = f"*{username} has left #Kitsune"
+                        log_entry = {
+                            "text": disconnection_message,
+                            "tag": "notification",
+                            "color": notification_color
+                        }
+                        save_message(log_entry)
+                        app.team_chat_tab.display_message(disconnection_message, notification_color)
+                        sockets_list.remove(notified_socket)
+                        del clients[notified_socket]
+                        message_header = f"{len(disconnection_message):<{HEADER_LENGTH}}".encode('utf-8')
+                        for client_socket in clients:
+                            client_socket.send(user['header'] + user['data'] + message_header + disconnection_message.encode('utf-8'))
                     continue
 
-                user = clients[notified_socket]
+                user = clients.get(notified_socket)
+                if user is None:
+                    continue
                 username = user['data'].decode('utf-8')
                 message_text = message["data"].decode('utf-8')
                 
@@ -133,7 +140,7 @@ def server_loop(app):
                 log_entry = {
                     "text": f"[{username}] > {message_text}",
                     "tag": "message",
-                    "color": assign_color(username)
+                    "color": color
                 }
                 save_message(log_entry)
                 app.notify_team_chat()
@@ -241,35 +248,36 @@ class TeamChatTab():
 
     def receive_messages(app):
         while True:
+            time.sleep(1)
             try:
-                while True:
-                    username_header = app.client_socket.recv(HEADER_LENGTH)
-                    if not len(username_header):
-                        return
-                    username_length = int(username_header.decode('utf-8').strip())
-                    username = app.client_socket.recv(username_length).decode('utf-8')
-                    message_header = app.client_socket.recv(HEADER_LENGTH)
-                    message_length = int(message_header.decode('utf-8').strip())
-                    message = app.client_socket.recv(message_length).decode('utf-8')
+                username_header = app.client_socket.recv(HEADER_LENGTH)
+                if not len(username_header):
+                    return
+                username_length = int(username_header.decode('utf-8').strip())
+                username = app.client_socket.recv(username_length).decode('utf-8')
+                color = assign_color(username)
+                message_header = app.client_socket.recv(HEADER_LENGTH)
+                message_length = int(message_header.decode('utf-8').strip())
+                message = app.client_socket.recv(message_length).decode('utf-8')
 
-                    if message.startswith("*"):
-                        log_entry = {
-                            "text": f"{message}",
-                            "tag": "notification",
-                            "color": notification_color
-                        }
-                        save_message(log_entry) 
-                        app.display_message(f"{message}", notification_color)
+                if message.startswith("*"):
+                    log_entry = {
+                        "text": f"{message}",
+                        "tag": "notification",
+                        "color": notification_color
+                    }
+                    save_message(log_entry) 
+                    app.display_message(f"{message}", notification_color)
 
-                    else:
-                        log_entry = {
-                            "text": f"[{username}] > {message}",
-                            "tag": "message",
-                            "color": assign_color(app.username)
-                        }
-                        save_message(log_entry)
-                        app.notify_team_chat()
-                        app.display_message(f"[{username}] > {message}", assign_color(username))
+                else:
+                    log_entry = {
+                        "text": f"[{username}] > {message}",
+                        "tag": "message",
+                        "color": color
+                    }
+                    save_message(log_entry)
+                    app.notify_team_chat()
+                    app.display_message(log_entry["text"], log_entry["color"])
 
             except:
                 pass
