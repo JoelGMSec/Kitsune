@@ -14,7 +14,7 @@ from modules.listeners import edit_listener
 from modules.controller import reload_listener
 from modules.widgets import setup_widgets
 from modules.widgets import DraggableTabsNotebook
-from modules import profile, updater, settings, about, delivery, listeners, controller, payloads, tails, reporter
+from modules import profile, updater, settings, about, delivery, listeners, controller, payloads, tails, reporter, chat
 
 def typing(text):
     for character in text:
@@ -77,6 +77,13 @@ class App(ttk.Frame):
 
         Session.load_saved_sessions(self)
         typing(colored("\n[>] Loading Event Viewer..\n", "yellow"))
+
+        chat.start_server(self)
+        self.client_socket = None
+        self.username = os.getlogin()
+        self.team_chat_tab = chat.TeamChatTab(self.notebook)
+        self.team_chat_tab.connect_to_server(os.getlogin(), "localhost")
+        self.client_socket = self.team_chat_tab.get_socket()
 
     def load_settings(self):
         default_settings = {
@@ -304,16 +311,22 @@ class App(ttk.Frame):
     def notify_event_viewer(self):
         for tab in self.notebook.tabs():
             current_tab = self.notebook.tab(self.notebook.select(), "text")
-            
             if current_tab != "Event Viewer":
                 for tab in self.notebook.tabs():
                     if self.notebook.tab(tab, "text") == "Event Viewer":
                         self.notebook.tab(tab, state="disabled")
 
+    def notify_team_chat(self):
+        for tab in self.notebook.tabs():
+            current_tab = self.notebook.tab(self.notebook.select(), "text")   
+            if current_tab != "Team Chat":
+                for tab in self.notebook.tabs():
+                    if self.notebook.tab(tab, "text") == "Team Chat":
+                        self.notebook.tab(tab, state="disabled")
+
     def notify_command_session(self, session_title):
         for tab in self.notebook.tabs():
             current_tab = self.notebook.tab(self.notebook.select(), "text")
-
             if current_tab != session_title:
                 for tab in self.notebook.tabs():
                     if self.notebook.tab(tab, "text") == session_title:
@@ -322,11 +335,16 @@ class App(ttk.Frame):
     def notify_web_delivery(self):
         for tab in self.notebook.tabs():
             current_tab = self.notebook.tab(self.notebook.select(), "text")
-
             if current_tab != "Web Server Log":
                 for tab in self.notebook.tabs():
                     if self.notebook.tab(tab, "text") == "Web Server Log":
                         self.notebook.tab(tab, state="disabled")
+
+    def restore_team_chat(self):
+        for tab in self.notebook.tabs():
+            if self.notebook.tab(tab, "text") == "Team Chat":
+                self.notebook.select(tab)
+                return
 
     def restore_event_viewer(self):
         for tab in self.notebook.tabs():
@@ -655,8 +673,8 @@ class App(ttk.Frame):
         sorted_tabs = sorted(tab_texts + [title])
         insert_index = sorted_tabs.index(title)
 
-        self.notebook.insert(insert_index, new_session, text=title)
-        self.notebook.select(insert_index)
+        self.notebook.insert(insert_index + 1, new_session, text=title)
+        self.notebook.select(insert_index + 1)
 
     def on_double_click(app):
         selected_item = app.listener_table.selection()
@@ -793,7 +811,6 @@ if __name__ == "__main__":
         app = App(root)
         app.pack(fill="both", expand=True)
         app_thread = threading.Thread(target=root.mainloop())
-
         app_thread.start()
 
     except KeyboardInterrupt:

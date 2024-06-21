@@ -15,6 +15,7 @@ from tkinter import ttk
 from neotermcolor import colored
 from modules import command, tails
 from modules.session import Session
+from modules.chat import TeamChatTab
 
 def typing(text):
     for character in text:
@@ -25,9 +26,7 @@ def typing(text):
 class ResizablePanedWindow(ttk.PanedWindow):
     def __init__(self, master=None, **kwargs):
         super().__init__(master, **kwargs)
-
         self._drag_data = {"y": 0, "index": None}
-
         self.bind("<B1-Motion>", self.on_separator_drag)
 
     def on_separator_drag(self, event):
@@ -38,9 +37,9 @@ class ResizablePanedWindow(ttk.PanedWindow):
 class DraggableTabsNotebook(ttk.Notebook):
     def __init__(self, master=None, **kwargs):
         super().__init__(master, **kwargs)
-
         self._drag_data = {"x": 0, "y": 0, "index": None}
         self._event_viewer_index = None
+        self._team_chat_index = None
         self.context_menu = None
 
         self.bind("<Button-3>", self.show_tab_menu)
@@ -62,8 +61,9 @@ class DraggableTabsNotebook(ttk.Notebook):
         if clicked_tab_index == -1:
             return
 
-        if self.tab(clicked_tab_index, "text") == "Event Viewer":
-            self._event_viewer_index = clicked_tab_index  
+        if self.tab(clicked_tab_index, "text") in ["Event Viewer", "Team Chat"]:
+            self._event_viewer_index = clicked_tab_index if self.tab(clicked_tab_index, "text") == "Event Viewer" else None
+            self._team_chat_index = clicked_tab_index if self.tab(clicked_tab_index, "text") == "Team Chat" else None
             return
 
         self._drag_data["index"] = clicked_tab_index
@@ -76,11 +76,10 @@ class DraggableTabsNotebook(ttk.Notebook):
 
         try:
             target_tab_index = self.index("@%d,%d" % (event.x, event.y))
-
         except:
             return
 
-        if target_tab_index == 0:
+        if target_tab_index in [self._event_viewer_index, self._team_chat_index]:
             return
 
         time.sleep(0.4)
@@ -91,18 +90,21 @@ class DraggableTabsNotebook(ttk.Notebook):
         self._drag_data["y"] = 0
         self._drag_data["index"] = None
         self._event_viewer_index = None
+        self._team_chat_index = None
 
     def show_tab_menu(self, event):
         tab = self.tk.call(self._w, "identify", "tab", event.x, event.y)
         if tab:
-            self.context_menu_tab = tab
+            tab_text = self.tab(tab, "text")
+            if tab_text in ["Event Viewer", "Team Chat"]:
+                return
 
+            self.context_menu_tab = tab
             self.select(tab)
 
             if not self.context_menu:
                 self.context_menu = tk.Menu(self, tearoff=0)
                 self.context_menu.add_command(label="Close", command=self.close_tab)
-
             self.context_menu.post(event.x_root, event.y_root)
 
     def close_tab(self):
@@ -114,7 +116,7 @@ class DraggableTabsNotebook(ttk.Notebook):
         current_tab = self.select()
         if current_tab:
             current_tab_name = self.tab(current_tab, 'text')
-            if current_tab_name != 'Event Viewer':
+            if current_tab_name not in ['Event Viewer', 'Team Chat']:
                 self.forget(current_tab)
 
 def setup_widgets(root, app):
@@ -122,9 +124,7 @@ def setup_widgets(root, app):
     root.config(menu=menu_bar)
     home_menu = tk.Menu(menu_bar)
     home_menu.add_command(label="Settings", command=app.open_settings)
-
     theme_submenu = tk.Menu(home_menu)
-
     theme_var = app.theme_var.get()
 
     theme_submenu.add_radiobutton(label="Blue", variable=theme_var, value="Blue", command=lambda: app.change_theme("Blue"), selectcolor="white")
@@ -147,6 +147,7 @@ def setup_widgets(root, app):
     view_menu.add_command(label="Event Viewer", command=app.restore_event_viewer)
     view_menu.add_command(label="Listeners", command=app.show_listeners)
     view_menu.add_command(label="Multi Server Log", command=app.open_multiserver_log_tab)
+    view_menu.add_command(label="Team Chat", command=app.restore_team_chat)
     view_menu.add_command(label="Web Server Log", command=app.open_webserver_log_tab)
     menu_bar.add_cascade(label=" View ", menu=view_menu)
 
@@ -338,9 +339,7 @@ def setup_widgets(root, app):
 
     now = datetime.datetime.now()
     current_time = now.strftime("%H:%M:%S")
-
     current_user = os.getlogin()
-
     app.scrollbar = ttk.Scrollbar(app.tab_1)
     app.scrollbar.pack(side="right", fill="y")
 
@@ -364,9 +363,7 @@ def setup_widgets(root, app):
     app.text.config(state="normal")
     app.text.insert("end", label_text + "\n")
     app.text.config(state="disabled")
-
     app.add_event_viewer_log(label_text + "\n", 'color_login', "#FF00FF")
-
     app.scrollbar.config(command=app.text.yview)
 
     existing_tabs = app.notebook.tabs()
@@ -380,9 +377,10 @@ def setup_widgets(root, app):
         app.notebook.add(app.tab_1, text="Event Viewer")
 
     class AutoCompleteEntry(ttk.Entry):
-        def __init__(self, master, history, *args, **kwargs):
+        def __init__(self, master, history, notebook, *args, **kwargs):
             self.command_history = history
             self.matches = []
+            self.notebook = notebook
             super().__init__(master, *args, **kwargs)
             self.bind("<KeyRelease>", self.on_key_release)
             self.bind("<Right>", self.on_right_arrow_press)
@@ -390,6 +388,9 @@ def setup_widgets(root, app):
             self.icursor(tk.END)
 
         def on_key_release(self, event):
+            if self.current_tab_is_excluded():
+                return
+
             if event.keysym in ["BackSpace", "Left", "Up", "Down", "Tab", "Escape", "Control"]:
                 return
 
@@ -417,13 +418,16 @@ def setup_widgets(root, app):
         def show_match(self):
             if self.matches:
                 current_text = self.get()
-                match = self.matches[0] 
+                match = self.matches[0]
                 self.delete(0, tk.END)
                 self.insert(0, match)
-                self.icursor(len(current_text)) 
-                self.select_range(len(current_text), tk.END) 
+                self.icursor(len(current_text))
+                self.select_range(len(current_text), tk.END)
 
         def on_right_arrow_press(self, event):
+            if self.current_tab_is_excluded():
+                return
+
             if self.matches:
                 self.delete(0, tk.END)
                 self.insert(tk.END, self.matches[0])
@@ -433,7 +437,11 @@ def setup_widgets(root, app):
                 self.icursor(current_index + 1)
             return
 
-    app.entry = AutoCompleteEntry(app.master, app.command_history)
+        def current_tab_is_excluded(self):
+            current_tab = self.notebook.tab(self.notebook.select(), "text")
+            return current_tab in ["Event Viewer", "Team Chat"]
+
+    app.entry = AutoCompleteEntry(app.master, app.command_history, app.notebook)
     app.entry.config(foreground="#c0c0c0")
     app.entry.pack(side="bottom", fill="x", expand=True, padx=10, pady=10)
 

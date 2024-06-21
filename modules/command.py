@@ -13,6 +13,7 @@ import tkinter as tk
 from tkinter import ttk
 from threading import Thread
 from modules.session import Session
+from modules.chat import TeamChatTab
 from modules.helper import command_help
 
 def execute_command_nxc(session_data, command):
@@ -228,184 +229,201 @@ def read_output_nonblocking(session_data, command):
     return output
 
 def execute_command(app, event):
-    if app.clear_command:
-        command = "clear"
-        stripped_command = "clear"
-        app.clear_command = False
+    current_tab = app.notebook.tab(app.notebook.select(), "text")
+    if "Team Chat" in current_tab:
+        if app.clear_command:
+            app.clear_command = False
+            TeamChatTab.clear_chat_logs(app)
+        else:
+            TeamChatTab.send_message(app, event)
 
     else:
-        command = app.entry.get()
-        stripped_command = command.strip()  
+        if app.clear_command:
+            command = "clear"
+            stripped_command = "clear"
+            app.clear_command = False
 
-    if not stripped_command:
-        return
+        else:
+            command = app.entry.get()
+            stripped_command = command.strip()  
 
-    if stripped_command in app.command_history:
-        app.command_history.remove(stripped_command)
+        if not stripped_command:
+            return
 
-    if stripped_command not in ["close", "clear"]:
-        app.command_history.append(stripped_command)
-        Session.save_command_history(app.command_history)
+        if stripped_command in app.command_history:
+            app.command_history.remove(stripped_command)
 
-    app.history_index = len(app.command_history)
+        if stripped_command not in ["close", "clear"]:
+            app.command_history.append(stripped_command)
+            Session.save_command_history(app.command_history)
 
-    if command == "exit":
-        app.entry.delete(0, tk.END)
-        current_tab = app.notebook.tab(app.notebook.select(), "text")
-        if "Event Viewer" in current_tab:
-            app.confirm_and_quit()
+        app.history_index = len(app.command_history)
 
-    if command == "close":
-        app.entry.delete(0, tk.END)
-        current_tab = app.notebook.tab(app.notebook.select(), "text")
-        if not "Event Viewer" in current_tab:
-            app.notebook.forget("current")
-        if "Event Viewer" in current_tab:
-            app.confirm_and_quit()
-
-    elif command == "clear":
-        app.entry.delete(0, tk.END)
-        
-        current_tab_title = app.notebook.tab(app.notebook.select(), "text")
- 
-        if current_tab_title in ["Listeners"]:
-            if app.confirm_dialog() == "yes":
-                pass
-
-        if current_tab_title in ["Event Viewer"]:
-            app.clear_logs()
-
-        for session in app.sessions:
-            if session.title == current_tab_title:
-                session.log.clear()
-                label = session.get_label(app)
-                if label is not None:
-                    label.config(state="normal")
-                    label.delete('1.0', tk.END)
-                    label.config(state="disabled")
-                break
-
-    else:
-        try:
-            current_session = ""
+        if command == "exit":
+            app.entry.delete(0, tk.END)
             current_tab = app.notebook.tab(app.notebook.select(), "text")
+            if "Event Viewer" in current_tab:
+                app.confirm_and_quit()
+
+        if command == "close":
+            app.entry.delete(0, tk.END)
+            current_tab = app.notebook.tab(app.notebook.select(), "text")
+            if not "Event Viewer" in current_tab:
+                app.notebook.forget("current")
+            if "Event Viewer" in current_tab:
+                app.confirm_and_quit()
+
+        elif command == "clear":
+            app.entry.delete(0, tk.END)
+            current_tab_title = app.notebook.tab(app.notebook.select(), "text")
+     
+            if current_tab_title in ["Listeners"]:
+                if app.confirm_dialog() == "yes":
+                    pass
+
+            if current_tab_title in ["Event Viewer"]:
+                app.clear_logs()
+
             for session in app.sessions:
-                if session.title == current_tab:
-                    current_session = session
+                if session.title == current_tab_title:
+                    session.log.clear()
+                    label = session.get_label(app)
+                    if label is not None:
+                        label.config(state="normal")
+                        label.delete('1.0', tk.END)
+                        label.config(state="disabled")
                     break
 
-            if current_session:
-                current_session.label.tag_config("color_input", foreground="#00AAFF")
-                current_session.label.tag_config("color_output", foreground="#00FF99")
-                current_session.label.tag_config("color_reset", foreground="#FFFFFF")
+        else:
+            try:
+                current_session = ""
+                current_tab = app.notebook.tab(app.notebook.select(), "text")
+                for session in app.sessions:
+                    if session.title == current_tab:
+                        current_session = session
+                        break
 
-                current_session.label.config(state="normal")
-                log_text = "kitsune> "
-                current_session.label.insert("end", log_text, "color_input")
-                log_text = f"{command}\n"
-                current_session.label.insert("end", log_text, "color_reset")
-                current_session.label.config(state="disabled")
+                if current_session:
+                    current_session.label.tag_config("color_input", foreground="#00AAFF")
+                    current_session.label.tag_config("color_output", foreground="#00FF99")
+                    current_session.label.tag_config("color_reset", foreground="#FFFFFF")
 
-                def execute_read_output_nonblocking():
-                    nonlocal command
-                    nonlocal current_session
-                    nonlocal current_tab
-                    disable_session = False
+                    current_session.label.config(state="normal")
+                    log_text = "kitsune> "
+                    current_session.label.insert("end", log_text, "color_input")
+                    log_text = f"{command}\n"
+                    current_session.label.insert("end", log_text, "color_reset")
+                    current_session.label.config(state="disabled")
+                    current_session.label.see("end")
 
-                    try:
-                        if "netexec" in str(current_session.session_data):
-                            if command != "help":
-                                output = execute_command_nxc(current_session.session_data, command)
-                        
-                        elif "wmiexec-pro" in str(current_session.session_data):
-                            if command != "help":
-                                current_session.session_data.write(f"powershell '{command}' \n")
-                                output = read_output_wmiexecpro(current_session.session_data, command)
-                        
-                        elif "dnscat2" in str(current_session.session_data):
-                            if command != "help":
-                                current_session.session_data.sendline("\n")
-                                current_session.session_data.sendline(command)
-                                time.sleep(3)
-                                output = read_output_dnscat2(current_session.session_data, command)
+                    def execute_read_output_nonblocking():
+                        nonlocal command
+                        nonlocal current_session
+                        nonlocal current_tab
+                        disable_session = False
 
-                        elif "Villain" in str(current_session.session_data):
-                            if command == "upload*":
-                                current_session.session_data.sendline("exit")
-                                time.sleep(3)
-                                current_session.session_data.sendline("sessions")
-                                current_session.session_data.expect("Windows", timeout=None)
-                                villain_id = session_data.before.decode()
-                                current_session.session_data.sendline(command + " " + villain_id)
-                                time.sleep(3)
-                                output = read_output_nonblocking(current_session.session_data, command)
-                                current_session.session_data.sendline(shell + " " + villain_id)
+                        try:
+                            if "netexec" in str(current_session.session_data):
+                                if command != "help":
+                                    output = execute_command_nxc(current_session.session_data, command)
+                            
+                            elif "wmiexec-pro" in str(current_session.session_data):
+                                if command != "help":
+                                    current_session.session_data.write(f"powershell '{command}' \n")
+                                    output = read_output_wmiexecpro(current_session.session_data, command)
+                            
+                            elif "dnscat2" in str(current_session.session_data):
+                                if command != "help":
+                                    current_session.session_data.sendline("\n")
+                                    current_session.session_data.sendline(command)
+                                    time.sleep(3)
+                                    output = read_output_dnscat2(current_session.session_data, command)
 
-                            if command == "kill":
-                                current_session.session_data.sendline("exit")
-                                time.sleep(3)
-                                current_session.session_data.sendline("sessions")
-                                current_session.session_data.expect("Windows", timeout=None)
-                                villain_id = session_data.before.decode()
-                                current_session.session_data.sendline(kill + " " + villain_id)
-                                time.sleep(3)
-                                output = "Session terminated."
-                                disable_session = True
+                            elif "Villain" in str(current_session.session_data):
+                                if command == "upload*":
+                                    current_session.session_data.sendline("exit")
+                                    time.sleep(3)
+                                    current_session.session_data.sendline("sessions")
+                                    current_session.session_data.expect("Windows", timeout=None)
+                                    villain_id = session_data.before.decode()
+                                    current_session.session_data.sendline(command + " " + villain_id)
+                                    time.sleep(3)
+                                    output = read_output_nonblocking(current_session.session_data, command)
+                                    current_session.session_data.sendline(shell + " " + villain_id)
+
+                                if command == "kill":
+                                    current_session.session_data.sendline("exit")
+                                    time.sleep(3)
+                                    current_session.session_data.sendline("sessions")
+                                    current_session.session_data.expect("Windows", timeout=None)
+                                    villain_id = session_data.before.decode()
+                                    current_session.session_data.sendline(kill + " " + villain_id)
+                                    time.sleep(3)
+                                    current_session.session_data.sendline("flee")
+                                    output = "Session terminated."
+                                    disable_session = True
+
+                                else:
+                                    current_session.session_data.write(command + "\n")  
+                                    output = read_output_nonblocking(current_session.session_data, command)
 
                             else:
-                                current_session.session_data.write(command + "\n")  
-                                output = read_output_nonblocking(current_session.session_data, command)
+                                if command != "help":
+                                    current_session.session_data.write(command + "\n")  
+                                    output = read_output_nonblocking(current_session.session_data, command)
 
-                        else:
-                            if command != "help":
-                                current_session.session_data.write(command + "\n")  
-                                output = read_output_nonblocking(current_session.session_data, command)
+                            if command.startswith("cd "):
+                                output = "Changing directory.."
 
-                        if command.startswith("cd "):
-                            output = "Changing directory.."
+                            if command == "help":
+                                output = command_help(current_session.session_data)
 
-                        if command == "help":
-                            output = command_help(current_session.session_data)
+                            if command == "kill" or command == "exit":
+                                output = "Disconnected.."
+                                disable_session = True
 
-                        if command == "exit":
+                            if command == "del*" or command == "rm*":
+                                output = "Success!"
+
+                            if not output:
+                                output = "Error: No output from command!"
+                        
+                        except:
                             output = "Error: No response from client!"
                             disable_session = True
 
-                        if not output:  
-                            output = "Error: No output from command!"
-                    except:
-                        output = "Error: No response from client!"
-                        disable_session = True
+                        current_session.text_widget = current_session.label
+                        current_session.log.append({"Command": command, "Output": output})
+                        current_session.save_logs()
 
-                    current_session.text_widget = current_session.label
-                    current_session.log.append({"Command": command, "Output": output})
-                    current_session.save_logs()
+                        current_session.label.config(state="normal")
+                        log_text = "[>] Output:\n"
+                        current_session.label.insert("end", log_text, "color_output")
+                        current_session.label.config(state="disabled")
+                        current_session.label.see("end")
+                        current_session.label.config(state="normal")
+                        log_text = f"{output}\n\n"
+                        current_session.label.insert("end", log_text, "color_reset")
+                        current_session.label.config(state="disabled")
+                        current_session.label.see("end")
 
-                    current_session.label.config(state="normal")
-                    log_text = "[>] Output:\n"
-                    current_session.label.insert("end", log_text, "color_output")
-                    log_text = f"{output}\n\n"
-                    current_session.label.insert("end", log_text, "color_reset")
-                    current_session.label.config(state="disabled")
+                        current_tab = app.notebook.tab(app.notebook.select(), "text")
+                        for session in app.sessions:
+                            if session.title == current_tab:
+                                session.reload_command_session()
+                                
+                        app.notify_command_session(current_session.title)
 
-                    current_tab = app.notebook.tab(app.notebook.select(), "text")
-                    for session in app.sessions:
-                        if session.title == current_tab:
-                            session.reload_command_session()
-                            
-                    current_session.label.see("end")
-                    app.notify_command_session(current_session.title)
+                        if disable_session:
+                            Session.disable_session(app, current_tab)
+                            disable_session = False
+                        else:
+                            Session.enable_session(app, current_tab)
 
-                    if disable_session:
-                        Session.disable_session(app, current_tab)
-                        disable_session = False
-                    else:
-                        Session.enable_session(app, current_tab)
+                    thread = Thread(target=execute_read_output_nonblocking)
+                    thread.start()
 
-                thread = Thread(target=execute_read_output_nonblocking)
-                thread.start()
+                app.entry.delete(0, tk.END)
 
-            app.entry.delete(0, tk.END)
-
-        except:
-            pass
+            except:
+                pass
