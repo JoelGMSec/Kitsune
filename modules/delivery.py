@@ -244,12 +244,14 @@ def web_delivery(app):
     ip_label.grid(row=1, column=0, padx=0, pady=15)
 
     ip_entry = ttk.Entry(delivery_window)
+    ip_entry.insert(0, "0.0.0.0")
     ip_entry.grid(row=1, column=1, padx=0, pady=15)
 
     port_label = ttk.Label(delivery_window, text="Port")
     port_label.grid(row=2, column=0, padx=0, pady=15)
 
     port_entry = ttk.Entry(delivery_window)
+    port_entry.insert(0, "80")
     port_entry.grid(row=2, column=1, padx=0, pady=15)
 
     script_label = ttk.Label(delivery_window, text="Protocol")
@@ -257,9 +259,19 @@ def web_delivery(app):
 
     http_combobox = ttk.Combobox(delivery_window, values=["HTTP", "HTTPS"], state="readonly")
     http_combobox.grid(row=3, column=1, padx=0, pady=15)
-    
     http_combobox.current(0)
+    
+    def update_port(event):
+        protocol = http_combobox.get()
+        if protocol == "HTTPS":
+            port_entry.delete(0, tk.END)
+            port_entry.insert(0, "443")
+        else:
+            port_entry.delete(0, tk.END)
+            port_entry.insert(0, "80")
 
+    # Bind the update_port function to the combobox selection event
+    http_combobox.bind("<<ComboboxSelected>>", update_port)
     http_combobox.bind("<FocusIn>", on_combobox_focus)
 
     save_button = ttk.Button(delivery_window, text="Publish", command=lambda: server_status(ip_entry.get(), port_entry.get(), http_combobox.get(), app, delivery_window))
