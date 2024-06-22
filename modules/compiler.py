@@ -83,12 +83,46 @@ STDAPI DllUnregisterServer(void) {{
 }}
 """
 
+template_code_bin = """
+#include <stdio.h>
+#include <stdlib.h>
+
+int main() {{
+    // Bash command you want to execute
+    const char *command = "{payload}";
+
+    // Execute the command
+    int result = system(command);
+
+    if (result == -1) {{
+        printf("Error executing command.\\n");
+        return EXIT_FAILURE;
+    }}
+
+    printf("Bash command executed successfully\\n");
+    return EXIT_SUCCESS;
+}}
+"""
+
+def create_py_file(payload, dst_file):
+    template_code = """
+import os
+
+os.system("{payload}")
+"""
+    escaped_payload = payload.replace('"', '\\"')
+    code = template_code.format(payload=escaped_payload)
+    with open(dst_file, "w") as file:
+        file.write(code)
+
 def create_c_file(payload, dst_file, format):     
     escaped_payload = payload.replace('"', '\\"').replace('\\', '\\\\')
     if format == "exe":
         code = template_code_exe.format(payload=escaped_payload)
     if format == "dll":
         code = template_code_dll.format(payload=escaped_payload)
+    if format == "bin":
+        code = template_code_bin.format(payload=escaped_payload)
     with open(f"{dst_file}.c", "w") as file:
         file.write(code)
 
@@ -107,5 +141,14 @@ def compile_dll_file(dst_file):
     try:
         subprocess.run(["x86_64-w64-mingw32-gcc", c_file, "-o", dll_file, "-shared"], check=True)
         os.remove(c_file)
+    except subprocess.CalledProcessError as e:
+        print(f"Error during compilation: {e}")
+
+def compile_bin_file(dst_file):
+    c_file = dst_file + ".c"
+    try:
+        subprocess.run(["gcc", c_file, "-o", dst_file], check=True)
+        os.remove(c_file)
+        os.system("chmod +x " + dst_file)
     except subprocess.CalledProcessError as e:
         print(f"Error during compilation: {e}")

