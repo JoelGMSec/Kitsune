@@ -138,7 +138,7 @@ def pwncat(app, host, port, name, session, restart):
     pwncat_path = f'/tmp/pwncat'
     os.makedirs(pwncat_path, exist_ok=True)
     
-    session_data = pexpect.spawn(f'pwncat-cs {host} {port}', cwd=pwncat_path, echo=False, use_poll=True)  
+    session_data = pexpect.spawn(f'pwncat-cs 0.0.0.0 {port}', cwd=pwncat_path, echo=False, use_poll=True)  
     session_data.timeout = 1
 
     try:
@@ -158,7 +158,7 @@ def pwncat(app, host, port, name, session, restart):
                     if "grep" in output:
                         session_info["IP Address"] = output.split("'")[-1].strip().split("/")[0]
                     else:
-                        session_info["IP Address"] = output.split("/").strip()
+                        session_info["IP Address"] = output.split("/")[0].strip()
                 elif cmd.startswith("echo"):
                     session_info["PID"] = output.strip()
                 elif cmd.startswith("ps -p"):

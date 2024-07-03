@@ -218,8 +218,8 @@ class TeamChatTab():
             app.text_area.tag_config(color, foreground=color)
             app.text_area.config(state='disabled')
             app.text_area.see("end")
-        except Exception as e:
-            print(f"Error displaying message: {e}")
+        except:
+            pass
 
     def connect_to_server(app, username, new_ip=IP):
         try:
@@ -238,8 +238,8 @@ class TeamChatTab():
             }
             save_message(log_entry)
             app.start_receiving_thread()
-        except Exception as e:
-            print(f"Error connecting to server: {e}")
+        except:
+            pass
 
     def start_receiving_thread(app):
         receive_thread = threading.Thread(target=app.receive_messages)
