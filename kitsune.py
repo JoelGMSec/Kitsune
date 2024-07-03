@@ -10,6 +10,7 @@ from pathlib import Path
 from neotermcolor import colored
 from tkinter import ttk, filedialog
 from modules.session import Session
+from modules.tails import clone_repos
 from modules.listeners import edit_listener
 from modules.controller import reload_listener
 from modules.widgets import setup_widgets
@@ -52,6 +53,7 @@ class App(ttk.Frame):
             self.columnconfigure(index=index, weight=1)
             self.rowconfigure(index=index, weight=1)
 
+        self.check_repos()
         self.text_tag_counter = 0
         self.event_viewer_logs = self.load_event_viewer_logs()
 
@@ -169,6 +171,11 @@ class App(ttk.Frame):
 
     def netexec_payload(self):
         return payloads.netexec_payload(self)
+
+    def check_repos(self):
+        tails_dir = "tails"
+        if not os.path.exists(tails_dir) or not any(os.path.isdir(os.path.join(tails_dir, entry)) for entry in os.listdir(tails_dir)):
+            threading.Thread(target=clone_repos).start()
 
     def sort_sessions(self):
         try:

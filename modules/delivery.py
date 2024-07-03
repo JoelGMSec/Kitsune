@@ -9,12 +9,19 @@ import re
 import json
 import time
 import atexit
+import logging
 import datetime
 import threading
 import subprocess
 import tkinter as tk
 from tkinter import ttk
 from pathlib import Path
+from impacket.examples import logger
+from impacket import smbserver, version
+from impacket.ntlm import compute_lmhash, compute_nthash
+from pyftpdlib.authorizers import DummyAuthorizer
+from pyftpdlib.handlers import FTPHandler
+from pyftpdlib.servers import FTPServer
 
 def on_combobox_focus(event):
     event.widget.selection_clear()
@@ -298,7 +305,13 @@ def server_status(ip, port, protocol, app, delivery_window):
     return app.web_delivery_port
 
 def kill_multiserver(app):
-    pass
+    if app.ftp_server_process is not None and app.ftp_server_process.poll() is None:
+        app.ftp_server_process.terminate()
+        app.ftp_server_process = None  
+    
+        current_time = datetime.datetime.now().strftime("%H:%M:%S")  
+        new_line = f"[{current_time}] FTP Server on port {app.web_delivery_port} was killed!\n"
+        app.add_event_viewer_log(new_line, 'color_error', "#FF0055") 
 
 def stop_webserver(app):
     if app.web_delivery_process is not None and app.web_delivery_process.poll() is None:
@@ -332,12 +345,14 @@ def multi_delivery(app):
     ip_label.grid(row=1, column=0, padx=0, pady=15)
 
     ip_entry = ttk.Entry(delivery_window)
+    ip_entry.insert(0, "0.0.0.0")
     ip_entry.grid(row=1, column=1, padx=0, pady=15)
 
     port_label = ttk.Label(delivery_window, text="Port")
     port_label.grid(row=2, column=0, padx=0, pady=15)
 
     port_entry = ttk.Entry(delivery_window)
+    port_entry.insert(0, "21")
     port_entry.grid(row=2, column=1, padx=0, pady=15)
 
     script_label = ttk.Label(delivery_window, text="Protocol")
@@ -345,13 +360,96 @@ def multi_delivery(app):
 
     multi_combobox = ttk.Combobox(delivery_window, values=["FTP", "NFS", "SMB"], state="readonly")
     multi_combobox.grid(row=3, column=1, padx=0, pady=15)
-    
     multi_combobox.current(0)
+    
+    def update_port(event):
+        protocol = multi_combobox.get()
+        if protocol == "FTP":
+            port_entry.delete(0, tk.END)
+            port_entry.insert(0, "21")
+        if protocol == "NFS":
+            port_entry.delete(0, tk.END)
+            port_entry.insert(0, "2049")
+        if protocol == "SMB":
+            port_entry.delete(0, tk.END)
+            port_entry.insert(0, "445")
 
+    # Bind the update_port function to the combobox selection event
+    multi_combobox.bind("<<ComboboxSelected>>", update_port)
     multi_combobox.bind("<FocusIn>", on_combobox_focus)
 
-    save_button = ttk.Button(delivery_window, text="Publish", command=delivery_window.destroy)
+    def start_server():
+        protocol = multi_combobox.get()
+        ip = ip_entry.get()
+        port = port_entry.get()
+        if protocol == "FTP":
+            ftp_server_status(ip, port, app, delivery_window)
+            
+    save_button = ttk.Button(delivery_window, text="Publish", command=start_server)
     save_button.grid(row=4, column=0, padx=50, pady=20)
 
     cancel_button = ttk.Button(delivery_window, text="Cancel", command=delivery_window.destroy)
     cancel_button.grid(row=4, column=1, padx=20, pady=20)
+
+def ftp_server_status(ip, port, app, delivery_window):
+    app.ftp_server_process = threading.Thread(target=start_ftp_server, args=(ip, port, app), daemon=True).start()
+
+    if app.ftp_server_process is None:
+        current_time = datetime.datetime.now().strftime("%H:%M:%S")  
+        new_line = f"[{current_time}] FTP Server is listening on port {port} now..\n"
+        app.add_event_viewer_log(new_line, 'color_login', "#FF00FF")
+
+    else:
+        current_time = datetime.datetime.now().strftime("%H:%M:%S")  
+        new_line = f"[{current_time}] Error starting FTP Server on {port}!\n"
+        app.add_event_viewer_log(new_line, 'color_error', "#FF0055")  
+
+    delivery_window.destroy()
+    return app.ftp_server_process
+
+def start_ftp_server(ip, port, app):
+    authorizer = DummyAuthorizer()
+    authorizer.add_anonymous("payloads")
+
+    handler = FTPHandler
+    handler.authorizer = authorizer
+    handler.banner = "Simple FTP Server"
+    handler.passive_ports = range(60000, 65535)
+    address = (ip, port)
+    server = FTPServer(address, handler)
+    server.max_cons = 256
+    server.max_cons_per_ip = 5
+
+    with open(os.devnull, 'w') as devnull:
+        old_stdout = os.dup(1)
+        old_stderr = os.dup(2)
+        os.dup2(devnull.fileno(), 1)
+        os.dup2(devnull.fileno(), 2)
+        try:
+            app.ftp_server_process = server
+            server.serve_forever()
+        finally:
+            os.dup2(old_stdout, 1)
+            os.dup2(old_stderr, 2)
+
+def start_smb_server(ip, port, app):
+    server = smbserver.SimpleSMBServer(listenAddress=ip, listenPort=int(port))
+    server.addShare(options.shareName.upper(), options.sharePath, comment)
+    server.setSMB2Support(options.smb2support)
+
+    if options.username is not None:
+        if options.password is None and options.hashes is None:
+            from getpass import getpass
+            password = getpass("Password:")
+            lmhash = compute_lmhash(password)
+            nthash = compute_nthash(password)
+        elif options.password is not None:
+            lmhash = compute_lmhash(options.password)
+            nthash = compute_nthash(options.password)
+        else:
+            lmhash, nthash = options.hashes.split(':')
+
+        server.addCredential(options.username, 0, lmhash, nthash)
+    server.setSMBChallenge('')
+    server.setLogFile('')
+    server.start()

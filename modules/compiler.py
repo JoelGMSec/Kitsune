@@ -107,7 +107,6 @@ int main() {{
 def create_py_file(payload, dst_file):
     template_code = """
 import os
-
 os.system("{payload}")
 """
     escaped_payload = payload.replace('"', '\\"')
@@ -147,7 +146,7 @@ def compile_dll_file(dst_file):
 def compile_bin_file(dst_file):
     c_file = dst_file + ".c"
     try:
-        subprocess.run(["gcc", c_file, "-o", dst_file], check=True)
+        subprocess.run(["gcc", c_file, "-o", dst_file, "-static"], check=True)
         os.remove(c_file)
         os.system("chmod +x " + dst_file)
     except subprocess.CalledProcessError as e:

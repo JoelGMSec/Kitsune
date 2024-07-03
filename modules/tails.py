@@ -4,12 +4,45 @@
 #    https://darkbyte.net #
 #=========================#
 
+import os
+import shutil
+import subprocess
 import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
-import subprocess
-import os
-import shutil
+
+def clone_repos(name_label=None):
+    repos = [
+        "https://github.com/JoelGMSec/HTTP-Shell",
+        "https://github.com/JoelGMSec/PyShell",
+        "https://github.com/calebstewart/pwncat",
+        "https://github.com/t3l3machus/Villain",
+        "https://github.com/XiaoliChan/wmiexec-Pro",
+        "https://github.com/Pennyw0rth/NetExec",
+        "https://github.com/iagox86/dnscat2",
+        "https://github.com/Hackplayers/evil-winrm"
+    ]
+
+    base_dir = "./tails"
+
+    if os.path.exists(base_dir):
+        shutil.rmtree(base_dir)
+
+    os.makedirs(base_dir)
+
+    for repo in repos:
+        repo_name = repo.split('/')[-1]
+        repo_dir = os.path.join(base_dir, repo_name)
+        
+        try:
+            subprocess.run(["git", "clone", repo, repo_dir], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except:
+            name_label.config(text=f"Error updating tails!")
+
+    if not name_label:
+        pass
+    else:
+        name_label.config(text="All are up to date!", fg="#00AAFF")
 
 def update_tails(app):
     updates_window = tk.Toplevel(app)
@@ -42,39 +75,7 @@ def update_tails(app):
     progressbar.grid(row=2, column=0, pady=(20, 10))
     progressbar.start()  
 
-    repos = [
-        "https://github.com/JoelGMSec/HTTP-Shell",
-        "https://github.com/JoelGMSec/PyShell",
-        "https://github.com/calebstewart/pwncat",
-        "https://github.com/t3l3machus/Villain",
-        "https://github.com/XiaoliChan/wmiexec-Pro",
-        "https://github.com/Pennyw0rth/NetExec",
-        "https://github.com/iagox86/dnscat2",
-        "https://github.com/Hackplayers/evil-winrm"
-    ]
-
-    def clone_repos(repos, name_label, progressbar):
-        base_dir = "./tails"
-
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-
-        os.makedirs(base_dir)
-
-        for repo in repos:
-            repo_name = repo.split('/')[-1]
-            repo_dir = os.path.join(base_dir, repo_name)
-            
-            try:
-                subprocess.run(["git", "clone", repo, repo_dir], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            except subprocess.CalledProcessError as e:
-                name_label.config(text=f"Error al clonar {repo}: {e}")
-
-        name_label.config(text="All are up to date!", fg="#00AAFF")
-
-    updates_window.after(1000, lambda: clone_repos(repos, name_label, progressbar))
+    updates_window.after(1000, lambda: clone_repos(name_label))
 
     save_button = ttk.Button(updates_frame, text="Close", command=lambda: updates_window.destroy())
     save_button.grid(row=3, column=0, pady=(25, 0))  
-
-
