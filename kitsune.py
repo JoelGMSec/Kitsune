@@ -68,6 +68,7 @@ class App(ttk.Frame):
         self.listeners = []
         self.listener_table = None
         self.web_delivery_process = None
+        self.multi_delivery_process = None
 
         listeners.load_listeners(self)
         self.update_listeners_settings()
@@ -347,6 +348,14 @@ class App(ttk.Frame):
                     if self.notebook.tab(tab, "text") == "Web Server Log":
                         self.notebook.tab(tab, state="disabled")
 
+    def notify_multi_delivery(self):
+        for tab in self.notebook.tabs():
+            current_tab = self.notebook.tab(self.notebook.select(), "text")
+            if current_tab != "Multi Server Log":
+                for tab in self.notebook.tabs():
+                    if self.notebook.tab(tab, "text") == "Multi Server Log":
+                        self.notebook.tab(tab, state="disabled")
+                        
     def restore_team_chat(self):
         for tab in self.notebook.tabs():
             if self.notebook.tab(tab, "text") == "Team Chat":

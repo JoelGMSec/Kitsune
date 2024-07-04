@@ -28,7 +28,6 @@ def on_combobox_focus(event):
 
 def regex_text(text):
     dynamic_text = r"(\d+\.\d+\.\d+\.\d+) - - \[(\d+/\w+/\d+ )(\d+:\d+:\d+)\] \"(.*?)\" (\d+) -"
-
     results = re.findall(dynamic_text, text)
     regex_text = []
     for result in results:
@@ -89,24 +88,29 @@ def start_web_delivery(ip, port, protocol, app):
         atexit.register(app.web_delivery_process.terminate)
         return app.web_delivery_process
 
-    except Exception as e:
-        print(f"Error starting web delivery: {e}")
+    except:
         return None
+        pass
 
-def periodically_update_webserver(app):
+def periodically_update_multiserver(app):
     def update():
-        update_webserver_log_tab(app)
+        update_multiserver_log_tab(app)
         app.after(500, update)
-
     update()
 
-def update_webserver_log_tab(app):
-    webserver_file = Path("data/webserver.json")
+def update_multiserver_log_tab(app):
+    multiserver_file = Path("data/multiserver.json")
     try:
-        with open(webserver_file, 'r') as f:
+        with open(multiserver_file, 'r') as f:
             log_data = json.load(f)
-        tab = app.notebook.nametowidget(app.notebook.select())
-        log_text = tab.winfo_children()[0]
+        for tab in app.notebook.tabs():
+            if app.notebook.tab(tab, "text") == "Multi Server Log":
+                multiserver_tab = tab
+                break
+        else:
+            return
+
+        log_text = app.notebook.nametowidget(multiserver_tab).winfo_children()[0]
         log_text.config(state="normal")
         log_text.delete(1.0, 'end')
 
@@ -115,11 +119,11 @@ def update_webserver_log_tab(app):
         log_text.tag_configure("color_listen", foreground="#FFCC00")
         log_text.tag_configure("color_input", foreground="#00AAFF")
 
-        if app.web_delivery_process:
-            message = "[>] WebServer is running..\n"
+        if app.multi_delivery_process and app.multi_delivery_process.is_alive():
+            message = "[>] Multi Server is running..\n"
             color_tag = "color_input"
         else:
-            message = "[!] WebServer is not running!\n"
+            message = "[!] Multi Server is not running!\n"
             color_tag = "color_error"
 
         log_text.insert('end', f"{message}\n", color_tag)
@@ -133,7 +137,57 @@ def update_webserver_log_tab(app):
 
         log_text.config(state="disabled")
         log_text.see("end")
-        app.notify_web_delivery()
+        # app.notify_multi_delivery()
+
+    except:
+        pass
+
+def periodically_update_webserver(app):
+    def update():
+        update_webserver_log_tab(app)
+        app.after(500, update)
+    update()
+
+def update_webserver_log_tab(app):
+    webserver_file = Path("data/webserver.json")
+    try:
+        with open(webserver_file, 'r') as f:
+            log_data = json.load(f)
+        for tab in app.notebook.tabs():
+            if app.notebook.tab(tab, "text") == "Web Server Log":
+                webserver_tab = tab
+                break
+        else:
+            return
+
+        log_text = app.notebook.nametowidget(webserver_tab).winfo_children()[0]
+        log_text.config(state="normal")
+        log_text.delete(1.0, 'end')
+
+        log_text.tag_configure("color_error", foreground="#FF0055")
+        log_text.tag_configure("color_success", foreground="#00FF99")
+        log_text.tag_configure("color_listen", foreground="#FFCC00")
+        log_text.tag_configure("color_input", foreground="#00AAFF")
+
+        if app.web_delivery_process:
+            message = "[>] Web Server is running..\n"
+            color_tag = "color_input"
+        else:
+            message = "[!] Web Server is not running!\n"
+            color_tag = "color_error"
+
+        log_text.insert('end', f"{message}\n", color_tag)
+
+        for key, value in log_data.items():
+            if key == "Log":
+                for line in value:
+                    log_text.insert('end', f"{line}\n", "color_listen")
+            else:
+                log_text.insert('end', f"{key}: {value}\n", "color_success")
+
+        log_text.config(state="disabled")
+        log_text.see("end")
+        # app.notify_web_delivery()
 
     except:
         pass
@@ -195,10 +249,17 @@ def open_webserver_log_tab(app):
     log_text.config(state="disabled")
 
     app.notebook.select(tab)
-    update_webserver_log_tab(app)
+    periodically_update_webserver(app)
 
 def open_multiserver_log_tab(app):
-    log_data = []
+    multiserver_file = Path("data/multiserver.json")
+
+    try:
+        with open(multiserver_file, 'r') as f:
+            log_data = json.load(f)
+
+    except:
+        log_data = []
 
     for tab in app.notebook.tabs():
         if app.notebook.tab(tab, "text") == "Multi Server Log":
@@ -228,15 +289,26 @@ def open_multiserver_log_tab(app):
     log_text.tag_configure("color_listen", foreground="#FFCC00")
     log_text.tag_configure("color_input", foreground="#00AAFF")
 
-    message = "[!] Multi Server is not running!\n"
-    color_tag = "color_error"
+    if app.multi_delivery_process:
+        message = "[>] Multi Server is running..\n"
+        color_tag = "color_input"
+    else:
+        message = "[!] Multi Server is not running!\n"
+        color_tag = "color_error"
 
     log_text.insert('end', f"{message}\n", color_tag)
+
+    try:
+        for key, value in log_data.items():
+            log_text.insert('end', f"{key}: {value}\n")
+    except:
+        pass
 
     log_text.config(font=("Consolas", 18, "bold"))
     log_text.config(state="disabled")
 
     app.notebook.select(tab)
+    periodically_update_multiserver(app)
 
 def web_delivery(app):
     delivery_window = tk.Toplevel(app)
@@ -277,7 +349,6 @@ def web_delivery(app):
             port_entry.delete(0, tk.END)
             port_entry.insert(0, "80")
 
-    # Bind the update_port function to the combobox selection event
     http_combobox.bind("<<ComboboxSelected>>", update_port)
     http_combobox.bind("<FocusIn>", on_combobox_focus)
 
@@ -304,14 +375,27 @@ def server_status(ip, port, protocol, app, delivery_window):
     app.web_delivery_port = port
     return app.web_delivery_port
 
-def kill_multiserver(app):
-    if app.ftp_server_process is not None and app.ftp_server_process.poll() is None:
-        app.ftp_server_process.terminate()
-        app.ftp_server_process = None  
-    
+def stop_multiserver(app):
+    if app.multi_delivery_process is not None:
+        app.multi_delivery_process.terminate()
+        app.multi_delivery_process = None  
+
         current_time = datetime.datetime.now().strftime("%H:%M:%S")  
-        new_line = f"[{current_time}] FTP Server on port {app.web_delivery_port} was killed!\n"
-        app.add_event_viewer_log(new_line, 'color_error', "#FF0055") 
+        new_line = f"[{current_time}] Multi Server was stopped!\n"
+        app.add_event_viewer_log(new_line, 'color_error', "#FF0055")  
+
+def kill_multiserver(app):
+    if app.multi_delivery_process is not None:
+        if app.confirm_dialog() == "yes":
+            try:
+                app.multi_delivery_process.terminate()
+            except:
+                pass
+
+            app.multi_delivery_process = None
+            current_time = datetime.datetime.now().strftime("%H:%M:%S")  
+            new_line = f"[{current_time}] {app.multi_delivery_protocol} Server on port {app.multi_delivery_port} was killed!\n"
+            app.add_event_viewer_log(new_line, 'color_error', "#FF0055")
 
 def stop_webserver(app):
     if app.web_delivery_process is not None and app.web_delivery_process.poll() is None:
@@ -374,7 +458,6 @@ def multi_delivery(app):
             port_entry.delete(0, tk.END)
             port_entry.insert(0, "445")
 
-    # Bind the update_port function to the combobox selection event
     multi_combobox.bind("<<ComboboxSelected>>", update_port)
     multi_combobox.bind("<FocusIn>", on_combobox_focus)
 
@@ -382,8 +465,8 @@ def multi_delivery(app):
         protocol = multi_combobox.get()
         ip = ip_entry.get()
         port = port_entry.get()
-        if protocol == "FTP":
-            ftp_server_status(ip, port, app, delivery_window)
+        start_multi_server(ip, port, protocol, app)
+        delivery_window.destroy()
             
     save_button = ttk.Button(delivery_window, text="Publish", command=start_server)
     save_button.grid(row=4, column=0, padx=50, pady=20)
@@ -398,14 +481,37 @@ def ftp_server_status(ip, port, app, delivery_window):
         current_time = datetime.datetime.now().strftime("%H:%M:%S")  
         new_line = f"[{current_time}] FTP Server is listening on port {port} now..\n"
         app.add_event_viewer_log(new_line, 'color_login', "#FF00FF")
-
+        save_multiserver_status(ip, port, "FTP")
     else:
         current_time = datetime.datetime.now().strftime("%H:%M:%S")  
         new_line = f"[{current_time}] Error starting FTP Server on {port}!\n"
         app.add_event_viewer_log(new_line, 'color_error', "#FF0055")  
 
     delivery_window.destroy()
-    return app.ftp_server_process
+    return app
+
+def save_multiserver_status(ip, port, protocol):
+    multiserver_file = Path('data/multiserver.json')
+
+    if multiserver_file.exists():
+        with open(multiserver_file, 'r') as f:
+            log_data = json.load(f)
+            log_entries = log_data.get("Log", [])
+    else:
+        log_data = {}
+        log_entries = []
+
+    log_data.update({
+        "Protocol": protocol,
+        "IP Address": ip,
+        "Listening Port": port,
+        "Path": "../Kitsune/Payloads\n"
+    })
+
+    log_data["Log"] = log_entries
+
+    with open(multiserver_file, 'w') as f:
+        json.dump(log_data, f, indent=4)
 
 def start_ftp_server(ip, port, app):
     authorizer = DummyAuthorizer()
@@ -434,22 +540,52 @@ def start_ftp_server(ip, port, app):
 
 def start_smb_server(ip, port, app):
     server = smbserver.SimpleSMBServer(listenAddress=ip, listenPort=int(port))
-    server.addShare(options.shareName.upper(), options.sharePath, comment)
-    server.setSMB2Support(options.smb2support)
-
-    if options.username is not None:
-        if options.password is None and options.hashes is None:
-            from getpass import getpass
-            password = getpass("Password:")
-            lmhash = compute_lmhash(password)
-            nthash = compute_nthash(password)
-        elif options.password is not None:
-            lmhash = compute_lmhash(options.password)
-            nthash = compute_nthash(options.password)
-        else:
-            lmhash, nthash = options.hashes.split(':')
-
-        server.addCredential(options.username, 0, lmhash, nthash)
+    server.addShare("payloads", "payloads", "payloads")
+    server.setSMB2Support(True)
     server.setSMBChallenge('')
-    server.setLogFile('')
+    # server.setLogFile('')
     server.start()
+
+def start_multi_server(ip, port, protocol, app):
+    stop_multiserver(app)
+    multiserver_file = Path('data/multiserver.json')
+    app.multi_delivery_port = port
+    
+    if multiserver_file.exists():
+        with open(multiserver_file, 'r') as f:
+            log_data = json.load(f)
+            log_entries = log_data.get("Log", [])
+    else:
+        log_data = {}
+        log_entries = []
+
+    log_data.update({
+        "Protocol": protocol,
+        "IP Address": ip,
+        "Listening Port": port,
+        "Path": "../Kitsune/Payloads\n"
+    })
+
+    log_data["Log"] = log_entries
+
+    with open(multiserver_file, 'w') as f:
+        json.dump(log_data, f, indent=4)
+
+    if protocol == "FTP":
+        app.multi_delivery_process = threading.Thread(target=start_ftp_server, args=(ip, port, app), daemon=True)
+        app.multi_delivery_process.start()
+        app.multi_delivery_protocol = "FTP"
+    elif protocol == "SMB":
+        app.multi_delivery_process = threading.Thread(target=start_smb_server, args=(ip, port, app), daemon=True)
+        app.multi_delivery_process.start()
+        app.multi_delivery_protocol = "SMB"
+    elif protocol == "NFS":
+        app.multi_delivery_process = threading.Thread(target=start_nfs_server, args=(ip, port, app), daemon=True)
+        app.multi_delivery_process.start()
+        app.multi_delivery_protocol = "NFS"
+
+    current_time = datetime.datetime.now().strftime("%H:%M:%S")  
+    new_line = f"[{current_time}] {protocol} Server is listening on port {port} now..\n"
+    app.add_event_viewer_log(new_line, 'color_login', "#FF00FF")
+
+    return app.multi_delivery_process
