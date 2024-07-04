@@ -11,7 +11,6 @@ Its use is very similar to other C2 like Cobalt Strike or Havoc, making use of l
 # Requirements
 - Python 3
 - Install requirements.txt
-- Download tails from Kitsune GUI
 
 
 # Download
