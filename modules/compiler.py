@@ -105,7 +105,7 @@ int main() {{
 """
 
 def create_py_file(payload, dst_file):
-    template_code = """
+    template_code = """#!/usr/bin/python3
 import os
 os.system("{payload}")
 """

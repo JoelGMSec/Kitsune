@@ -27,7 +27,6 @@ def clone_repos(name_label=None):
 
     if os.path.exists(base_dir):
         shutil.rmtree(base_dir)
-
     os.makedirs(base_dir)
 
     for repo in repos:
@@ -36,12 +35,30 @@ def clone_repos(name_label=None):
         
         try:
             subprocess.run(["git", "clone", repo, repo_dir], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        except:
-            name_label.config(text=f"Error updating tails!")
+        except subprocess.CalledProcessError:
+            if name_label:
+                name_label.config(text="Error updating tails!", fg="red")
+            return
 
-    if not name_label:
-        pass
-    else:
+    powercat_repo = "https://github.com/besimorhino/powercat"
+    powercat_dir = os.path.join(base_dir, "dnscat2", "client", "win32", "powercat")
+    
+    try:
+        subprocess.run(["git", "clone", powercat_repo, powercat_dir], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except subprocess.CalledProcessError:
+        if name_label:
+            name_label.config(text="Error cloning powercat!", fg="red")
+        return
+
+    dnscat2_client_url = "https://downloads.skullsecurity.org/dnscat2/dnscat2-v0.07-client-x86.tar.bz2"
+    dnscat2_client_dir = os.path.join(base_dir, "dnscat2", "client")
+    
+    os.makedirs(dnscat2_client_dir, exist_ok=True)
+    subprocess.run(["wget", "-q", dnscat2_client_url, "-O", os.path.join(dnscat2_client_dir, "dnscat2-v0.07-client-x86.tar.bz2")], check=True)
+    subprocess.run(["tar", "-xf", os.path.join(dnscat2_client_dir, "dnscat2-v0.07-client-x86.tar.bz2"), "-C", dnscat2_client_dir], check=True)
+    os.remove(os.path.join(dnscat2_client_dir, "dnscat2-v0.07-client-x86.tar.bz2"))
+
+    if name_label:
         name_label.config(text="All are up to date!", fg="#00AAFF")
 
 def update_tails(app):

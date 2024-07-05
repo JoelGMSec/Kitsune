@@ -286,7 +286,7 @@ def setup_widgets(root, app):
         print("Failed to load sessions:", e)
 
     app.treeview.column("#0", anchor="center", width=-100)
-    app.treeview.column(1, anchor="center", width=100)
+    app.treeview.column(1, anchor="center", width=80)
     app.treeview.column(2, anchor="center", width=140)
     app.treeview.column(3, anchor="center", width=180)
     app.treeview.column(4, anchor="center", width=140)

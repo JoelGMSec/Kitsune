@@ -606,6 +606,7 @@ class App(ttk.Frame):
         dialog.title("Success")
         dialog.focus_force()
 
+        os.system("chmod +x payloads -R")
         label = ttk.Label(dialog, text="Payload generated successfully!")
         label.pack(padx=20, pady=20)
 

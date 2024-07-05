@@ -36,7 +36,6 @@ warning_color = "#FF0055"
 user_color_map = {}
 
 def save_message(log_entry):
-    # Verificar si el mensaje ya está en el historial antes de guardarlo
     if log_entry["text"] in [log["text"] for log in chat_history["logs"]]:
         return
     
@@ -203,7 +202,6 @@ class TeamChatTab():
     def load_chat_history(app):
         app.text_area.config(state='normal')
         app.text_area.delete(1.0, tk.END)
-        # Cargar el historial desde el archivo y asegurarse de no duplicar mensajes
         loaded_logs = set()
         with open(CHAT_FILE, "r") as file:
             chat_history = json.load(file)
@@ -215,7 +213,6 @@ class TeamChatTab():
 
     def display_message(app, message, color):
         try:
-            # Verificar si el mensaje ya está en el área de texto
             current_content = app.text_area.get(1.0, tk.END)
             if message in current_content:
                 return

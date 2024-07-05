@@ -230,7 +230,7 @@ def dnscat2(app, host, port, name, session, restart):
     dnscat2_path = "/tmp/Kitsune/dnscat2"
     os.makedirs(dnscat2_path, exist_ok=True)
 
-    session_data = pexpect.spawn(f'dnscat2-server -u -e open -s {port}"', cwd=dnscat2_path, echo=False, use_poll=True)  
+    session_data = pexpect.spawn(f'dnscat2-server -u -e open -s {port} -d "domain=kit.su.ne"', cwd=dnscat2_path, echo=False, use_poll=True)  
     session_data.timeout = 1
 
     try:

