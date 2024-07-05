@@ -332,6 +332,9 @@ class Session(ttk.Frame):
                 tab_texts = [app.notebook.tab(tab, "text") for tab in app.notebook.tabs()]
                 sorted_tabs = sorted(tab_texts + [title])
                 insert_index = sorted_tabs.index(title)
+
+                if "Web Server Log" in sorted_tabs:
+                    insert_index = insert_index + 1
                 app.notebook.insert(insert_index + 1, new_session, text=title)
 
                 if previously_selected:

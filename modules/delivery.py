@@ -16,9 +16,7 @@ import subprocess
 import tkinter as tk
 from tkinter import ttk
 from pathlib import Path
-from impacket.examples import logger
-from impacket import smbserver, version
-from impacket.ntlm import compute_lmhash, compute_nthash
+from impacket import smbserver
 from pyftpdlib.authorizers import DummyAuthorizer
 from pyftpdlib.handlers import FTPHandler
 from pyftpdlib.servers import FTPServer
@@ -35,8 +33,22 @@ def regex_text(text):
         regex_text.append(f"[{hora}] CODE: {codigo} - FROM: {ip} - {peticion}")
     return regex_text
 
+def regex_multi_text(text):
+    dynamic_text = r"^[^:]*:[^:]*:"
+    now = datetime.datetime.now()
+    current_time = now.strftime("%H:%M:%S")
+    regex_text = []
+
+    cleaned_text = re.sub(dynamic_text, '', text)
+    lines = cleaned_text.splitlines()
+    for line in lines:
+        if line.strip():
+            regex_text.append(f"[{current_time}] {line.strip()}")
+
+    return regex_text
+
 def start_web_delivery(ip, port, protocol, app):
-    stop_webserver(app)
+    kill_webserver(app)
     webserver_file = Path('data/webserver.json')
     
     if webserver_file.exists():
@@ -199,17 +211,41 @@ def open_webserver_log_tab(app):
         with open(webserver_file, 'r') as f:
             log_data = json.load(f)
 
-    except:
-        log_data = []
+    except FileNotFoundError:
+        log_data = {}
 
     for tab in app.notebook.tabs():
         if app.notebook.tab(tab, "text") == "Web Server Log":
             app.notebook.select(tab)
+            update_webserver_log_tab(app)
             return
 
     tab = ttk.Frame(app.notebook)
+    existing_tabs = app.notebook.tabs()
+    tab_texts = [app.notebook.tab(tab_id, "text") for tab_id in existing_tabs]
+
+    insert_index = len(existing_tabs)
+    for idx, text in enumerate(tab_texts):
+        if text.startswith("Session"):
+            insert_index = idx
+            break
+
+    existing_tabs = app.notebook.tabs()
+    tab_texts = [app.notebook.tab(tab_id, "text") for tab_id in existing_tabs]
+
+    insert_index = len(existing_tabs)
+    for idx, text in enumerate(tab_texts):
+        if text.startswith("Session"):
+            insert_index = idx
+            break
+
+    tab = ttk.Frame(app.notebook)
     app.notebook.add(tab, text="Web Server Log")
-      
+    if insert_index < 0 or insert_index > len(existing_tabs):
+        insert_index = len(existing_tabs)
+    app.notebook.insert(insert_index, tab, text="Web Server Log")
+    app.notebook.select(tab)
+
     log_text = tk.Text(tab)
     log_text.config(
         background="#333333",
@@ -221,7 +257,6 @@ def open_webserver_log_tab(app):
         borderwidth=0,
     )
     log_text.pack(fill='both', expand=True)
-
     log_text.config(state="normal")
     log_text.delete(1.0, 'end')
 
@@ -230,7 +265,7 @@ def open_webserver_log_tab(app):
     log_text.tag_configure("color_listen", foreground="#FFCC00")
     log_text.tag_configure("color_input", foreground="#00AAFF")
 
-    if app.web_delivery_process:
+    if app.web_delivery_process and app.web_delivery_process.poll() is None:
         message = "[>] Web Server is running..\n"
         color_tag = "color_input"
     else:
@@ -247,7 +282,6 @@ def open_webserver_log_tab(app):
 
     log_text.config(font=("Consolas", 18, "bold"))
     log_text.config(state="disabled")
-
     app.notebook.select(tab)
     periodically_update_webserver(app)
 
@@ -258,17 +292,47 @@ def open_multiserver_log_tab(app):
         with open(multiserver_file, 'r') as f:
             log_data = json.load(f)
 
-    except:
-        log_data = []
+    except FileNotFoundError:
+        log_data = {}
 
     for tab in app.notebook.tabs():
         if app.notebook.tab(tab, "text") == "Multi Server Log":
             app.notebook.select(tab)
+            update_multiserver_log_tab(app)
             return
 
     tab = ttk.Frame(app.notebook)
+    existing_tabs = app.notebook.tabs()
+    tab_texts = [app.notebook.tab(tab_id, "text") for tab_id in existing_tabs]
+
+    insert_index = len(existing_tabs)  # Default to adding at the end if no "Session*" tab found
+    for idx, text in enumerate(tab_texts):
+        if text.startswith("Session"):
+            insert_index = idx
+            break
+
+    existing_tabs = app.notebook.tabs()
+    tab_texts = [app.notebook.tab(tab_id, "text") for tab_id in existing_tabs]
+
+    insert_index = len(existing_tabs)
+    for idx, text in enumerate(tab_texts):
+        if text.startswith("Session"):
+            insert_index = idx
+            break
+        if text.startswith("Web"):
+            insert_index = idx
+            break
+        if text.startswith("Listeners"):
+            insert_index = idx + 1
+            break
+
+    tab = ttk.Frame(app.notebook)
     app.notebook.add(tab, text="Multi Server Log")
-      
+    if insert_index < 0 or insert_index > len(existing_tabs):
+        insert_index = len(existing_tabs)  # Set to the end if out of bounds
+    app.notebook.insert(insert_index, tab, text="Multi Server Log")
+    app.notebook.select(tab)
+
     log_text = tk.Text(tab)
     log_text.config(
         background="#333333",
@@ -280,7 +344,6 @@ def open_multiserver_log_tab(app):
         borderwidth=0,
     )
     log_text.pack(fill='both', expand=True)
-
     log_text.config(state="normal")
     log_text.delete(1.0, 'end')
 
@@ -289,7 +352,7 @@ def open_multiserver_log_tab(app):
     log_text.tag_configure("color_listen", foreground="#FFCC00")
     log_text.tag_configure("color_input", foreground="#00AAFF")
 
-    if app.multi_delivery_process:
+    if app.multi_delivery_process and app.multi_delivery_process.is_alive():
         message = "[>] Multi Server is running..\n"
         color_tag = "color_input"
     else:
@@ -306,7 +369,6 @@ def open_multiserver_log_tab(app):
 
     log_text.config(font=("Consolas", 18, "bold"))
     log_text.config(state="disabled")
-
     app.notebook.select(tab)
     periodically_update_multiserver(app)
 
@@ -375,15 +437,6 @@ def server_status(ip, port, protocol, app, delivery_window):
     app.web_delivery_port = port
     return app.web_delivery_port
 
-def stop_multiserver(app):
-    if app.multi_delivery_process is not None:
-        app.multi_delivery_process.terminate()
-        app.multi_delivery_process = None  
-
-        current_time = datetime.datetime.now().strftime("%H:%M:%S")  
-        new_line = f"[{current_time}] Multi Server was stopped!\n"
-        app.add_event_viewer_log(new_line, 'color_error', "#FF0055")  
-
 def kill_multiserver(app):
     if app.multi_delivery_process is not None:
         if app.confirm_dialog() == "yes":
@@ -396,15 +449,6 @@ def kill_multiserver(app):
             current_time = datetime.datetime.now().strftime("%H:%M:%S")  
             new_line = f"[{current_time}] {app.multi_delivery_protocol} Server on port {app.multi_delivery_port} was killed!\n"
             app.add_event_viewer_log(new_line, 'color_error', "#FF0055")
-
-def stop_webserver(app):
-    if app.web_delivery_process is not None and app.web_delivery_process.poll() is None:
-        app.web_delivery_process.terminate()
-        app.web_delivery_process = None  
-    
-        current_time = datetime.datetime.now().strftime("%H:%M:%S")  
-        new_line = f"[{current_time}] Web Server on port {app.web_delivery_port} was killed!\n"
-        app.add_event_viewer_log(new_line, 'color_error', "#FF0055")  
 
 def kill_webserver(app):
     if app.web_delivery_process is not None and app.web_delivery_process.poll() is None:
@@ -474,49 +518,53 @@ def multi_delivery(app):
     cancel_button = ttk.Button(delivery_window, text="Cancel", command=delivery_window.destroy)
     cancel_button.grid(row=4, column=1, padx=20, pady=20)
 
-def ftp_server_status(ip, port, app, delivery_window):
-    app.ftp_server_process = threading.Thread(target=start_ftp_server, args=(ip, port, app), daemon=True).start()
-
-    if app.ftp_server_process is None:
-        current_time = datetime.datetime.now().strftime("%H:%M:%S")  
-        new_line = f"[{current_time}] FTP Server is listening on port {port} now..\n"
-        app.add_event_viewer_log(new_line, 'color_login', "#FF00FF")
-        save_multiserver_status(ip, port, "FTP")
-    else:
-        current_time = datetime.datetime.now().strftime("%H:%M:%S")  
-        new_line = f"[{current_time}] Error starting FTP Server on {port}!\n"
-        app.add_event_viewer_log(new_line, 'color_error', "#FF0055")  
-
-    delivery_window.destroy()
-    return app
-
-def save_multiserver_status(ip, port, protocol):
-    multiserver_file = Path('data/multiserver.json')
-
-    if multiserver_file.exists():
-        with open(multiserver_file, 'r') as f:
-            log_data = json.load(f)
-            log_entries = log_data.get("Log", [])
-    else:
-        log_data = {}
-        log_entries = []
-
-    log_data.update({
-        "Protocol": protocol,
-        "IP Address": ip,
-        "Listening Port": port,
-        "Path": "../Kitsune/Payloads\n"
-    })
-
-    log_data["Log"] = log_entries
-
-    with open(multiserver_file, 'w') as f:
-        json.dump(log_data, f, indent=4)
-
 def start_ftp_server(ip, port, app):
+    os.makedirs('/tmp/Kitsune', exist_ok=True)
+
+    def read_and_update_log():
+        log_file_path = "/tmp/Kitsune/ftp.log"
+        json_file_path = "data/multiserver.json"
+        last_read_size = 0
+
+        while True:
+            time.sleep(1)
+
+            if not os.path.exists(log_file_path):
+                continue
+
+            with open(log_file_path, "r") as log_file:
+                log_file.seek(last_read_size)
+                new_log_content = log_file.readlines()
+                last_read_size = log_file.tell()
+
+            if os.path.exists(json_file_path):
+                with open(json_file_path, "r") as json_file:
+                    data = json.load(json_file)
+            else:
+                data = {
+                    "Protocol": "FTP",
+                    "IP Address": ip,
+                    "Listening Port": port,
+                    "Path": "../Kitsune/Payloads",
+                    "Log": []
+                }
+
+            for line in new_log_content:
+                if line.strip():
+                    clean_data = regex_multi_text(line.strip())
+                    clean_data = str(clean_data)
+                    clean_data = clean_data.replace("['","").replace("']","")
+                    clean_data = clean_data.replace('["','').replace('"]','')
+                    data["Log"].append(clean_data)
+                    app.notify_multi_delivery()
+
+            with open(json_file_path, "w") as json_file:
+                json.dump(data, json_file, indent=4)
+
+    threading.Thread(target=read_and_update_log, daemon=True).start()
+
     authorizer = DummyAuthorizer()
     authorizer.add_anonymous("payloads")
-
     handler = FTPHandler
     handler.authorizer = authorizer
     handler.banner = "Simple FTP Server"
@@ -526,47 +574,148 @@ def start_ftp_server(ip, port, app):
     server.max_cons = 256
     server.max_cons_per_ip = 5
 
-    with open(os.devnull, 'w') as devnull:
-        old_stdout = os.dup(1)
-        old_stderr = os.dup(2)
-        os.dup2(devnull.fileno(), 1)
-        os.dup2(devnull.fileno(), 2)
-        try:
-            app.ftp_server_process = server
-            server.serve_forever()
-        finally:
-            os.dup2(old_stdout, 1)
-            os.dup2(old_stderr, 2)
+    logging.basicConfig(filename="/tmp/Kitsune/ftp.log", level=logging.INFO)
+    app.ftp_server_process = server
+    server.serve_forever()
 
 def start_smb_server(ip, port, app):
+    def read_smb_logs():
+        log_file_path = "/tmp/Kitsune/smb.log"
+        json_file_path = "data/multiserver.json"
+        last_read_size = 0
+
+        while True:
+            time.sleep(1)
+            if not os.path.exists(log_file_path):
+                continue
+
+            try:
+                with open(log_file_path, "r") as log_file:
+                    log_file.seek(last_read_size)
+                    new_log_content = log_file.readlines()
+                    last_read_size = log_file.tell()
+
+                if os.path.exists(json_file_path):
+                    with open(json_file_path, "r") as json_file:
+                        data = json.load(json_file)
+                else:
+                    data = {
+                        "Protocol": "SMB",
+                        "IP Address": ip,
+                        "Listening Port": port,
+                        "Path": "../Kitsune/Payloads",
+                        "Log": []
+                    }
+
+                for line in new_log_content:
+                    if line.strip():
+                        clean_data = regex_multi_text(line.strip())
+                        clean_data = str(clean_data)
+                        clean_data = clean_data.replace("['","").replace("']","")
+                        clean_data = clean_data.replace('["','').replace('"]','')
+                        data["Log"].append(clean_data)
+                        app.notify_multi_delivery()
+
+                with open(json_file_path, "w") as json_file:
+                    json.dump(data, json_file, indent=4)
+
+            except Exception as e:
+                logging.error(f"Error writing to JSON file '{json_file_path}': {e}")
+
+    threading.Thread(target=read_smb_logs, daemon=True).start()
+    smb_server_path = '/tmp/Kitsune'
+    os.makedirs(smb_server_path, exist_ok=True)
+    logging.basicConfig(filename="/tmp/Kitsune/smb.log", level=logging.INFO)
+
     server = smbserver.SimpleSMBServer(listenAddress=ip, listenPort=int(port))
     server.addShare("payloads", "payloads", "payloads")
     server.setSMB2Support(True)
-    server.setSMBChallenge('')
-    # server.setLogFile('')
+    server.setSMBChallenge("")
+    server.setLogFile(os.path.join(smb_server_path, "smb.log"))
     server.start()
 
-def start_multi_server(ip, port, protocol, app):
-    stop_multiserver(app)
-    multiserver_file = Path('data/multiserver.json')
-    app.multi_delivery_port = port
-    
-    if multiserver_file.exists():
-        with open(multiserver_file, 'r') as f:
-            log_data = json.load(f)
-            log_entries = log_data.get("Log", [])
-    else:
-        log_data = {}
-        log_entries = []
+def start_nfs_server(ip, port, app):
+    def read_nfs_logs():
+        log_file_path = "/tmp/Kitsune/nfs.log"
+        json_file_path = "data/multiserver.json"
+        last_read_size = 0
 
-    log_data.update({
+        while True:
+            time.sleep(1)
+            if not os.path.exists(log_file_path):
+                continue
+
+            try:
+                with open(log_file_path, "r") as log_file:
+                    log_file.seek(last_read_size)
+                    new_log_content = log_file.readlines()
+                    last_read_size = log_file.tell()
+
+                if os.path.exists(json_file_path):
+                    with open(json_file_path, "r") as json_file:
+                        data = json.load(json_file)
+                else:
+                    data = {
+                        "Protocol": "NFS",
+                        "IP Address": ip,
+                        "Listening Port": port,
+                        "Path": "/tmp/Kitsune/Payloads",
+                        "Log": []
+                    }
+
+                for line in new_log_content:
+                    if line.strip():
+                        clean_data = regex_multi_text(line.strip())
+                        clean_data = str(clean_data)
+                        clean_data = clean_data.replace("['","").replace("']","")
+                        clean_data = clean_data.replace('["','').replace('"]','')
+                        data["Log"].append(clean_data)
+                        app.notify_multi_delivery()
+
+                with open(json_file_path, "w") as json_file:
+                    json.dump(data, json_file, indent=4)
+
+            except Exception as e:
+                logging.error(f"Error writing to JSON file '{json_file_path}': {e}")
+
+    threading.Thread(target=read_nfs_logs, daemon=True).start()
+    nfs_server_path = '/tmp/Kitsune'
+    os.makedirs(nfs_server_path, exist_ok=True)
+    logging.basicConfig(filename="/tmp/Kitsune/nfs.log", level=logging.INFO)
+    nfs_options = {
+        'nfs_port': port,
+        'rpc_port': port,
+        'host': ip,
+    }
+
+    try:
+        server = NFSServer(**nfs_options)
+        server.export("/tmp/Kitsune/Payloads", options={
+            'sync': True,
+            'fsid': 1,
+            'uid': 1000,
+            'gid': 1000,
+            'allow': '127.0.0.1',
+        })
+        server.start()
+        server.serve_forever()
+
+    except:
+        pass
+
+def start_multi_server(ip, port, protocol, app):
+    kill_multiserver(app)
+    multiserver_file = Path('data/multiserver.json')
+    app.multi_delivery_port = port 
+    if multiserver_file.exists():
+        multiserver_file.unlink()
+    log_data = {
         "Protocol": protocol,
         "IP Address": ip,
         "Listening Port": port,
-        "Path": "../Kitsune/Payloads\n"
-    })
-
-    log_data["Log"] = log_entries
+        "Path": "../Kitsune/Payloads\n",
+        "Log": []
+    }
 
     with open(multiserver_file, 'w') as f:
         json.dump(log_data, f, indent=4)

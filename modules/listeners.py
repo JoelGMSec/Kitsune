@@ -194,11 +194,8 @@ def show_listeners(app):
 
     listener_tab.columnconfigure(0, weight=1)
     listener_tab.rowconfigure(1, weight=1)
-
     existing_tabs = app.notebook.tabs()
-
     app.listener_table.delete(*app.listener_table.get_children())
-
     listeners = load_listeners(app)
 
     if app.listener_table.winfo_exists():
@@ -224,16 +221,14 @@ def show_listeners(app):
     app.listener_table.bind("<Button-1>", on_treeview_click, add='+')  
     app.listener_table.bind("<Button-3>", app.remove_listener)
 
-    if len(existing_tabs) > 1:
+    if len(existing_tabs) > 2:
         tab_texts = [app.notebook.tab(tab, "text") for tab in existing_tabs]
 
         tab_texts.append("Listeners")
-
         sorted_tabs = sorted(tab_texts)
-
         insert_index = sorted_tabs.index("Listeners")
 
-        app.notebook.insert(insert_index, listener_tab, text="Listeners")
+        app.notebook.insert(insert_index + 1, listener_tab, text="Listeners")
         app.notebook.select(listener_tab)
 
     else:

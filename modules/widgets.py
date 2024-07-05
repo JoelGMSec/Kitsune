@@ -327,7 +327,7 @@ def setup_widgets(root, app):
     separator_paned = ResizablePanedWindow(app.pane_2, orient=tk.VERTICAL)
     separator_label = ttk.Label(separator_paned, text="•••••", font=("Consolas", 20), foreground="#c0c0c0", cursor="sb_v_double_arrow")
     separator_paned.add(separator_label)
-    separator_paned.pack(pady=0)
+    separator_paned.pack(pady=(0, 20))
 
     app.notebook = DraggableTabsNotebook(app.pane_2, height=580)
     app.notebook.pack(fill="both", expand=True)
@@ -391,29 +391,28 @@ def setup_widgets(root, app):
             if self.current_tab_is_excluded():
                 return
 
-            if event.keysym in ["BackSpace", "Left", "Up", "Down", "Tab", "Escape", "Control"]:
+            if event.keysym in ["space", "Right", "BackSpace", "Left", "Up", "Down", "Tab", "Escape", "Control"]:
                 return
 
             text = self.get()
             prefix = text.strip()
-
-            if event.keysym == "space":
-                return
+            current_index = self.index(tk.INSERT)
 
             if prefix:
-                current_index = self.index(tk.INSERT)
                 self.icursor(current_index)
                 self.matches = [cmd for cmd in self.command_history if cmd.startswith(prefix)]
                 if self.matches:
                     self.show_match()
                     return
             else:
+                self.icursor(current_index)
                 self.matches = []
+                return
 
             if event.keysym == "Return":
                 cursor_position = self.index(tk.INSERT)
                 self.insert(0, self.get()[:cursor_position])
-                return
+            return
 
         def show_match(self):
             if self.matches:
@@ -423,6 +422,7 @@ def setup_widgets(root, app):
                 self.insert(0, match)
                 self.icursor(len(current_text))
                 self.select_range(len(current_text), tk.END)
+                return
 
         def on_right_arrow_press(self, event):
             if self.current_tab_is_excluded():

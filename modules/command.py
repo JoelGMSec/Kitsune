@@ -406,6 +406,7 @@ def execute_command(app, event):
                         current_session.label.insert("end", log_text, "color_reset")
                         current_session.label.config(state="disabled")
                         current_session.label.see("end")
+                        app.update()
 
                         current_tab = app.notebook.tab(app.notebook.select(), "text")
                         for session in app.sessions:

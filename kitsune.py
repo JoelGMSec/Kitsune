@@ -73,6 +73,7 @@ class App(ttk.Frame):
         listeners.load_listeners(self)
         self.update_listeners_settings()
         delivery.periodically_update_webserver(self)
+        delivery.periodically_update_multiserver(self)
 
         self.sessions = []
         self.session_id = 0
@@ -655,6 +656,8 @@ class App(ttk.Frame):
         os.execl(sys.executable, sys.executable, *sys.argv)
 
     def on_treeview_doubleclick(self, event):
+        TAB_ORDER = ["Event Viewer", "Team Chat", "Listeners", "Multi Server Log", "Web Server Log"]
+
         try:
             item = self.treeview.selection()[0]
             values = self.treeview.item(item, "values")
@@ -667,10 +670,6 @@ class App(ttk.Frame):
         for tab in self.notebook.tabs():
             if self.notebook.tab(tab, "text") == title:
                 self.notebook.select(tab)
-                tab_widget = self.notebook.nametowidget(tab)
-                for session in self.sessions:
-                    if not session_id:
-                        break
                 return
 
         for session in self.sessions:
@@ -686,11 +685,14 @@ class App(ttk.Frame):
         self.sessions.append(new_session)
 
         tab_texts = [self.notebook.tab(tab, "text") for tab in self.notebook.tabs()]
-        sorted_tabs = sorted(tab_texts + [title])
+        sorted_tabs = [tab for tab in TAB_ORDER if tab in tab_texts] + sorted([tab for tab in tab_texts if tab not in TAB_ORDER])
+        if title not in sorted_tabs:
+            sorted_tabs.append(title)
         insert_index = sorted_tabs.index(title)
 
-        self.notebook.insert(insert_index + 1, new_session, text=title)
-        self.notebook.select(insert_index + 1)
+        self.notebook.insert(insert_index, new_session, text=title)
+        self.notebook.select(insert_index)
+        self.update()
 
     def on_double_click(app):
         selected_item = app.listener_table.selection()
@@ -831,3 +833,7 @@ if __name__ == "__main__":
 
     except KeyboardInterrupt:
         print(colored("\n[!] Exiting.. Goodbye! :)\n", "red"))
+        pass
+
+    except:
+        pass

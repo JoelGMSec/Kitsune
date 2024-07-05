@@ -36,8 +36,10 @@ warning_color = "#FF0055"
 user_color_map = {}
 
 def save_message(log_entry):
-    if chat_history["logs"] and chat_history["logs"][-1] == log_entry:
+    # Verificar si el mensaje ya está en el historial antes de guardarlo
+    if log_entry["text"] in [log["text"] for log in chat_history["logs"]]:
         return
+    
     chat_history["logs"].append(log_entry)
     with open(CHAT_FILE, "w") as file:
         json.dump(chat_history, file, indent=4)
@@ -201,16 +203,23 @@ class TeamChatTab():
     def load_chat_history(app):
         app.text_area.config(state='normal')
         app.text_area.delete(1.0, tk.END)
+        # Cargar el historial desde el archivo y asegurarse de no duplicar mensajes
+        loaded_logs = set()
         with open(CHAT_FILE, "r") as file:
             chat_history = json.load(file)
             for log in chat_history["logs"]:
-                app.display_message(log["text"], log["color"])
+                if log["text"] not in loaded_logs:
+                    app.display_message(log["text"], log["color"])
+                    loaded_logs.add(log["text"])
         app.text_area.config(state='disabled')
 
     def display_message(app, message, color):
         try:
-            if app.last_displayed_message == {"text": message, "color": color}:
+            # Verificar si el mensaje ya está en el área de texto
+            current_content = app.text_area.get(1.0, tk.END)
+            if message in current_content:
                 return
+
             app.last_displayed_message = {"text": message, "color": color}
             app.text_area.config(font=("Consolas", 18, "bold"))
             app.text_area.config(state='normal')
@@ -218,8 +227,8 @@ class TeamChatTab():
             app.text_area.tag_config(color, foreground=color)
             app.text_area.config(state='disabled')
             app.text_area.see("end")
-        except:
-            pass
+        except Exception as e:
+            print(f"Error displaying message: {e}")
 
     def connect_to_server(app, username, new_ip=IP):
         try:
