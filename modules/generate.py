@@ -8,6 +8,7 @@ import os
 import base64
 import shutil
 from modules import compiler
+from modules import obfuscator
 
 def generate_webshell(app, tail, format, obfuscate):
     payloads_dir = "payloads"
@@ -18,30 +19,72 @@ def generate_webshell(app, tail, format, obfuscate):
         dst_file = os.path.join(payloads_dir, "webshell.asp")
         shutil.copy(src_file, dst_file)
 
+        if obfuscate == "Yes":
+            with open(dst_file, 'r') as file:
+                code = file.read()
+            obfuscated_code = obfuscator.obfuscate_asp(code)
+            with open(dst_file, 'w') as file:
+                file.write(obfuscated_code)
+
     if format == "Aspx":
         src_file = "tails/PyShell/Shells/shell.aspx"
         dst_file = os.path.join(payloads_dir, "webshell.aspx")
         shutil.copy(src_file, dst_file)
 
+        if obfuscate == "Yes":
+            with open(dst_file, 'r') as file:
+                code = file.read()
+            obfuscated_code = obfuscator.obfuscate_aspx(code)
+            with open(dst_file, 'w') as file:
+                file.write(obfuscated_code)
+
     if format == "Jsp":
         src_file = "tails/PyShell/Shells/shell.jsp"
         dst_file = os.path.join(payloads_dir, "webshell.jsp")
         shutil.copy(src_file, dst_file)
+
+        if obfuscate == "Yes":
+            with open(dst_file, 'r') as file:
+                code = file.read()
+            obfuscated_code = obfuscator.obfuscate_jsp(code)
+            with open(dst_file, 'w') as file:
+                file.write(obfuscated_code)
     
     if format == "Php":
         src_file = "tails/PyShell/Shells/shell.php"
         dst_file = os.path.join(payloads_dir, "webshell.php")
         shutil.copy(src_file, dst_file)
 
+        if obfuscate == "Yes":
+            with open(dst_file, 'r') as file:
+                code = file.read()
+            obfuscated_code = obfuscator.obfuscate_php(code)
+            with open(dst_file, 'w') as file:
+                file.write(obfuscated_code)
+
     if format == "Python 3":
         src_file = "tails/PyShell/Shells/shell.py"
         dst_file = os.path.join(payloads_dir, "webshell.py")
         shutil.copy(src_file, dst_file)
 
+        if obfuscate == "Yes":
+            with open(dst_file, 'r') as file:
+                code = file.read()
+            obfuscated_code = obfuscator.obfuscate_py3(code)
+            with open(dst_file, 'w') as file:
+                file.write(obfuscated_code)
+
     if format == "Shell":
         src_file = "tails/PyShell/Shells/shell.sh"
         dst_file = os.path.join(payloads_dir, "webshell.sh")
         shutil.copy(src_file, dst_file)
+
+        if obfuscate == "Yes":
+            with open(dst_file, 'r') as file:
+                code = file.read()
+            obfuscated_code = obfuscator.obfuscate_sh(code)
+            with open(dst_file, 'w') as file:
+                file.write(obfuscated_code)
 
     if format == "Tomcat":
         src_file = "tails/PyShell/Shells/tomcat.war"
@@ -54,6 +97,7 @@ def generate_webshell(app, tail, format, obfuscate):
         shutil.copy(src_file, dst_file)
 
     app.generate_success()
+    obfuscate = False
 
 def generate_payload(app, tail, file_format, listener_name):
     payloads_dir = "payloads"
