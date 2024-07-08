@@ -150,6 +150,9 @@ def read_output_dnscat2(session_data, command):
     output = re.sub(r'bash .*?>', '', output)
     output = re.sub(r'cmd .*?>', '', output)
     output = re.sub(r'powershell .*?>', '', output)
+    output = re.sub(r'PS .*?>', '', output)
+    output = re.sub(r'dnscat2>', '', output)
+    output = re.sub(r'unnamed .*?>', '', output)
     output = re.sub(r'POTENTIAL CACHE HIT', '', output)
 
     ansi_escape = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
