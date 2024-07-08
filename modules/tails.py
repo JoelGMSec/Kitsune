@@ -13,14 +13,14 @@ from PIL import Image, ImageTk
 
 def clone_repos(name_label=None):
     repos = [
-        "https://github.com/JoelGMSec/HTTP-Shell",
-        "https://github.com/JoelGMSec/PyShell",
-        "https://github.com/calebstewart/pwncat",
-        "https://github.com/t3l3machus/Villain",
-        "https://github.com/XiaoliChan/wmiexec-Pro",
-        "https://github.com/Pennyw0rth/NetExec",
         "https://github.com/iagox86/dnscat2",
-        "https://github.com/Hackplayers/evil-winrm"
+        "https://github.com/Hackplayers/evil-winrm",
+        "https://github.com/JoelGMSec/HTTP-Shell",
+        "https://github.com/Pennyw0rth/NetExec",
+        "https://github.com/calebstewart/pwncat",
+        "https://github.com/JoelGMSec/PyShell",
+        "https://github.com/t3l3machus/Villain",
+        "https://github.com/XiaoliChan/wmiexec-Pro"
     ]
 
     base_dir = "./tails"
@@ -45,9 +45,8 @@ def clone_repos(name_label=None):
     
     try:
         subprocess.run(["git", "clone", powercat_repo, powercat_dir], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    except subprocess.CalledProcessError:
-        if name_label:
-            name_label.config(text="Error cloning powercat!", fg="red")
+    except:
+        name_label.config(text="Error upgrading tails!", fg="red")
         return
 
     dnscat2_client_url = "https://downloads.skullsecurity.org/dnscat2/dnscat2-v0.07-client-x86.tar.bz2"
