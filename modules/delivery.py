@@ -48,7 +48,7 @@ def regex_multi_text(text):
     return regex_text
 
 def start_web_delivery(ip, port, protocol, app):
-    kill_webserver(app)
+    stop_webserver(app)
     webserver_file = Path('data/webserver.json')
     
     if webserver_file.exists():
@@ -437,6 +437,27 @@ def server_status(ip, port, protocol, app, delivery_window):
     app.web_delivery_port = port
     return app.web_delivery_port
 
+def stop_multiserver(app):
+    if app.multi_delivery_process is not None:
+        try:
+            app.multi_delivery_process.terminate()
+        except:
+            pass
+
+        app.multi_delivery_process = None
+        current_time = datetime.datetime.now().strftime("%H:%M:%S")  
+        new_line = f"[{current_time}] {app.multi_delivery_protocol} Server on port {app.multi_delivery_port} was killed!\n"
+        app.add_event_viewer_log(new_line, 'color_error', "#FF0055")
+
+def stop_webserver(app):
+    if app.web_delivery_process is not None and app.web_delivery_process.poll() is None:
+        app.web_delivery_process.terminate()
+        app.web_delivery_process = None  
+    
+        current_time = datetime.datetime.now().strftime("%H:%M:%S")  
+        new_line = f"[{current_time}] Web Server on port {app.web_delivery_port} was killed!\n"
+        app.add_event_viewer_log(new_line, 'color_error', "#FF0055") 
+
 def kill_multiserver(app):
     if app.multi_delivery_process is not None:
         if app.confirm_dialog() == "yes":
@@ -704,7 +725,7 @@ def start_nfs_server(ip, port, app):
         pass
 
 def start_multi_server(ip, port, protocol, app):
-    kill_multiserver(app)
+    stop_multiserver(app)
     multiserver_file = Path('data/multiserver.json')
     app.multi_delivery_port = port 
     if multiserver_file.exists():
