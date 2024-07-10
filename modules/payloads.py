@@ -332,6 +332,8 @@ def netexec_payload(app):
 
     def get_params_and_start_thread():
         params = str(ip_entry.get() + " -u " + user_entry.get() + " -p " + nxc_pass.get())
+        if local_auth_combobox.get() == "Yes":
+            params += " --local-auth"
         connect_session(app, params, protocol_combobox.get(), app.session_id, tail_entry.get())
         listener_window.destroy()
 
@@ -340,3 +342,4 @@ def netexec_payload(app):
 
     cancel_button = ttk.Button(listener_window, text="Cancel", command=listener_window.destroy)
     cancel_button.grid(row=8, column=1, padx=20, pady=20)
+

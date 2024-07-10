@@ -282,8 +282,8 @@ def setup_widgets(root, app):
             for session in sessions_data:
                 app.treeview.insert('', 'end', tags=['disabled'] ,values=(session["Session"], session["User"], session["Hostname"], session["IP Address"], session["Process"], session["PID"], session["Arch"], session["Listener"], session["Tail"]))
 
-    except Exception as e:
-        print("Failed to load sessions:", e)
+    except:
+        pass
 
     app.treeview.column("#0", anchor="center", width=-100)
     app.treeview.column(1, anchor="center", width=80)

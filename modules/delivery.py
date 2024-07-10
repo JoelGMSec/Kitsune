@@ -6,13 +6,16 @@
 
 import os
 import re
+import ssl
 import json
 import time
 import atexit
+import asyncio
 import logging
 import datetime
 import threading
 import subprocess
+import http.server
 import tkinter as tk
 from tkinter import ttk
 from pathlib import Path
@@ -20,6 +23,9 @@ from impacket import smbserver
 from pyftpdlib.authorizers import DummyAuthorizer
 from pyftpdlib.handlers import FTPHandler
 from pyftpdlib.servers import FTPServer
+from shenaniganfs.nfs_utils import serve_nfs
+from shenaniganfs.fs import SimpleFS, SimpleDirectory, SimpleFile, VerifyingFileHandleEncoder
+from shenaniganfs.fs_manager import EvictingFileSystemManager, create_fs
 
 def on_combobox_focus(event):
     event.widget.selection_clear()
@@ -50,7 +56,8 @@ def regex_multi_text(text):
 def start_web_delivery(ip, port, protocol, app):
     stop_webserver(app)
     webserver_file = Path('data/webserver.json')
-    
+    server_address = (ip, port)
+
     if webserver_file.exists():
         with open(webserver_file, 'r') as f:
             log_data = json.load(f)
@@ -72,11 +79,16 @@ def start_web_delivery(ip, port, protocol, app):
         json.dump(log_data, f, indent=4)
 
     script_path = os.path.join(os.getcwd(), "payloads")
-    command = [os.sys.executable, '-m', 'http.server', '--bind', ip, '-d', script_path, str(port)]
-    
+ 
     try:
-        app.web_delivery_process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        
+        if protocol == "HTTPS":
+            command = [os.sys.executable, 'modules/https.py', ip, script_path, str(port)]
+            app.web_delivery_process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+        else:
+            command = [os.sys.executable, '-m', 'http.server', '--bind', ip, '-d', script_path, str(port)]
+            app.web_delivery_process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
         def capture_output(process, filename):
             while True:
                 output = process.stdout.readline()
@@ -101,7 +113,6 @@ def start_web_delivery(ip, port, protocol, app):
         return app.web_delivery_process
 
     except:
-        return None
         pass
 
 def periodically_update_multiserver(app):
@@ -640,9 +651,9 @@ def start_smb_server(ip, port, app):
                 with open(json_file_path, "w") as json_file:
                     json.dump(data, json_file, indent=4)
 
-            except Exception as e:
-                logging.error(f"Error writing to JSON file '{json_file_path}': {e}")
-
+            except:
+                pass
+                
     threading.Thread(target=read_smb_logs, daemon=True).start()
     smb_server_path = '/tmp/Kitsune'
     os.makedirs(smb_server_path, exist_ok=True)
@@ -696,31 +707,35 @@ def start_nfs_server(ip, port, app):
                 with open(json_file_path, "w") as json_file:
                     json.dump(data, json_file, indent=4)
 
-            except Exception as e:
-                logging.error(f"Error writing to JSON file '{json_file_path}': {e}")
+            except:
+                pass
 
     threading.Thread(target=read_nfs_logs, daemon=True).start()
+    
+    async def run_nfs_server():
+        fs_manager = EvictingFileSystemManager(
+            VerifyingFileHandleEncoder(os.urandom(32)),
+            factories={
+                b"/tmp/Kitsune/Payloads": lambda call_ctx: create_fs(
+                    lambda *args, **kwargs: SimpleFS(
+                        size_quota=100*1024, 
+                        entries_quota=100, 
+                        *args, **kwargs
+                    ),
+                    call_ctx,
+                    read_only=False
+                ),
+            },
+        )
+        await serve_nfs(fs_manager, use_internal_rpcbind=True)
+
     nfs_server_path = '/tmp/Kitsune'
     os.makedirs(nfs_server_path, exist_ok=True)
     logging.basicConfig(filename="/tmp/Kitsune/nfs.log", level=logging.INFO)
-    nfs_options = {
-        'nfs_port': port,
-        'rpc_port': port,
-        'host': ip,
-    }
 
     try:
-        server = NFSServer(**nfs_options)
-        server.export("/tmp/Kitsune/Payloads", options={
-            'sync': True,
-            'fsid': 1,
-            'uid': 1000,
-            'gid': 1000,
-            'allow': '127.0.0.1',
-        })
-        server.start()
-        server.serve_forever()
-
+        asyncio.run(run_nfs_server())
+        start_nfs_server(ip, port, app)
     except:
         pass
 

@@ -148,7 +148,7 @@ def kill_listeners(app, listener_details):
         if key in app.listener_processes:
             del app.listener_processes[key]
 
-    except Exception as e:
+    except:
         pass
 
     now = datetime.datetime.now()
@@ -200,7 +200,7 @@ def stop_listeners(app, listener_details):
         if key in app.listener_processes:
             del app.listener_processes[key]
 
-    except Exception as e:
+    except:
         pass
 
     time.sleep(0.2)

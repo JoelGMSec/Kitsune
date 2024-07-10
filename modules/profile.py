@@ -103,10 +103,8 @@ def delete_profile(app):
                     folder_path = os.path.join(profiles_path, folder_name)
                     if os.path.isdir(folder_path):
                         shutil.rmtree(folder_path)
-            except Exception as e:
-                print(f"Error deleting logs: {e}")
-        else:
-            print("The 'profiles' directory does not exist.")
+            except:
+                pass
     
         app.profile_deleted_success()
 
@@ -124,10 +122,8 @@ def save_profile(settings_window, name_entry, app):
                     shutil.copytree(s, d, dirs_exist_ok=True)
                 else:
                     shutil.copy2(s, d)
-        except Exception as e:
-            print(f"Error saving profile '{profile_name}': {e}")  
-    else:
-        print("Please enter a valid profile name.")  
+        except:
+            pass
 
     settings_window.destroy()
     app.profile_saved_success()
@@ -161,7 +157,7 @@ def load_and_close(settings_window, selected_value, app):
             app.event_viewer_logs = app.load_event_viewer_logs()
             app.restart_app()
 
-        except Exception as e:
+        except:
             pass
 
     settings_window.destroy()

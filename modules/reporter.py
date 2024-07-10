@@ -65,19 +65,19 @@ def save_project(settings_window, name_entry, app):
                     shutil.copytree(s, d, dirs_exist_ok=True)
                 else:
                     shutil.copy2(s, d)
-        except Exception as e:
-            print(f"Error saving profile '{profile_name}': {e}")  
-    else:
-        print("Please enter a valid profile name.")  
+        except:
+            pass
 
-    json_file_path = os.path.join(profile_path, "sessions.json")
-    html_file_path = os.path.join(profile_path + "/" + profile_name + ".html")
+    try:
+        json_file_path = os.path.join(profile_path, "sessions.json")
+        html_file_path = os.path.join(profile_path + "/" + profile_name + ".html")
+        json_to_html(json_file_path, html_file_path)
 
-    json_to_html(json_file_path, html_file_path)
-
-    for file_name in os.listdir(profile_path):
-        if file_name.endswith('.json'):
-            os.remove(os.path.join(profile_path, file_name))
+        for file_name in os.listdir(profile_path):
+            if file_name.endswith('.json'):
+                os.remove(os.path.join(profile_path, file_name))
+    except:
+        pass
 
     settings_window.destroy()
     app.project_saved_success()
@@ -94,10 +94,9 @@ def clear_logs(app):
                     elif os.path.isfile(folder_path):
                         os.remove(folder_path)
                 app.report_deleted_success()
-            except Exception as e:
-                print(f"Error deleting logs: {e}")
-        else:
-            print("The 'reports' directory does not exist.")
+
+            except:
+                pass
 
 def json_to_html(json_file_path, html_file_path):
     with open(json_file_path, 'r') as file:

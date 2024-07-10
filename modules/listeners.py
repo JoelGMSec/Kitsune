@@ -305,6 +305,11 @@ def edit_listener(app, listener_details):
     cancel_button.grid(row=6, column=1, padx=20, pady=20)
 
 def update_listener(app, listener_window, old_details, name, host, port, protocol, tail):
+    new_details = (name, host, port, protocol, tail)
+    if old_details == new_details:
+        listener_window.destroy()
+        return
+
     with open('data/listeners.json', 'r') as file:
         listeners = json.load(file)
 
@@ -337,8 +342,6 @@ def update_listener(app, listener_window, old_details, name, host, port, protoco
 
         for item in app.listener_table.get_children():
             app.listener_table.delete(item)
-
-        new_details = (name, host, port, protocol, tail)
         
         for listener in load_listeners(app):
             item_id = app.listener_table.insert('', 'end', values=(listener["Name"], listener["Host"], listener["Port"], listener["Protocol"], listener["Tail"]))

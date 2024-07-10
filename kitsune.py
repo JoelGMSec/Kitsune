@@ -232,8 +232,8 @@ class App(ttk.Frame):
                     for session in sessions_data:
                         app.treeview.insert('', 'end', tags=['disabled'] ,values=(session["Session"], session["User"], session["Hostname"], session["IP Address"], session["Process"], session["PID"], session["Arch"], session["Listener"], session["Tail"]))
 
-            except Exception as e:
-                print("Failed to load sessions:", e)
+            except:
+                pass
 
             for item in self.treeview.get_children():
                 item_info = app.treeview.item(item)
@@ -550,7 +550,7 @@ class App(ttk.Frame):
         dialog.title("Success")
         dialog.focus_force()
 
-        label = ttk.Label(dialog, text="All reports has deleted!")
+        label = ttk.Label(dialog, text="All reports have been deleted!")
         label.pack(padx=20, pady=20)
 
         button_frame = ttk.Frame(dialog)
@@ -564,7 +564,7 @@ class App(ttk.Frame):
         dialog.title("Success")
         dialog.focus_force()
 
-        label = ttk.Label(dialog, text="All profiles has deleted!")
+        label = ttk.Label(dialog, text="All profiles have been deleted!")
         label.pack(padx=20, pady=20)
 
         button_frame = ttk.Frame(dialog)
