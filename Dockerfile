@@ -25,4 +25,4 @@ RUN for i in $(cat /opt/Kitsune/reqs.txt) ; do pip3 install $i --break-system-pa
 RUN rm -f /opt/Kitsune/reqs.txt
 
 WORKDIR /opt/Kitsune
-ENTRYPOINT ["/bin/bash"]
+ENTRYPOINT ["python3", "/opt/Kitsune/kitsune.py"]
