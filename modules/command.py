@@ -102,7 +102,7 @@ def read_output_wmiexecpro(session_data, command):
         output = read_buffer(session_data)
         attempts += 1
     output = output.decode("utf-8").replace("\r", "")    
-    output = re.sub(r'^.*C:\\Windows\\system32>.*$\n?', '', output, flags=re.MULTILINE)
+    output = re.sub(r'^.*C:\\Windows\\system32>', '', output, flags=re.MULTILINE)
 
     ansi_escape = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
     output = ansi_escape.sub('', output)
@@ -123,6 +123,7 @@ def read_output_wmiexecpro(session_data, command):
     if lines[0].strip() == command:
         output = "\n".join(lines[1:])  
 
+    output = re.sub(r'C:\\Windows\\System32>', '', output).strip()
     return output
 
 def read_output_dnscat2(session_data, command):
