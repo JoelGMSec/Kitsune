@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 #=========================#
 #  Kitsune by @JoelGMSec  #
-#    https://darkbyte.net #
+#      darkbyte.net       #
 #=========================#
 
 import os
@@ -339,7 +339,12 @@ def setup_widgets(root, app):
 
     now = datetime.datetime.now()
     current_time = now.strftime("%H:%M:%S")
-    current_user = os.getlogin()
+    
+    try:
+        current_user = os.getlogin()
+    except:
+        current_user = "root"
+
     app.scrollbar = ttk.Scrollbar(app.tab_1)
     app.scrollbar.pack(side="right", fill="y")
 

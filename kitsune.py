@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 #=========================#
 #  Kitsune by @JoelGMSec  #
-#    https://darkbyte.net #
+#      darkbyte.net       #
 #=========================#
 
 import tkinter as tk
@@ -81,12 +81,16 @@ class App(ttk.Frame):
 
         Session.load_saved_sessions(self)
         typing(colored("\n[>] Loading Event Viewer..\n", "yellow"))
+        
+        try:
+            self.username = os.getlogin()
+        except:
+            self.username = "root"
 
         chat.start_server(self)
         self.client_socket = None
-        self.username = os.getlogin()
         self.team_chat_tab = chat.TeamChatTab(self.notebook)
-        self.team_chat_tab.connect_to_server(os.getlogin(), "localhost")
+        self.team_chat_tab.connect_to_server(self.username, "localhost")
         self.client_socket = self.team_chat_tab.get_socket()
 
     def load_settings(self):
@@ -753,7 +757,10 @@ class App(ttk.Frame):
         now = datetime.datetime.now()
         current_time = now.strftime("%H:%M:%S")
 
-        current_user = os.getlogin()
+        try:
+            current_user = os.getlogin()
+        except:
+            current_user = "root"
         
         label_text = f"[{current_time}] User *{current_user}* has reset all data!"
 
@@ -836,5 +843,6 @@ if __name__ == "__main__":
         print(colored("\n[!] Exiting.. Goodbye! :)\n", "red"))
         pass
 
-    except:
+    except Exception as e:
+        print("\n".join( "-"*i+" "+j for i,j in enumerate(e.args)))
         pass

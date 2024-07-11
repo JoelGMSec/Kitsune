@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 #=========================#
 #  Kitsune by @JoelGMSec  #
-#    https://darkbyte.net #
+#      darkbyte.net       #
 #=========================#
 
 import os

@@ -1,2 +1,6 @@
+Pillow
+pexpect
+impacket
 neotermcolor
 pyftpdlib
+shenaniganfs
