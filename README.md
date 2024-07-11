@@ -9,8 +9,8 @@ Its use is very similar to other C2 like Cobalt Strike or Havoc, making use of l
 
 
 # Requirements
-- Python 3
-- Install requirements.txt
+- Bash
+- Docker
 
 
 # Download
@@ -23,7 +23,7 @@ git clone https://github.com/JoelGMSec/Kitsune
 
 # Usage
 ```
-python3 ./Kitsune.py
+./start.sh
 
            _ _                                                                                  
       /\ /(_) |_ ___ _   _ _ __   ___                                                           
