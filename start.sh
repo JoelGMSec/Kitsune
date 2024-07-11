@@ -11,9 +11,9 @@ sudo service docker start > /dev/null 2>&1 ; sleep 2 ; fi ; fi
 
 # Create Docker Image
 if [[ -z $(docker image ls | grep kitsune) ]]; then
-  docker build -t joelgmsec/kitsune .
+  sudo docker build -t joelgmsec/kitsune .
 fi
 
 # Main Function
-xhost +local: > /dev/null
-docker run -it --rm --net host -v /tmp:/tmp -v "$(pwd):/opt/Kitsune" joelgmsec/kitsune
+sudo xhost +local: > /dev/null
+sudo docker run -it --rm --net host -v /tmp:/tmp -v "$(pwd):/opt/Kitsune" joelgmsec/kitsune
