@@ -19,6 +19,7 @@ RUN git clone https://github.com/Pennyw0rth/NetExec /opt/Kitsune/tails/NetExec
 RUN git clone https://github.com/calebstewart/pwncat /opt/Kitsune/tails/pwncat
 RUN git clone https://github.com/JoelGMSec/PyShell /opt/Kitsune/tails/PyShell
 RUN git clone https://github.com/XiaoliChan/wmiexec-Pro /opt/Kitsune/tails/wmiexec-Pro
+RUN pip3 install numpy --break-system-packages
 RUN pip3 install -r /opt/Kitsune/requirements.txt --break-system-packages
 RUN for i in $(find /opt/Kitsune/ -name requirements.txt) ; do cat $i >> /opt/Kitsune/reqs.txt ; done
 RUN for i in $(cat /opt/Kitsune/reqs.txt) ; do pip3 install $i --break-system-packages ; done
