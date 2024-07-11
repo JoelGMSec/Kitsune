@@ -40,11 +40,11 @@ def connect_pwncat(app, params, method, session, restart):
         user = params.split("@")[0]
         host = params.split("@")[1]
         pasw = method
-        session_data = pexpect.spawn(f'python3.11 $(which pwncat-cs) ssh://{user}:{pasw}@{host}', cwd=pwncat_path, echo=False, use_poll=True)  
+        session_data = pexpect.spawn(f'python3.11 /usr/local/bin/pwncat-cs ssh://{user}:{pasw}@{host}', cwd=pwncat_path, echo=False, use_poll=True)  
     
     else:
         session_info["Listener"] = "BIND"
-        session_data = pexpect.spawn(f'python3.11 $(which pwncat-cs) connect://{params}', cwd=pwncat_path, echo=False, use_poll=True)  
+        session_data = pexpect.spawn(f'python3.11 /usr/local/bin/pwncat-cs connect://{params}', cwd=pwncat_path, echo=False, use_poll=True)  
     session_data.timeout = 1
 
     try:
