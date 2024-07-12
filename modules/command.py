@@ -101,7 +101,7 @@ def read_output_wmiexecpro(session_data, command):
         session_data.write("\n")
         output = read_buffer(session_data)
         attempts += 1
-    output = output.decode("utf-8").replace("\r", "")    
+    output = output.decode("utf-8").replace("\r", "")
     output = re.sub(r'^.*C:\\Windows\\system32>', '', output, flags=re.MULTILINE)
 
     ansi_escape = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
@@ -121,8 +121,8 @@ def read_output_wmiexecpro(session_data, command):
 
     lines = output.split("\n")
     if lines[0].strip() == command:
-        output = "\n".join(lines[1:])  
-
+        output = "\n".join(lines[1:])
+    
     output = re.sub(r'C:\\Windows\\System32>', '', output).strip()
     return output
 

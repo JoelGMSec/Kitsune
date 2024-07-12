@@ -60,7 +60,17 @@ def open_settings(app):
     nekomancer_combobox.set(selected_value.get())
 
     nekomancer_combobox.bind("<FocusIn>", on_combobox_focus)
-    
+
+    def on_enter_key(event):
+        save_and_close(settings_window, selected_value, app)
+
+    settings_window.bind("<Return>", on_enter_key)
+
+    def on_escape_key(event):
+        settings_window.destroy()
+
+    settings_window.bind("<Escape>", on_escape_key)
+
     save_button = ttk.Button(settings_frame, text="Save", command=lambda: save_and_close(settings_window, selected_value, app))
     save_button.grid(row=3, column=0, pady=(35, 10))  
 

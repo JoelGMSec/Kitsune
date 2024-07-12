@@ -138,7 +138,7 @@ def pwncat(app, host, port, name, session, restart):
     pwncat_path = f'/tmp/pwncat'
     os.makedirs(pwncat_path, exist_ok=True)
     
-    session_data = pexpect.spawn(f'python3.11 /usr/local/bin/pwncat-cs 0.0.0.0 {port}', cwd=pwncat_path, echo=False, use_poll=True) 
+    session_data = pexpect.spawn(f'python3.11 /usr/local/bin/pwncat-cs 0.0.0.0 {port}', cwd=pwncat_path, echo=False, use_poll=True)  
     session_data.timeout = 1
 
     try:

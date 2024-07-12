@@ -93,5 +93,15 @@ def update_tails(app):
 
     updates_window.after(1000, lambda: clone_repos(name_label))
 
+    def on_enter_key(event):
+        updates_window.destroy()
+
+    updates_window.bind("<Return>", on_enter_key)
+
+    def on_escape_key(event):
+        updates_window.destroy()
+
+    updates_window.bind("<Escape>", on_escape_key)
+
     save_button = ttk.Button(updates_frame, text="Close", command=lambda: updates_window.destroy())
     save_button.grid(row=3, column=0, pady=(25, 0))  

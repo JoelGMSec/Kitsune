@@ -47,9 +47,18 @@ def export_profile(app):
     name_entry = ttk.Entry(settings_frame, textvariable=tk.StringVar())
     name_entry.grid(row=2, column=0, padx=(15, 0), pady=(20, 0))
 
+    def on_enter_key(event):
+        save_profile(settings_window, name_entry, app)
+
+    settings_window.bind("<Return>", on_enter_key)
+
+    def on_escape_key(event):
+        settings_window.destroy()
+
+    settings_window.bind("<Escape>", on_escape_key)
+
     save_button = ttk.Button(settings_frame, text="Save", command=lambda: save_profile(settings_window, name_entry, app))
     save_button.grid(row=3, column=0, pady=(35, 10))  
-
 
 def import_profile(app):
     settings_window = tk.Toplevel(app)
@@ -91,6 +100,16 @@ def import_profile(app):
 
     nekomancer_combobox.bind("<FocusIn>", on_combobox_focus)
 
+    def on_enter_key(event):
+        load_and_close(settings_window, selected_value, app)
+
+    settings_window.bind("<Return>", on_enter_key)
+
+    def on_escape_key(event):
+        settings_window.destroy()
+
+    settings_window.bind("<Escape>", on_escape_key)
+
     save_button = ttk.Button(settings_frame, text="Load", command=lambda: load_and_close(settings_window, selected_value, app))
     save_button.grid(row=3, column=1, pady=(35, 10))  
 
@@ -109,55 +128,57 @@ def delete_profile(app):
         app.profile_deleted_success()
 
 def save_profile(settings_window, name_entry, app):
-    profile_name = name_entry.get().strip()
-    if profile_name:  
-        profile_path = os.path.join("profiles", profile_name)
-        data_path = "data"
-        try:
-            os.makedirs(profile_path, exist_ok=True)  
-            for item in os.listdir(data_path):  
-                s = os.path.join(data_path, item)
-                d = os.path.join(profile_path, item)
-                if os.path.isdir(s):
-                    shutil.copytree(s, d, dirs_exist_ok=True)
-                else:
-                    shutil.copy2(s, d)
-        except:
-            pass
+    if name_entry.get():
+        profile_name = name_entry.get().strip()
+        if profile_name:  
+            profile_path = os.path.join("profiles", profile_name)
+            data_path = "data"
+            try:
+                os.makedirs(profile_path, exist_ok=True)  
+                for item in os.listdir(data_path):  
+                    s = os.path.join(data_path, item)
+                    d = os.path.join(profile_path, item)
+                    if os.path.isdir(s):
+                        shutil.copytree(s, d, dirs_exist_ok=True)
+                    else:
+                        shutil.copy2(s, d)
+            except:
+                pass
 
-    settings_window.destroy()
-    app.profile_saved_success()
+        settings_window.destroy()
+        app.profile_saved_success()
 
 def load_and_close(settings_window, selected_value, app):
-    if app.confirm_dialog() == "yes":
-        settings_window.destroy()
-        app.remove_data()
-        profile_name = selected_value.get()
-        profile_path = os.path.join("profiles", profile_name)
-        data_path = "data"
+    if selected_value.get() != str("No profiles found"):
+        if app.confirm_dialog() == "yes":
+            settings_window.destroy()
+            app.remove_data()
+            profile_name = selected_value.get()
+            profile_path = os.path.join("profiles", profile_name)
+            data_path = "data"
 
-        try:
-            for item in os.listdir(data_path):
-                item_path = os.path.join(data_path, item)
-                if os.path.isfile(item_path):
-                    os.remove(item_path)
-                else:  
-                    shutil.rmtree(item_path)
+            try:
+                for item in os.listdir(data_path):
+                    item_path = os.path.join(data_path, item)
+                    if os.path.isfile(item_path):
+                        os.remove(item_path)
+                    else:  
+                        shutil.rmtree(item_path)
 
-            for item in os.listdir(profile_path):
-                s = os.path.join(profile_path, item)
-                d = os.path.join(data_path, item)
-                if os.path.isdir(s):
-                    shutil.copytree(s, d, dirs_exist_ok=True)
-                else:
-                    shutil.copy2(s, d)
+                for item in os.listdir(profile_path):
+                    s = os.path.join(profile_path, item)
+                    d = os.path.join(data_path, item)
+                    if os.path.isdir(s):
+                        shutil.copytree(s, d, dirs_exist_ok=True)
+                    else:
+                        shutil.copy2(s, d)
 
-            app.event_viewer_logs.clear()
-            app.event_viewer_logs = []
-            app.event_viewer_logs = app.load_event_viewer_logs()
-            app.restart_app()
+                app.event_viewer_logs.clear()
+                app.event_viewer_logs = []
+                app.event_viewer_logs = app.load_event_viewer_logs()
+                app.restart_app()
 
-        except:
-            pass
+            except:
+                pass
 
-    settings_window.destroy()
+            settings_window.destroy()

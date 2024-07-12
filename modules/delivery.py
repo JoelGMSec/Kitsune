@@ -425,6 +425,16 @@ def web_delivery(app):
     http_combobox.bind("<<ComboboxSelected>>", update_port)
     http_combobox.bind("<FocusIn>", on_combobox_focus)
 
+    def on_enter_key(event):
+        server_status(ip_entry.get(), port_entry.get(), http_combobox.get(), app, delivery_window)
+
+    delivery_window.bind("<Return>", on_enter_key)
+
+    def on_escape_key(event):
+        delivery_window.destroy()
+
+    delivery_window.bind("<Escape>", on_escape_key)
+
     save_button = ttk.Button(delivery_window, text="Publish", command=lambda: server_status(ip_entry.get(), port_entry.get(), http_combobox.get(), app, delivery_window))
     save_button.grid(row=4, column=0, padx=50, pady=20)
 
@@ -543,6 +553,16 @@ def multi_delivery(app):
         port = port_entry.get()
         start_multi_server(ip, port, protocol, app)
         delivery_window.destroy()
+
+    def on_enter_key(event):
+        start_server()
+
+    delivery_window.bind("<Return>", on_enter_key)
+
+    def on_escape_key(event):
+        delivery_window.destroy()
+
+    delivery_window.bind("<Escape>", on_escape_key)
             
     save_button = ttk.Button(delivery_window, text="Publish", command=start_server)
     save_button.grid(row=4, column=0, padx=50, pady=20)

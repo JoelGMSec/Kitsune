@@ -546,6 +546,16 @@ class App(ttk.Frame):
         button_frame = ttk.Frame(dialog)
         button_frame.pack(padx=20, pady=10)
 
+        def on_enter_key(event):
+            dialog.destroy()
+
+        dialog.bind("<Return>", on_enter_key)
+
+        def on_escape_key(event):
+            dialog.destroy()
+
+        dialog.bind("<Escape>", on_escape_key)
+
         yes_button = ttk.Button(button_frame, text="Close", command=lambda: dialog.destroy())
         yes_button.pack(side=tk.LEFT, padx=5, pady=(0, 10))
 
@@ -559,6 +569,16 @@ class App(ttk.Frame):
 
         button_frame = ttk.Frame(dialog)
         button_frame.pack(padx=20, pady=10)
+
+        def on_enter_key(event):
+            dialog.destroy()
+
+        dialog.bind("<Return>", on_enter_key)
+
+        def on_escape_key(event):
+            dialog.destroy()
+
+        dialog.bind("<Escape>", on_escape_key)
 
         yes_button = ttk.Button(button_frame, text="Close", command=lambda: dialog.destroy())
         yes_button.pack(side=tk.LEFT, padx=5, pady=(0, 10))
@@ -574,6 +594,16 @@ class App(ttk.Frame):
         button_frame = ttk.Frame(dialog)
         button_frame.pack(padx=20, pady=10)
 
+        def on_enter_key(event):
+            dialog.destroy()
+
+        dialog.bind("<Return>", on_enter_key)
+
+        def on_escape_key(event):
+            dialog.destroy()
+
+        dialog.bind("<Escape>", on_escape_key)
+
         yes_button = ttk.Button(button_frame, text="Close", command=lambda: dialog.destroy())
         yes_button.pack(side=tk.LEFT, padx=5, pady=(0, 10))
 
@@ -587,6 +617,16 @@ class App(ttk.Frame):
 
         button_frame = ttk.Frame(dialog)
         button_frame.pack(padx=20, pady=10)
+
+        def on_enter_key(event):
+            dialog.destroy()
+
+        dialog.bind("<Return>", on_enter_key)
+
+        def on_escape_key(event):
+            dialog.destroy()
+
+        dialog.bind("<Escape>", on_escape_key)
 
         yes_button = ttk.Button(button_frame, text="Close", command=lambda: dialog.destroy())
         yes_button.pack(side=tk.LEFT, padx=5, pady=(0, 10))
@@ -602,6 +642,16 @@ class App(ttk.Frame):
         button_frame = ttk.Frame(dialog)
         button_frame.pack(padx=20, pady=10)
 
+        def on_enter_key(event):
+            dialog.destroy()
+
+        dialog.bind("<Return>", on_enter_key)
+
+        def on_escape_key(event):
+            dialog.destroy()
+
+        dialog.bind("<Escape>", on_escape_key)
+
         yes_button = ttk.Button(button_frame, text="Close", command=lambda: dialog.destroy())
         yes_button.pack(side=tk.LEFT, padx=5, pady=(0, 10))
 
@@ -616,6 +666,16 @@ class App(ttk.Frame):
 
         button_frame = ttk.Frame(dialog)
         button_frame.pack(padx=20, pady=10)
+
+        def on_enter_key(event):
+            dialog.destroy()
+
+        dialog.bind("<Return>", on_enter_key)
+
+        def on_escape_key(event):
+            dialog.destroy()
+
+        dialog.bind("<Escape>", on_escape_key)
 
         yes_button = ttk.Button(button_frame, text="Close", command=lambda: dialog.destroy())
         yes_button.pack(side=tk.LEFT, padx=5, pady=(0, 10))
@@ -634,6 +694,16 @@ class App(ttk.Frame):
         def set_result(value):
             self.result = value
             dialog.destroy()
+
+        def on_enter_key(event):
+            set_result("yes")
+
+        dialog.bind("<Return>", on_enter_key)
+
+        def on_escape_key(event):
+            set_result("no")
+
+        dialog.bind("<Escape>", on_escape_key)
 
         yes_button = ttk.Button(button_frame, text="Yes", command=lambda: set_result("yes"))
         yes_button.pack(side=tk.LEFT, padx=5, pady=(0, 10))

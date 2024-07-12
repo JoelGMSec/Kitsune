@@ -60,8 +60,19 @@ def windows_payload(app):
     update_listener_options()
 
     def get_params_and_generate():
-        generate_payload(app, selected_tail.get(), selected_output.get(), port_listener_combobox.get())
+        if selected_tail.get() and selected_output.get() and port_listener_combobox.get():
+            generate_payload(app, selected_tail.get(), selected_output.get(), port_listener_combobox.get())
+            listener_window.destroy()
+
+    def on_enter_key(event):
+        get_params_and_generate()
+
+    listener_window.bind("<Return>", on_enter_key)
+
+    def on_escape_key(event):
         listener_window.destroy()
+
+    listener_window.bind("<Escape>", on_escape_key)
 
     ttk.Button(listener_window, text="Generate", command=get_params_and_generate).grid(row=4, column=0, padx=50, pady=20)
     ttk.Button(listener_window, text="Cancel", command=listener_window.destroy).grid(row=4, column=1, padx=20, pady=20)
@@ -107,8 +118,19 @@ def linux_payload(app):
     update_listener_options()
 
     def get_params_and_generate():
-        generate_payload(app, selected_tail.get(), selected_output.get(), port_listener_combobox.get())
+        if selected_tail.get() and selected_output.get() and port_listener_combobox.get():
+            generate_payload(app, selected_tail.get(), selected_output.get(), port_listener_combobox.get())
+            listener_window.destroy()
+
+    def on_enter_key(event):
+        get_params_and_generate()
+
+    listener_window.bind("<Return>", on_enter_key)
+
+    def on_escape_key(event):
         listener_window.destroy()
+
+    listener_window.bind("<Escape>", on_escape_key)
 
     ttk.Button(listener_window, text="Generate", command=get_params_and_generate).grid(row=4, column=0, padx=50, pady=20)
     ttk.Button(listener_window, text="Cancel", command=listener_window.destroy).grid(row=4, column=1, padx=20, pady=20)
@@ -147,8 +169,19 @@ def webshell_payload(app):
 
     def get_params_and_start_thread():
         params = params_entry.get()
-        pyshell_thread(app, params, method_combobox.get(), app.session_id, restart=False)
+        if params and method_combobox.get():
+            pyshell_thread(app, params, method_combobox.get(), app.session_id, restart=False)
+            listener_window.destroy()
+
+    def on_enter_key(event):
+        get_params_and_start_thread()
+
+    listener_window.bind("<Return>", on_enter_key)
+
+    def on_escape_key(event):
         listener_window.destroy()
+
+    listener_window.bind("<Escape>", on_escape_key)
 
     save_button = ttk.Button(listener_window, text="Connect", command=get_params_and_start_thread)
     save_button.grid(row=4, column=0, padx=50, pady=20)
@@ -191,8 +224,19 @@ def webshell_generate(app):
     method_combobox.bind("<FocusIn>", on_combobox_focus)
 
     def get_params_and_generate():
-        generate_webshell(app, tail_entry.get(), params_entry.get(), method_combobox.get())
+        if tail_entry.get() and params_entry.get() and method_combobox.get():
+            generate_webshell(app, tail_entry.get(), params_entry.get(), method_combobox.get())
+            listener_window.destroy()
+
+    def on_enter_key(event):
+        get_params_and_generate()
+
+    listener_window.bind("<Return>", on_enter_key)
+
+    def on_escape_key(event):
         listener_window.destroy()
+
+    listener_window.bind("<Escape>", on_escape_key)
 
     save_button = ttk.Button(listener_window, text="Generate", command=get_params_and_generate)
     save_button.grid(row=4, column=0, padx=50, pady=20)
@@ -231,8 +275,19 @@ def pwncat_payload(app):
 
     def get_params_and_start_thread():
         params = params_entry.get()
-        pwncat_thread(app, params, pwncat_pass.get(), app.session_id, restart=False)
+        if params and pwncat_pass.get():
+            pwncat_thread(app, params, pwncat_pass.get(), app.session_id, restart=False)
+            listener_window.destroy()
+
+    def on_enter_key(event):
+        get_params_and_start_thread()
+
+    listener_window.bind("<Return>", on_enter_key)
+
+    def on_escape_key(event):
         listener_window.destroy()
+
+    listener_window.bind("<Escape>", on_escape_key)
 
     save_button = ttk.Button(listener_window, text="Connect", command=get_params_and_start_thread)
     save_button.grid(row=4, column=0, padx=50, pady=20)
@@ -332,14 +387,24 @@ def netexec_payload(app):
 
     def get_params_and_start_thread():
         params = str(ip_entry.get() + " -u " + user_entry.get() + " -p " + nxc_pass.get())
-        if local_auth_combobox.get() == "Yes":
-            params += " --local-auth"
-        connect_session(app, params, protocol_combobox.get(), app.session_id, tail_entry.get())
+        if params and protocol_combobox.get() and tail_entry.get():
+            if local_auth_combobox.get() == "Yes":
+                params += " --local-auth"
+            connect_session(app, params, protocol_combobox.get(), app.session_id, tail_entry.get())
+            listener_window.destroy()
+
+    def on_enter_key(event):
+        get_params_and_start_thread()
+
+    listener_window.bind("<Return>", on_enter_key)
+
+    def on_escape_key(event):
         listener_window.destroy()
+
+    listener_window.bind("<Escape>", on_escape_key)
 
     save_button = ttk.Button(listener_window, text="Connect", command=get_params_and_start_thread)
     save_button.grid(row=8, column=0, padx=50, pady=20)
 
     cancel_button = ttk.Button(listener_window, text="Cancel", command=listener_window.destroy)
     cancel_button.grid(row=8, column=1, padx=20, pady=20)
-

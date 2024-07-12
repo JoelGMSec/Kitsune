@@ -59,3 +59,13 @@ def about_window(app):
     
     license_label = tk.Label(info_frame, text="License: GNU GPL v3.0")
     license_label.pack(padx=(0, 10), pady=20)
+
+    def on_enter_key(event):
+        about_window.destroy()
+
+    about_window.bind("<Return>", on_enter_key)
+
+    def on_escape_key(event):
+        about_window.destroy()
+
+    about_window.bind("<Escape>", on_escape_key)
