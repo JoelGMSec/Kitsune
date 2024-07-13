@@ -91,11 +91,13 @@ def import_profile(app):
     if not profiles:  
         profiles = ["No profiles found"]
 
-    selected_value = tk.StringVar(value=profiles[0])  
+    selected_value = tk.StringVar(value=profiles[0])
 
     nekomancer_combobox = ttk.Combobox(settings_frame, values=profiles, textvariable=selected_value, state="readonly")
     nekomancer_combobox.grid(row=2, column=1, padx=(15, 0), pady=(20, 0))
 
+    if selected_value.get() == str("No profiles found"):
+        nekomancer_combobox.configure(state="disabled")
     nekomancer_combobox.set(selected_value.get())
 
     nekomancer_combobox.bind("<FocusIn>", on_combobox_focus)
