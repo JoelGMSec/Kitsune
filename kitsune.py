@@ -222,6 +222,9 @@ class App(ttk.Frame):
             if theme == "Blue":
                 root.tk.call("set_theme", "blue")
 
+            elif theme == "Green":
+                root.tk.call("set_theme", "green")
+
             elif theme == "Purple":
                 root.tk.call("set_theme", "purple")
 

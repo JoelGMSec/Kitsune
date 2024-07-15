@@ -128,6 +128,7 @@ def setup_widgets(root, app):
     theme_var = app.theme_var.get()
 
     theme_submenu.add_radiobutton(label="Blue", variable=theme_var, value="Blue", command=lambda: app.change_theme("Blue"), selectcolor="white")
+    theme_submenu.add_radiobutton(label="Green", variable=theme_var, value="Green", command=lambda: app.change_theme("Green"), selectcolor="white")
     theme_submenu.add_radiobutton(label="Purple", variable=theme_var, value="Purple", command=lambda: app.change_theme("Purple"), selectcolor="white")
     theme_submenu.add_radiobutton(label="Red", variable=theme_var, value="Red", command=lambda: app.change_theme("Red"), selectcolor="white")
 
@@ -137,11 +138,13 @@ def setup_widgets(root, app):
     menu_bar.add_cascade(label=" Kitsune ", menu=home_menu)
 
     if app.theme_var.get() == "Blue":
-        theme_submenu.invoke(0)  
+        theme_submenu.invoke(0)
+    if app.theme_var.get() == "Green":
+        theme_submenu.invoke(1)
     if app.theme_var.get() == "Purple":
-        theme_submenu.invoke(1)  
+        theme_submenu.invoke(2)
     if app.theme_var.get() == "Red":
-        theme_submenu.invoke(2)  
+        theme_submenu.invoke(3)
 
     view_menu = tk.Menu(menu_bar)
     view_menu.add_command(label="Event Viewer", command=app.restore_event_viewer)
@@ -161,9 +164,9 @@ def setup_widgets(root, app):
     menu_bar.add_cascade(label=" Payloads ", menu=payloads_menu)
 
     modules_menu = tk.Menu(menu_bar)
-    modules_menu.add_command(label="Add New Module", command=app.module_warning)
-    modules_menu.add_command(label="List Current Modules", command=app.module_warning)
     modules_menu.add_command(label="Module Console", command=app.module_warning)
+    modules_menu.add_command(label="Reload Modules", command=app.module_warning)
+    modules_menu.add_command(label="Update Modules", command=app.module_warning)
     menu_bar.add_cascade(label=" Modules ", menu=modules_menu)
 
     attacks_menu = tk.Menu(menu_bar)
