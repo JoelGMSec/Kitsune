@@ -1,4 +1,4 @@
-<p align="center"><img width=360 alt="HTTP-Shell" src="https://github.com/JoelGMSec/Kitsune/blob/main/themes/images/Kitsune.png"></p>
+<p align="center"><img width=360 alt="Kitsune" src="https://github.com/JoelGMSec/Kitsune/blob/main/themes/images/Kitsune.png"></p>
 
 # Kitsune
 **Kitsune** is a Polymorphic Command & Control. This tool allows you to get a graphical version of your favourite hacking tools, such as NetExec, Villain or Evil-WinRM among others. In addition, brings many improvements such as automatic reconnection, reports, history and some extra functions in each of the implemented tools.
@@ -39,6 +39,11 @@ git clone https://github.com/JoelGMSec/Kitsune
 
 ### The detailed guide of use can be found at the following link:
  - To be disclosed
+
+
+# Screenshots
+<p align="left"><img width=100% alt="Kitsune_C2" src="https://github.com/JoelGMSec/Kitsune/blob/main/screenshots/Kitsune_C2.png"></p>
+<p align="left"><img width=100% alt="Kitsune_Report" src="https://github.com/JoelGMSec/Kitsune/blob/main/screenshots/Kitsune_Report.png"></p>
 
 
 # License
