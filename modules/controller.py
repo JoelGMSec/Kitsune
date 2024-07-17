@@ -104,15 +104,13 @@ def start_listeners(app, session, reload_listeners=False):
         if reload_listeners and app.listeners:
             now = datetime.datetime.now()
             current_time = now.strftime("%H:%M:%S")
-
-            typing(colored("\n[>] Reloading previous listeners..\n", "yellow"))
+            if not app.fast_mode:
+                typing(colored("\n[>] Reloading previous listeners..\n", "yellow"))
             label_text = f"[{current_time}] Listeners found in JSON file! Reloading.."
-
             app.text.config(state="normal")
             app.text.config(foreground="#FF0055")
             app.text.insert("end", label_text + "\n")
             app.text.config(state="disabled")
-
             app.add_event_viewer_log(label_text + "\n", 'color_error', "#FF0055")
 
     for listener in app.listeners:
@@ -122,10 +120,9 @@ def start_listeners(app, session, reload_listeners=False):
         protocol = listener.get("Protocol")
         tail = listener.get("Tail")
         time.sleep(0.1)
-        
-        print(colored(f"[+] {name} - {host}:{port} - {protocol} - {tail}","green"))
+        if not app.fast_mode:
+            print(colored(f"[+] {name} - {host}:{port} - {protocol} - {tail}","green"))
         listener_details = (name, host, port, protocol, tail)
-
         reload_listener(app, session, listener_details, reload_listeners=False)
 
 def kill_listeners(app, listener_details):

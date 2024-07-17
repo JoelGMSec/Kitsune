@@ -365,8 +365,10 @@ def setup_widgets(root, app):
     )
     app.text.pack(fill="both", expand=True)
 
+    if not app.fast_mode:
+        typing(colored(f"[*] User *{current_user}* has joined the party!\n", "magenta"))
+    
     label_text = f"[{current_time}] User *{current_user}* has joined the party!"
-    typing(colored(f"[*] User *{current_user}* has joined the party!\n", "magenta"))
     app.text.config(font=("Consolas", 18, "bold"))
     app.text.config(state="normal")
     app.text.insert("end", label_text + "\n")

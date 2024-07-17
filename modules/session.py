@@ -94,13 +94,15 @@ class Session(ttk.Frame):
             app.session_id = 0
 
         if sessions_data:
-            typing(colored("\n[>] Looking for previous sessions..\n","yellow"))
+            if not app.fast_mode:
+                typing(colored("\n[>] Looking for previous sessions..\n","yellow"))
 
             for session in sessions_data:
                 title = 'Session ' + str(session['Session'])
                 app.saved_sessions[title] = session
                 restart_session(app, session)
-                print(colored(f"[+] {title} loaded successfully!","green"))
+                if not app.fast_mode:
+                    print(colored(f"[+] {title} loaded successfully!","green"))
                 app.session_id = max(app.session_id, session['Session'])
                 time.sleep(0.1)
 
@@ -111,14 +113,14 @@ class Session(ttk.Frame):
         if nekomancer_setting == "All Sessions" or nekomancer_setting == "Reverse Only":
             start_listeners(app, app.session_id, reload_listeners=True)
             if app.saved_sessions:
-                typing(colored("\n[!] Nekomancer is enabled! Recovering connections..\n","red"))
-                
+                if not app.fast_mode:
+                    typing(colored("\n[!] Nekomancer is enabled! Recovering connections..\n","red"))
                 app.add_event_viewer_log(label_text + "\n", 'color_error', "#FF0055")
 
         if nekomancer_setting == "Bind Only":
             if app.saved_sessions:
-                typing(colored("\n[!] Nekomancer is enabled! Recovering connections..\n","red"))
-
+                if not app.fast_mode:
+                    typing(colored("\n[!] Nekomancer is enabled! Recovering connections..\n","red"))
                 app.add_event_viewer_log(label_text + "\n", 'color_error', "#FF0055")
 
         return app.session_id
