@@ -44,11 +44,11 @@ def check_and_copy_fonts():
 
 class App(tk.Frame):
     def __init__(self, parent, fast_mode):
-        self.fast_mode = fast_mode
         ttk.Frame.__init__(self, parent)
         self.load_settings()
         self.sort_sessions()
         self.silent_error = False
+        self.fast_mode = fast_mode
         parent.protocol("WM_DELETE_WINDOW", self.on_close)
 
         for index in [0, 1]:
@@ -880,57 +880,54 @@ class App(tk.Frame):
     def on_close(self):
         self.confirm_and_quit()
         
-def main(fast_mode):
-    if __name__ == "__main__":
-        check_and_copy_fonts()
-
-        root = tk.Tk()
-        screen_width = root.winfo_screenwidth()
-        screen_height = root.winfo_screenheight()
-        root.geometry(f"{screen_width}x{screen_height}")
-        root.title("Kitsune - Command & Control - by @JoelGMSec")
-        photo = tk.PhotoImage(file='themes/images/Kitsune.png')
-        root.wm_iconphoto(False, photo)
-
-        settings_path = Path("data/settings.json")
-        if settings_path.exists():
-            try:
-                with settings_path.open("r") as json_file:
-                    kitsune_settings = json.load(json_file)["settings"]
-                    theme_name = kitsune_settings.get("theme").lower()
-
-                    root.tk.call("source", "themes/kitsune.tcl")
-                    root.tk.call("set_theme", theme_name)
-            except:
-                pass
-        else:
-            root.tk.call("source", "themes/kitsune.tcl")
-            root.tk.call("set_theme", "blue")
-
-        temp_path = f'/tmp/Kitsune'
-        shutil.rmtree(temp_path, ignore_errors=True)
-
-        if not fast_mode:
-            print(open("./themes/banner.txt", "r").read())
-            print(colored("     -------- by @JoelGMSec --------\n", "blue"))
-
-        try:
-            app = App(root, fast_mode)
-            app.pack(fill="both", expand=True)
-            app_thread = threading.Thread(target=root.mainloop())
-            app_thread.start()
-
-        except KeyboardInterrupt:
-            if not fast_mode:
-                print(colored("\n[!] Exiting.. Goodbye! :)\n", "red"))
-            pass
-
-        except Exception as e:
-            print("\n".join("-" * i + " " + j for i, j in enumerate(e.args)))
-            pass
-
 if __name__ == "__main__":
+    check_and_copy_fonts()
+
     parser = argparse.ArgumentParser()
     parser.add_argument('-fast', action='store_true')
     args = parser.parse_args()
-    main(args.fast)
+    fast_mode = args.fast
+
+    root = tk.Tk()
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+    root.geometry(f"{screen_width}x{screen_height}")
+    root.title("Kitsune - Command & Control - by @JoelGMSec")
+    photo = tk.PhotoImage(file='themes/images/Kitsune.png')
+    root.wm_iconphoto(False, photo)
+
+    settings_path = Path("data/settings.json")
+    if settings_path.exists():
+        try:
+            with settings_path.open("r") as json_file:
+                kitsune_settings = json.load(json_file)["settings"]
+                theme_name = kitsune_settings.get("theme").lower()
+                root.tk.call("source", "themes/kitsune.tcl")
+                root.tk.call("set_theme", theme_name)
+        except:
+            pass
+    else:
+        root.tk.call("source", "themes/kitsune.tcl")
+        root.tk.call("set_theme", "blue")
+
+    temp_path = f'/tmp/Kitsune'
+    shutil.rmtree(temp_path, ignore_errors=True)
+
+    if not fast_mode:
+        print(open("./themes/banner.txt", "r").read())
+        print(colored("     -------- by @JoelGMSec --------\n", "blue"))
+
+    try:
+        app = App(root, fast_mode)
+        app.pack(fill="both", expand=True)
+        app_thread = threading.Thread(target=root.mainloop())
+        app_thread.start()
+
+    except KeyboardInterrupt:
+        if not fast_mode:
+            print(colored("\n[!] Exiting.. Goodbye! :)\n", "red"))
+        pass
+
+    except Exception as e:
+        print("\n".join("-" * i + " " + j for i, j in enumerate(e.args)))
+        pass
