@@ -320,7 +320,8 @@ class Session(ttk.Frame):
         commands = Session.load_commands_from_session(session_id)
         new_session = Session(title, session_data, commands)
         new_session.reload_command_session()
-        print(colored(f"[+] New connection from {session_info['Hostname']} on {title}!","green"))
+        if not app.fast_mode:
+            print(colored(f"[+] New connection from {session_info['Hostname']} on {title}!","green"))
 
         previously_selected = False
         for tab in app.notebook.tabs():
