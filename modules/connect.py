@@ -42,13 +42,13 @@ def connect_pwncat(app, params, method, session, restart):
         pasw = method
 
         if app.proxy_status:
-            session_data = pexpect.spawn(f'proxychains python3.11 /usr/local/bin/pwncat-cs ssh://{user}:{pasw}@{host}', cwd=pwncat_path, echo=False, use_poll=True)  
+            session_data = pexpect.spawn(f'proxychains4 -q python3.11 /usr/local/bin/pwncat-cs ssh://{user}:{pasw}@{host}', cwd=pwncat_path, echo=False, use_poll=True)  
         else:
             session_data = pexpect.spawn(f'python3.11 /usr/local/bin/pwncat-cs ssh://{user}:{pasw}@{host}', cwd=pwncat_path, echo=False, use_poll=True)  
     else:
         session_info["Listener"] = "BIND"
         if app.proxy_status:
-            session_data = pexpect.spawn(f'proxychains python3.11 /usr/local/bin/pwncat-cs connect://{params}', cwd=pwncat_path, echo=False, use_poll=True)  
+            session_data = pexpect.spawn(f'proxychains4 -q python3.11 /usr/local/bin/pwncat-cs connect://{params}', cwd=pwncat_path, echo=False, use_poll=True)  
         else:
             session_data = pexpect.spawn(f'python3.11 /usr/local/bin/pwncat-cs connect://{params}', cwd=pwncat_path, echo=False, use_poll=True)  
 
@@ -142,7 +142,7 @@ def connect_pyshell(app, params, method, session, restart):
     pyshell_path = "tails/PyShell/pyshell.py"
 
     if app.proxy_status:
-        command = f"proxychains {os.sys.executable} {pyshell_path} {params} {method}"
+        command = f"proxychains4 -q {os.sys.executable} {pyshell_path} {params} {method}"
     else:
         command = f"{os.sys.executable} {pyshell_path} {params} {method}"
     
@@ -338,7 +338,7 @@ def connect_evilwinrm(app, params, method, session, restart):
     os.makedirs(evilwinrm_path, exist_ok=True)
     
     if app.proxy_status:
-        session_data = pexpect.spawn(f'proxychains evil-winrm -i {params}', cwd=evilwinrm_path, echo=False, use_poll=True)  
+        session_data = pexpect.spawn(f'proxychains4 -q evil-winrm -i {params}', cwd=evilwinrm_path, echo=False, use_poll=True)  
     else:
         session_data = pexpect.spawn(f'evil-winrm -i {params}', cwd=evilwinrm_path, echo=False, use_poll=True)  
     session_data.timeout = 1
@@ -437,7 +437,7 @@ def connect_wmiexecpro(app, params, method, session, restart):
     wmiexecpro_path = "tails/wmiexec-Pro"
     
     if app.proxy_status:
-        command = f"proxychains {os.sys.executable} wmiexec-pro.py '{user_wmi}:{pass_wmi}'@{host_wmi} exec-command -shell"
+        command = f"proxychains4 -q {os.sys.executable} wmiexec-pro.py '{user_wmi}:{pass_wmi}'@{host_wmi} exec-command -shell"
     else:
         command = f"{os.sys.executable} wmiexec-pro.py '{user_wmi}:{pass_wmi}'@{host_wmi} exec-command -shell"
 

@@ -32,12 +32,12 @@ def execute_command_nxc(app, session_data, command):
     else:
         if command in nxc_cmd:
             if app.proxy_status:
-                current_process = pexpect.spawn(f"proxychains netexec {method} {params} -M {command}'", cwd=netexec_path, echo=True, use_poll=True)
+                current_process = pexpect.spawn(f"proxychains4 -q netexec {method} {params} -M {command}'", cwd=netexec_path, echo=True, use_poll=True)
             else:
                 current_process = pexpect.spawn(f"netexec {method} {params} -M {command}'", cwd=netexec_path, echo=True, use_poll=True)
         else:
             if app.proxy_status:
-                current_process = pexpect.spawn(f"proxychains netexec {method} {params} -x 'powershell {command}'", cwd=netexec_path, echo=True, use_poll=True)
+                current_process = pexpect.spawn(f"proxychains4 -q netexec {method} {params} -x 'powershell {command}'", cwd=netexec_path, echo=True, use_poll=True)
             else:
                 current_process = pexpect.spawn(f"netexec {method} {params} -x 'powershell {command}'", cwd=netexec_path, echo=True, use_poll=True)
 

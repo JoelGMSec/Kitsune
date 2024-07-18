@@ -116,7 +116,7 @@ def update_proxychains_conf(proto, host, port):
     if not proto or not host or not port:
         return
 
-    config_path = "/etc/proxychains.conf"
+    config_path = "/etc/proxychains4.conf"
     
     if not os.path.isfile(config_path):
         return
