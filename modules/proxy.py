@@ -127,6 +127,7 @@ def update_proxychains_conf(proto, host, port):
         
         if proto.lower() == "socks":
             proto = "socks5"
+        lines[-2] = "\n"
         lines[-1] = f"{proto.lower()} {host} {port}\n"
 
         with open(config_path, 'w') as f:
