@@ -16,7 +16,7 @@ from modules.session import Session
 from modules.chat import TeamChatTab
 from modules.helper import command_help
 
-def execute_command_nxc(session_data, command):
+def execute_command_nxc(app, session_data, command):
     method = session_data.nxc_method
     params = session_data.nxc_params
 
@@ -31,11 +31,16 @@ def execute_command_nxc(session_data, command):
 
     else:
         if command in nxc_cmd:
-            current_process = pexpect.spawn(f"netexec {method} {params} -M {command}'", cwd=netexec_path, echo=True, use_poll=True)
-
+            if app.proxy_status:
+                current_process = pexpect.spawn(f"proxychains netexec {method} {params} -M {command}'", cwd=netexec_path, echo=True, use_poll=True)
+            else:
+                current_process = pexpect.spawn(f"netexec {method} {params} -M {command}'", cwd=netexec_path, echo=True, use_poll=True)
         else:
-            current_process = pexpect.spawn(f"netexec {method} {params} -x 'powershell {command}'", cwd=netexec_path, echo=True, use_poll=True)
-        
+            if app.proxy_status:
+                current_process = pexpect.spawn(f"proxychains netexec {method} {params} -x 'powershell {command}'", cwd=netexec_path, echo=True, use_poll=True)
+            else:
+                current_process = pexpect.spawn(f"netexec {method} {params} -x 'powershell {command}'", cwd=netexec_path, echo=True, use_poll=True)
+
         current_process.timeout = 1  
         
         try:

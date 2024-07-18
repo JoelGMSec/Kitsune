@@ -316,7 +316,7 @@ def open_multiserver_log_tab(app):
     existing_tabs = app.notebook.tabs()
     tab_texts = [app.notebook.tab(tab_id, "text") for tab_id in existing_tabs]
 
-    insert_index = len(existing_tabs)  # Default to adding at the end if no "Session*" tab found
+    insert_index = len(existing_tabs)
     for idx, text in enumerate(tab_texts):
         if text.startswith("Session"):
             insert_index = idx
@@ -340,7 +340,7 @@ def open_multiserver_log_tab(app):
     tab = ttk.Frame(app.notebook)
     app.notebook.add(tab, text="Multi Server Log")
     if insert_index < 0 or insert_index > len(existing_tabs):
-        insert_index = len(existing_tabs)  # Set to the end if out of bounds
+        insert_index = len(existing_tabs)
     app.notebook.insert(insert_index, tab, text="Multi Server Log")
     app.notebook.select(tab)
 

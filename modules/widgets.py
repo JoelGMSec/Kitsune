@@ -13,9 +13,9 @@ import webbrowser
 import tkinter as tk
 from tkinter import ttk
 from neotermcolor import colored
-from modules import command, tails
 from modules.session import Session
 from modules.chat import TeamChatTab
+from modules import command, tails, custom
 
 def typing(text):
     for character in text:
@@ -133,6 +133,7 @@ def setup_widgets(root, app):
     theme_submenu.add_radiobutton(label="Red", variable=theme_var, value="Red", command=lambda: app.change_theme("Red"), selectcolor="white")
 
     home_menu.add_cascade(label="Change Theme", menu=theme_submenu)
+    home_menu.add_command(label="Proxification", command=lambda: app.set_proxy())
     home_menu.add_command(label="Update Tails", command=lambda: app.update_tails())
     home_menu.add_command(label="Exit", command=app.confirm_and_quit)
     menu_bar.add_cascade(label=" Kitsune ", menu=home_menu)
@@ -164,8 +165,8 @@ def setup_widgets(root, app):
     menu_bar.add_cascade(label=" Payloads ", menu=payloads_menu)
 
     modules_menu = tk.Menu(menu_bar)
-    modules_menu.add_command(label="Module Console", command=app.module_warning)
-    modules_menu.add_command(label="Reload Modules", command=app.module_warning)
+    modules_menu.add_command(label="Module Console", command=lambda: custom.show_current_modules(app, False))
+    modules_menu.add_command(label="Reload Modules", command=lambda: custom.show_current_modules(app, True))
     modules_menu.add_command(label="Update Modules", command=app.module_warning)
     menu_bar.add_cascade(label=" Modules ", menu=modules_menu)
 

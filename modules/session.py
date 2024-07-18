@@ -130,11 +130,9 @@ class Session(ttk.Frame):
             with open('data/sessions.json') as f:
                 sessions = json.load(f)
                 if not isinstance(sessions, list):
-                    print("Error: sessions.json does not contain a list")
                     return []
                 for session in sessions:
                     if not isinstance(session, dict):
-                        print("Error: session is not a dictionary")
                         return []
                 sessions = sorted(sessions, key=lambda s: s['Session'])
                 return sessions
@@ -172,8 +170,8 @@ class Session(ttk.Frame):
                     break
             with open('data/sessions.json', 'w') as f:
                 json.dump(sessions, f, indent=4)
-        except FileNotFoundError:
-            print("Error: No se encontró sessions.json.")
+        except:
+            pass
 
     def load_logs(self):
         try:

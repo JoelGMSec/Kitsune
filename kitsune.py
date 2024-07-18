@@ -16,7 +16,7 @@ from modules.listeners import edit_listener
 from modules.controller import reload_listener
 from modules.widgets import setup_widgets
 from modules.widgets import DraggableTabsNotebook
-from modules import profile, updater, settings, about, delivery, listeners, controller, payloads, tails, reporter, chat, custom
+from modules import profile, updater, settings, about, delivery, listeners, controller, payloads, tails, reporter, chat, custom, proxy
 
 def typing(text):
     for character in text:
@@ -47,6 +47,7 @@ class App(tk.Frame):
         ttk.Frame.__init__(self, parent)
         self.load_settings()
         self.sort_sessions()
+        self.proxy_status = False
         self.silent_error = False
         self.fast_mode = fast_mode
         parent.protocol("WM_DELETE_WINDOW", self.on_close)
@@ -65,6 +66,7 @@ class App(tk.Frame):
         self.history_index = len(self.command_history)
 
         self.treeview_state = {}
+        self.load_proxy_settings()
         setup_widgets(parent, self)
         self.update_event_viewer()
 
@@ -114,6 +116,12 @@ class App(tk.Frame):
                 json.dump(default_settings, json_file, indent=4)
             self.theme_var = tk.StringVar(value="Blue")
             self.saved_value = "All Sessions"
+
+    def set_proxy(self):
+        return proxy.set_proxy(self)
+
+    def load_proxy_settings(self):
+        return proxy.load_proxy_settings(self)
 
     def check_updates(self):
         return updater.check_updates(self)
@@ -273,14 +281,12 @@ class App(tk.Frame):
                 settings = json.load(json_file)["settings"]
                 nekomancer_setting = settings.get("nekomancer", "All Sessions")
         except FileNotFoundError:
-            print("Archivo de configuración no encontrado, utilizando valores predeterminados.")
             nekomancer_setting = "All Sessions"
 
         try:
             with open('data/listeners.json', 'r') as listeners_file:
                 listeners_data = json.load(listeners_file)
         except FileNotFoundError:
-            print("Archivo de listeners no encontrado, saltando actualización.")
             return
 
         if nekomancer_setting in ["Disabled", "Bind Only"]:
@@ -288,7 +294,6 @@ class App(tk.Frame):
         elif nekomancer_setting in ["All Sessions", "Reverse Only"]:
             new_state = "enabled"
         else:
-            print("Configuración de Neokomancer desconocida, no se realizarán cambios.")
             return
 
         for listener in listeners_data:
@@ -689,6 +694,31 @@ class App(tk.Frame):
         yes_button = ttk.Button(button_frame, text="Close", command=lambda: dialog.destroy())
         yes_button.pack(side=tk.LEFT, padx=5, pady=(0, 10))
 
+    def reload_success(self):
+        dialog = tk.Toplevel(self)
+        dialog.title("Success")
+        dialog.focus_force()
+
+        os.system("chmod +x payloads -R")
+        label = ttk.Label(dialog, text="Modules reloaded successfully!")
+        label.pack(padx=20, pady=20)
+
+        button_frame = ttk.Frame(dialog)
+        button_frame.pack(padx=20, pady=10)
+
+        def on_enter_key(event):
+            dialog.destroy()
+
+        dialog.bind("<Return>", on_enter_key)
+
+        def on_escape_key(event):
+            dialog.destroy()
+
+        dialog.bind("<Escape>", on_escape_key)
+
+        yes_button = ttk.Button(button_frame, text="Close", command=lambda: dialog.destroy())
+        yes_button.pack(side=tk.LEFT, padx=5, pady=(0, 10))
+
     def confirm_dialog(self):
         dialog = tk.Toplevel(self)
         dialog.title("Confirmation")
@@ -735,7 +765,8 @@ class App(tk.Frame):
             self.quit()
 
     def restart_app(self):
-        print(colored("\n[!] Loading new profile..", "red"))
+        if not self.fast_mode:
+            print(colored("\n[!] Loading new profile..", "red"))
         self.destroy()
 
         os.execl(sys.executable, sys.executable, *sys.argv)

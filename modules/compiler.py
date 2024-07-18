@@ -131,8 +131,8 @@ def compile_exe_file(dst_file):
     try:
         subprocess.run(["x86_64-w64-mingw32-gcc", c_file, "-o", exe_file], check=True)
         os.remove(c_file)
-    except subprocess.CalledProcessError as e:
-        print(f"Error during compilation: {e}")
+    except:
+        pass
 
 def compile_dll_file(dst_file):
     c_file = dst_file + ".c"
@@ -140,8 +140,8 @@ def compile_dll_file(dst_file):
     try:
         subprocess.run(["x86_64-w64-mingw32-gcc", c_file, "-o", dll_file, "-shared"], check=True)
         os.remove(c_file)
-    except subprocess.CalledProcessError as e:
-        print(f"Error during compilation: {e}")
+    except:
+        pass
 
 def compile_bin_file(dst_file):
     c_file = dst_file + ".c"
@@ -149,5 +149,5 @@ def compile_bin_file(dst_file):
         subprocess.run(["gcc", c_file, "-o", dst_file, "-static"], check=True)
         os.remove(c_file)
         os.system("chmod +x " + dst_file)
-    except subprocess.CalledProcessError as e:
-        print(f"Error during compilation: {e}")
+    except:
+        pass

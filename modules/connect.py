@@ -40,11 +40,18 @@ def connect_pwncat(app, params, method, session, restart):
         user = params.split("@")[0]
         host = params.split("@")[1]
         pasw = method
-        session_data = pexpect.spawn(f'python3.11 /usr/local/bin/pwncat-cs ssh://{user}:{pasw}@{host}', cwd=pwncat_path, echo=False, use_poll=True)  
-    
+
+        if app.proxy_status:
+            session_data = pexpect.spawn(f'proxychains python3.11 /usr/local/bin/pwncat-cs ssh://{user}:{pasw}@{host}', cwd=pwncat_path, echo=False, use_poll=True)  
+        else:
+            session_data = pexpect.spawn(f'python3.11 /usr/local/bin/pwncat-cs ssh://{user}:{pasw}@{host}', cwd=pwncat_path, echo=False, use_poll=True)  
     else:
         session_info["Listener"] = "BIND"
-        session_data = pexpect.spawn(f'python3.11 /usr/local/bin/pwncat-cs connect://{params}', cwd=pwncat_path, echo=False, use_poll=True)  
+        if app.proxy_status:
+            session_data = pexpect.spawn(f'proxychains python3.11 /usr/local/bin/pwncat-cs connect://{params}', cwd=pwncat_path, echo=False, use_poll=True)  
+        else:
+            session_data = pexpect.spawn(f'python3.11 /usr/local/bin/pwncat-cs connect://{params}', cwd=pwncat_path, echo=False, use_poll=True)  
+
     session_data.timeout = 1
 
     try:
@@ -133,7 +140,12 @@ def connect_pyshell(app, params, method, session, restart):
     }
 
     pyshell_path = "tails/PyShell/pyshell.py"
-    command = f"{os.sys.executable} {pyshell_path} {params} {method}"
+
+    if app.proxy_status:
+        command = f"proxychains {os.sys.executable} {pyshell_path} {params} {method}"
+    else:
+        command = f"{os.sys.executable} {pyshell_path} {params} {method}"
+    
     session_data = pexpect.spawn(command, echo=False, use_poll=True)
     session_data.timeout = 1
 
@@ -248,7 +260,7 @@ def connect_netexec(app, params, method, session, restart):
         session_data = SessionData(nxc_method=method, nxc_params=params)
 
         for cmd in commands:
-            output = execute_command_nxc(session_data, cmd)
+            output = execute_command_nxc(app, session_data, cmd)
             if output:
                 if cmd.startswith("whoami"):
                     session_info["User"] = (output.split('\\')[1]).lower().strip()
@@ -325,7 +337,10 @@ def connect_evilwinrm(app, params, method, session, restart):
     evilwinrm_path = f'/tmp/Kitsune/evilwinrm'
     os.makedirs(evilwinrm_path, exist_ok=True)
     
-    session_data = pexpect.spawn(f'evil-winrm -i {params}', cwd=evilwinrm_path, echo=False, use_poll=True)  
+    if app.proxy_status:
+        session_data = pexpect.spawn(f'proxychains evil-winrm -i {params}', cwd=evilwinrm_path, echo=False, use_poll=True)  
+    else:
+        session_data = pexpect.spawn(f'evil-winrm -i {params}', cwd=evilwinrm_path, echo=False, use_poll=True)  
     session_data.timeout = 1
 
     try:
@@ -420,7 +435,12 @@ def connect_wmiexecpro(app, params, method, session, restart):
     host_wmi = params.split()[0]
 
     wmiexecpro_path = "tails/wmiexec-Pro"
-    command = f"{os.sys.executable} wmiexec-pro.py '{user_wmi}:{pass_wmi}'@{host_wmi} exec-command -shell"
+    
+    if app.proxy_status:
+        command = f"proxychains {os.sys.executable} wmiexec-pro.py '{user_wmi}:{pass_wmi}'@{host_wmi} exec-command -shell"
+    else:
+        command = f"{os.sys.executable} wmiexec-pro.py '{user_wmi}:{pass_wmi}'@{host_wmi} exec-command -shell"
+
     session_data = pexpect.spawn(command, cwd=wmiexecpro_path, echo=True, use_poll=True)
     session_data.timeout = 1
 
