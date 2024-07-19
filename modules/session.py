@@ -162,24 +162,33 @@ class Session(ttk.Frame):
         except:
             return []
 
+    def find_next_session_number(sessions):
+        if not sessions:
+            return 1
+        existing_numbers = {session['Session'] for session in sessions}
+        next_number = 1
+        while next_number in existing_numbers:
+            next_number += 1
+        return next_number
+
     def save_session(session_info, commands):
-        sessions = Session.load_sessions()
-        for i, session in enumerate(sessions):
-            if session['Session'] == session_info['Session']:
-                sessions[i] = session_info
-                sessions[i]['Commands'] = commands
-                break
-        else:
-            session_info['Commands'] = commands
-            sessions.append(session_info)
-
-        if not isinstance(sessions, list):
-            sessions = [sessions]
-
-        sessions = sorted(sessions, key=lambda s: s['Session'])
-
-        with open('data/sessions.json', 'w') as f:
-            json.dump(sessions, f, indent=4)
+            sessions = Session.load_sessions()
+            
+            session_exists = False
+            for i, session in enumerate(sessions):
+                if session['Session'] == session_info['Session']:
+                    session_exists = True
+                    sessions[i] = session_info
+                    sessions[i]['Commands'] = commands
+                    break
+            
+            if not session_exists:
+                session_info['Commands'] = commands
+                session_info['Session'] = Session.find_next_session_number(sessions)
+                sessions.append(session_info)
+            
+            with open('data/sessions.json', 'w') as f:
+                json.dump(sessions, f, indent=4)
 
     def save_logs(self):
         try:
