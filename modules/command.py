@@ -26,8 +26,8 @@ def execute_command_nxc(app, session_data, command):
     try:
         with open("help/nxc_cmd.txt", "r") as file:
             nxc_cmd = file.read()
-    except FileNotFoundError:
-        nxc_cmd = "No se pudo cargar la ayuda específica."
+    except:
+        pass
 
     else:
         if command in nxc_cmd:
@@ -221,6 +221,8 @@ def read_output_nonblocking(session_data, command):
 
     villain_prompt_pattern = re.compile(r'(.*\\.*> )')
     output = villain_prompt_pattern.sub('', output)
+    villain_prompt_pattern = re.compile(r'(\[Shell\] .*\n)')
+    output = villain_prompt_pattern.sub('', output)
 
     lines = output.split("\n")
     while lines and lines[0].strip() == "":
@@ -334,7 +336,7 @@ def execute_command(app, event):
                         try:
                             if "netexec" in str(current_session.session_data):
                                 if command != "help":
-                                    output = execute_command_nxc(current_session.session_data, command)
+                                    output = execute_command_nxc(app, current_session.session_data, command)
                             
                             elif "wmiexec-pro" in str(current_session.session_data):
                                 if command != "help":

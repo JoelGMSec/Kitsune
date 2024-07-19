@@ -420,6 +420,7 @@ def setup_widgets(root, app):
                 self.matches = [cmd for cmd in self.command_history if cmd.startswith(prefix)]
                 if self.matches:
                     self.show_match()
+                    self.icursor(current_index)
                     return
             else:
                 self.icursor(current_index)
