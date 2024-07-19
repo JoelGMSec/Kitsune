@@ -419,6 +419,30 @@ class App(tk.Frame):
         self.notify_event_viewer()
         self.update_event_viewer()
 
+    def show_context_menu(self, event):
+        self.context_menu.tk_popup(event.x_root, event.y_root)
+
+    def show_delivery_menu(self, event):
+        self.delivery_menu.tk_popup(event.x_root, event.y_root)
+
+    def show_multi_menu(self, event):
+        self.multi_menu.tk_popup(event.x_root, event.y_root)
+
+    def show_custom_menu(self, event):
+        self.custom_menu.tk_popup(event.x_root, event.y_root)
+    
+    def copy_text(self):
+        try:
+            selected_text = self.text.selection_get()
+            self.text.clipboard_clear()
+            self.text.clipboard_append(selected_text)
+        except tk.TclError:
+            pass
+
+    def clear_text(self):
+        if self.confirm_dialog() == "yes":
+            self.remove_data()
+
     def on_entry_focus_in(self, event):
         if self.entry:
             current_text = self.entry.get()
@@ -502,9 +526,9 @@ class App(tk.Frame):
                         self.remove_session_json(session_id)
 
         menu = tk.Menu(self.treeview, tearoff=False)
-        menu.add_command(label="Disconnect", command=kill_session)
-        menu.add_command(label="Remove", command=confirm_remove)
         menu.add_command(label="Restart", command=restart_session)
+        menu.add_command(label="Remove", command=confirm_remove)
+        menu.add_command(label="Disconnect", command=kill_session)
         menu.tk_popup(event.x_root, event.y_root)
 
     def confirm_remove(self, action):
@@ -892,6 +916,56 @@ class App(tk.Frame):
             current_session.label.delete('1.0', tk.END)
             current_session.label.config(state="disabled")
             current_session.log.clear()
+
+    def clear_delivery_logs(self, log_text, log_type):
+        log_text.config(state="normal")
+        log_text.delete(1.0, 'end')
+        log_text.config(state="disabled")
+
+        if log_type == "multi":
+            # Reset log with initial message
+            if self.multi_delivery_process and self.multi_delivery_process.is_alive():
+                message = "[>] Multi Server is running..\n"
+                color_tag = "color_input"
+            else:
+                message = "[!] Multi Server is not running!\n"
+                color_tag = "color_error"
+            log_text.config(state="normal")
+            log_text.insert('end', f"{message}\n", color_tag)
+            log_text.config(state="disabled")
+
+            # Clear multiserver.json logs
+            multiserver_file = Path("data/multiserver.json")
+            if multiserver_file.exists():
+                with open(multiserver_file, 'r+') as f:
+                    data = json.load(f)
+                    data["Log"] = []
+                    f.seek(0)
+                    json.dump(data, f, indent=4)
+                    f.truncate()
+
+        if log_type == "web":
+            # Reset log with initial message
+            if self.web_delivery_process and self.web_delivery_process.poll() is None:
+                message = "[>] Web Server is running..\n"
+                color_tag = "color_input"
+            else:
+                message = "[!] Web Server is not running!\n"
+                color_tag = "color_error"
+            log_text.config(state="normal")
+            log_text.insert('end', f"{message}\n", color_tag)
+            log_text.config(state="disabled")
+
+            # Clear webserver.json logs
+            webserver_file = Path("data/webserver.json")
+            if webserver_file.exists():
+                with open(webserver_file, 'r+') as f:
+                    data = json.load(f)
+                    data["Log"] = []
+                    f.seek(0)
+                    json.dump(data, f, indent=4)
+                    f.truncate()
+
 
     def export_profile(self):
         profile.export_profile(app)

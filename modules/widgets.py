@@ -377,6 +377,11 @@ def setup_widgets(root, app):
     app.add_event_viewer_log(label_text + "\n", 'color_login', "#FF00FF")
     app.scrollbar.config(command=app.text.yview)
 
+    app.context_menu = tk.Menu(app.text, tearoff=0)
+    app.context_menu.add_command(label="Copy", command=app.copy_text)
+    app.context_menu.add_command(label="Clear", command=app.clear_text)
+    app.text.bind("<Button-3>", app.show_context_menu)
+
     existing_tabs = app.notebook.tabs()
     if existing_tabs:
         tab_texts = [app.notebook.tab(tab, "text") for tab in existing_tabs]

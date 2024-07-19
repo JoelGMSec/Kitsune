@@ -192,6 +192,28 @@ class TeamChatTab():
         app.scrollbar.config(command=app.text_area.yview)
         app.load_chat_history()
 
+        app.context_menu = tk.Menu(app.text_area, tearoff=0)
+        app.context_menu.add_command(label="Copy", command=app.copy_text)
+        app.context_menu.add_command(label="Clear", command=app.clear_text)
+        app.text_area.bind("<Button-3>", app.show_context_menu)
+
+    def show_context_menu(app, event):
+        app.context_menu.tk_popup(event.x_root, event.y_root)
+    
+    def copy_text(app):
+        try:
+            selected_text = app.text_area.selection_get()
+            app.text_area.clipboard_clear()
+            app.text_area.clipboard_append(selected_text)
+        except tk.TclError:
+            pass
+
+    def clear_text(app):
+        app.text_area.config(state="normal")
+        app.text_area.delete('1.0', tk.END)
+        app.text_area.config(state="disabled")
+        return
+
     def clear_chat_logs(app):
         app.team_chat_tab.text_area.config(state="normal")
         app.team_chat_tab.text_area.delete('1.0', tk.END)

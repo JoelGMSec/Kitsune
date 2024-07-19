@@ -80,6 +80,10 @@ def open_module_console(app):
         app.module_text.pack(expand=True, fill='both')
         app.scrollbar.config(command=app.module_text.yview)
 
+        app.custom_menu = tk.Menu(app.module_text, tearoff=0)
+        app.custom_menu.add_command(label="Copy", command=app.copy_text)
+        app.custom_menu.add_command(label="Reload", command=lambda: show_current_modules(app, True))
+        app.module_text.bind("<Button-3>", app.show_custom_menu)
 
 def display_message(app, message, color):
     try:

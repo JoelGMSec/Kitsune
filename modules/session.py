@@ -29,15 +29,37 @@ class Session(ttk.Frame):
         self.text_widget = None
         self.commands = commands
         self.session_data = session_data
-        
+
         self.scrollbar = ttk.Scrollbar(self)
         self.scrollbar.pack(side="right", fill="y")
         
         self.label = tk.Text(self, yscrollcommand=self.scrollbar.set, bg="#333333",
-        borderwidth=0, highlightbackground="#333333", highlightthickness=0, state="disabled")
+                             borderwidth=0, highlightbackground="#333333", highlightthickness=0, state="disabled")
         self.label.config(font=("Consolas", 18, "bold"))
         self.label.pack(fill="both", expand=True)
         self.scrollbar.config(command=self.label.yview)
+
+        self.context_menu = tk.Menu(self.label, tearoff=0)
+        self.context_menu.add_command(label="Copy", command=self.copy_text)
+        self.context_menu.add_command(label="Clear", command=self.clear_text)
+        self.label.bind("<Button-3>", self.show_context_menu)
+
+    def show_context_menu(self, event):
+        self.context_menu.tk_popup(event.x_root, event.y_root)
+    
+    def copy_text(self):
+        try:
+            selected_text = self.label.selection_get()
+            self.label.clipboard_clear()
+            self.label.clipboard_append(selected_text)
+        except tk.TclError:
+            pass
+
+    def clear_text(self):
+        self.label.config(state="normal")
+        self.label.delete('1.0', tk.END)
+        self.label.config(state="disabled")
+        return
 
     def add_to_notebook(self, notebook):
         self.notebook = notebook

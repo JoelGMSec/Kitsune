@@ -276,6 +276,11 @@ def open_webserver_log_tab(app):
     log_text.tag_configure("color_listen", foreground="#FFCC00")
     log_text.tag_configure("color_input", foreground="#00AAFF")
 
+    app.delivery_menu = tk.Menu(log_text, tearoff=0)
+    app.delivery_menu.add_command(label="Copy", command=app.copy_text)
+    app.delivery_menu.add_command(label="Clear", command=lambda: app.clear_delivery_logs(log_text, "web"))
+    log_text.bind("<Button-3>", app.show_delivery_menu)
+
     if app.web_delivery_process and app.web_delivery_process.poll() is None:
         message = "[>] Web Server is running..\n"
         color_tag = "color_input"
@@ -362,6 +367,11 @@ def open_multiserver_log_tab(app):
     log_text.tag_configure("color_success", foreground="#00FF99")
     log_text.tag_configure("color_listen", foreground="#FFCC00")
     log_text.tag_configure("color_input", foreground="#00AAFF")
+
+    app.multi_menu = tk.Menu(log_text, tearoff=0)
+    app.multi_menu.add_command(label="Copy", command=app.copy_text)
+    app.multi_menu.add_command(label="Clear", command=lambda: app.clear_delivery_logs(log_text, "multi"))
+    log_text.bind("<Button-3>", app.show_multi_menu)
 
     if app.multi_delivery_process and app.multi_delivery_process.is_alive():
         message = "[>] Multi Server is running..\n"
