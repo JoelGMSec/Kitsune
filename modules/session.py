@@ -40,22 +40,23 @@ class Session(ttk.Frame):
         self.scrollbar.config(command=self.label.yview)
 
         self.context_menu = tk.Menu(self.label, tearoff=0)
-        self.context_menu.add_command(label="Copy", command=self.copy_text)
-        self.context_menu.add_command(label="Clear", command=self.clear_text)
+        self.context_menu.add_command(label="Copy", command=self.copy_session_text)
+        self.context_menu.add_command(label="Clear", command=self.clear_session_text)
         self.label.bind("<Button-3>", self.show_context_menu)
 
     def show_context_menu(self, event):
         self.context_menu.tk_popup(event.x_root, event.y_root)
     
-    def copy_text(self):
+    def copy_session_text(self):
         try:
             selected_text = self.label.selection_get()
             self.label.clipboard_clear()
             self.label.clipboard_append(selected_text)
-        except tk.TclError:
+            self.label.tag_remove(tk.SEL, "1.0", tk.END)
+        except:
             pass
 
-    def clear_text(self):
+    def clear_session_text(self):
         self.label.config(state="normal")
         self.label.delete('1.0', tk.END)
         self.label.config(state="disabled")

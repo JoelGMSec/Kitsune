@@ -436,7 +436,17 @@ class App(tk.Frame):
             selected_text = self.text.selection_get()
             self.text.clipboard_clear()
             self.text.clipboard_append(selected_text)
-        except tk.TclError:
+            self.text.tag_remove(tk.SEL, "1.0", tk.END)
+        except:
+            pass
+
+    def copy_custom_text(self):
+        try:
+            selected_text = self.module_text.selection_get()
+            self.module_text.clipboard_clear()
+            self.module_text.clipboard_append(selected_text)
+            self.module_text.tag_remove(tk.SEL, "1.0", tk.END)
+        except:
             pass
 
     def clear_text(self):
@@ -904,9 +914,7 @@ class App(tk.Frame):
         self.text.config(foreground="#FF00FF")
         self.text.insert("end", label_text + "\n")
         self.text.config(state="disabled")
-
         self.add_event_viewer_log(label_text + "\n", 'color_login', "#FF00FF")
-
         self.treeview.delete(*self.treeview.get_children())
 
         current_tab = self.notebook.tab(self.notebook.select(), "text")
@@ -923,7 +931,6 @@ class App(tk.Frame):
         log_text.config(state="disabled")
 
         if log_type == "multi":
-            # Reset log with initial message
             if self.multi_delivery_process and self.multi_delivery_process.is_alive():
                 message = "[>] Multi Server is running..\n"
                 color_tag = "color_input"
@@ -934,7 +941,6 @@ class App(tk.Frame):
             log_text.insert('end', f"{message}\n", color_tag)
             log_text.config(state="disabled")
 
-            # Clear multiserver.json logs
             multiserver_file = Path("data/multiserver.json")
             if multiserver_file.exists():
                 with open(multiserver_file, 'r+') as f:
@@ -945,7 +951,6 @@ class App(tk.Frame):
                     f.truncate()
 
         if log_type == "web":
-            # Reset log with initial message
             if self.web_delivery_process and self.web_delivery_process.poll() is None:
                 message = "[>] Web Server is running..\n"
                 color_tag = "color_input"
@@ -956,7 +961,6 @@ class App(tk.Frame):
             log_text.insert('end', f"{message}\n", color_tag)
             log_text.config(state="disabled")
 
-            # Clear webserver.json logs
             webserver_file = Path("data/webserver.json")
             if webserver_file.exists():
                 with open(webserver_file, 'r+') as f:

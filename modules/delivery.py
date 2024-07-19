@@ -321,32 +321,25 @@ def open_multiserver_log_tab(app):
     existing_tabs = app.notebook.tabs()
     tab_texts = [app.notebook.tab(tab_id, "text") for tab_id in existing_tabs]
 
-    insert_index = len(existing_tabs)
-    for idx, text in enumerate(tab_texts):
-        if text.startswith("Session"):
-            insert_index = idx
+    tab_texts.append("Multi Server Log")
+    sorted_tabs = sorted(tab_texts)
+    insert_index = sorted_tabs.index("Multi Server Log")
+
+    for idx, text in enumerate(sorted_tabs):
+        if text == "Session*":
+            insert_index = insert_index - 1
+            break
+        elif text == "Listeners":
+            insert_index = insert_index + 1
+            break
+        elif text == "Team Chat":
+            insert_index = insert_index + 1
             break
 
-    existing_tabs = app.notebook.tabs()
-    tab_texts = [app.notebook.tab(tab_id, "text") for tab_id in existing_tabs]
-
-    insert_index = len(existing_tabs)
-    for idx, text in enumerate(tab_texts):
-        if text.startswith("Session"):
-            insert_index = idx
-            break
-        if text.startswith("Web"):
-            insert_index = idx
-            break
-        if text.startswith("Listeners"):
-            insert_index = idx + 1
-            break
-
-    tab = ttk.Frame(app.notebook)
-    app.notebook.add(tab, text="Multi Server Log")
-    if insert_index < 0 or insert_index > len(existing_tabs):
-        insert_index = len(existing_tabs)
-    app.notebook.insert(insert_index, tab, text="Multi Server Log")
+    try:
+        app.notebook.insert(insert_index, tab, text="Multi Server Log")
+    except:
+        app.notebook.add(tab, text="Multi Server Log")
     app.notebook.select(tab)
 
     log_text = tk.Text(tab)

@@ -46,13 +46,16 @@ def open_module_console(app):
         existing_tabs = app.notebook.tabs()
         tab_texts = [app.notebook.tab(tab_id, "text") for tab_id in existing_tabs]
 
-        insert_index = len(existing_tabs)
-        for idx, text in enumerate(tab_texts):
+        tab_texts.append("Module Console")
+        sorted_tabs = sorted(tab_texts)
+        insert_index = sorted_tabs.index("Module Console")
+
+        for idx, text in enumerate(sorted_tabs):
             if text == "Listeners":
-                insert_index = idx + 1
+                insert_index = insert_index + 1
                 break
             elif text == "Team Chat":
-                insert_index = idx + 1
+                insert_index = insert_index + 1
                 break
 
         try:
@@ -81,7 +84,7 @@ def open_module_console(app):
         app.scrollbar.config(command=app.module_text.yview)
 
         app.custom_menu = tk.Menu(app.module_text, tearoff=0)
-        app.custom_menu.add_command(label="Copy", command=app.copy_text)
+        app.custom_menu.add_command(label="Copy", command=app.copy_custom_text)
         app.custom_menu.add_command(label="Reload", command=lambda: show_current_modules(app, True))
         app.module_text.bind("<Button-3>", app.show_custom_menu)
 

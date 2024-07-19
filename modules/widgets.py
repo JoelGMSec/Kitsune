@@ -400,6 +400,7 @@ def setup_widgets(root, app):
             super().__init__(master, *args, **kwargs)
             self.bind("<KeyRelease>", self.on_key_release)
             self.bind("<Right>", self.on_right_arrow_press)
+            self.bind("<Return>", self.on_return_press)
             self.insert(tk.END, "Insert command here..")
             self.icursor(tk.END)
 
@@ -407,7 +408,7 @@ def setup_widgets(root, app):
             if self.current_tab_is_excluded():
                 return
 
-            if event.keysym in ["space", "Right", "BackSpace", "Left", "Up", "Down", "Tab", "Escape", "Control"]:
+            if event.keysym in ["Return", "space", "Right", "BackSpace", "Left", "Up", "Down", "Tab", "Escape", "Control"]:
                 return
 
             text = self.get()
@@ -425,20 +426,19 @@ def setup_widgets(root, app):
                 self.matches = []
                 return
 
-            if event.keysym == "Return":
-                cursor_position = self.index(tk.INSERT)
-                self.insert(0, self.get()[:cursor_position])
-            return
-
         def show_match(self):
             if self.matches:
-                current_text = self.get()
+                current_index = self.index(tk.INSERT)
+                text = self.get()
+                prefix = text[:current_index]
                 match = self.matches[0]
-                self.delete(0, tk.END)
-                self.insert(0, match)
-                self.icursor(len(current_text))
-                self.select_range(len(current_text), tk.END)
-                return
+                match_text = match[len(prefix):]
+                if match_text:
+                    self.icursor(current_index)
+                    self.delete(current_index, tk.END)
+                    self.insert(current_index, match_text)
+                    self.icursor(current_index + len(match_text))
+                    self.select_range(current_index, tk.END)
 
         def on_right_arrow_press(self, event):
             if self.current_tab_is_excluded():
@@ -448,20 +448,28 @@ def setup_widgets(root, app):
                 self.delete(0, tk.END)
                 self.insert(tk.END, self.matches[0])
                 self.icursor(tk.END)
+                return
+
             else:
                 current_index = self.index(tk.INSERT)
                 self.icursor(current_index + 1)
+                return
+
+        def on_return_press(self, event):
+            cursor_position = self.index(tk.INSERT)
+            command_text = self.get()[:cursor_position]
+            self.delete(cursor_position, tk.END)
+            command.execute_command(app, event)
             return
 
         def current_tab_is_excluded(self):
             current_tab = self.notebook.tab(self.notebook.select(), "text")
-            return current_tab in ["Event Viewer", "Team Chat"]
+            return current_tab in ["Event Viewer", "Team Chat", "Listeners", "Module Console", "Multi Server Log", "Web Server Log"]
 
     app.entry = AutoCompleteEntry(app.master, app.command_history, app.notebook)
     app.entry.config(foreground="#c0c0c0")
     app.entry.pack(side="bottom", fill="x", expand=True, padx=10, pady=10)
 
-    app.entry.bind("<Return>", lambda event: command.execute_command(app, event))
     app.entry.bind("<FocusIn>", app.on_entry_focus_in)
     app.entry.bind("<FocusOut>", app.on_entry_focus_out)
     app.entry.bind('<Up>', lambda event: on_up(app, event))
