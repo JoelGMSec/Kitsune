@@ -5,7 +5,7 @@
 
 Its use is very similar to other C2 like Cobalt Strike or Havoc, making use of listeners, payload generator, delivery over HTTP/S and much more. Its simple, modern and responsive graphical interface has been created to be easy to use and speed up the work of hackers.
 
-> :warning: This is a Developer Version. A lot of things don't work or just simulate the way it works. Use it if you want to test it before the full version or if you want to help in its development with a pull request.
+> :warning: This is an Early Adopter/Developer version. A lot of things work and others just simulate the way it works. Use it if you want to test it before the full version or if you want to help in its development with a pull request.
 
 
 # Requirements
