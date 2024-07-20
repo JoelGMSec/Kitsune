@@ -76,7 +76,7 @@ def execute_command_nxc(app, session_data, command):
             output = "\n".join(lines)
 
             lines = output.split("\n")
-            if lines[0].strip() == command:
+            if command.split()[0] in lines[0].strip():
                 output = "\n".join(lines[1:])  
 
         except:
@@ -125,7 +125,7 @@ def read_output_wmiexecpro(session_data, command):
     output = "\n".join(lines)
 
     lines = output.split("\n")
-    if lines[0].strip() == command:
+    if command.split()[0] in lines[0].strip():
         output = "\n".join(lines[1:])
     
     output = re.sub(r'C:\\Windows\\System32>', '', output).strip()
@@ -177,7 +177,55 @@ def read_output_dnscat2(session_data, command):
     output = "\n".join(lines)
 
     lines = output.split("\n")
-    if lines[0].strip() == command:
+    if command.split()[0] in lines[0].strip():
+        output = "\n".join(lines[1:])  
+
+    return output
+
+def read_output_pwncat(session_data, command):
+    def read_buffer(session_data):
+        output = b''
+        while True:
+            try:
+                block = session_data.read_nonblocking(size=999, timeout=0.2)
+                output += block
+                if not block:
+                    break
+            except pexpect.exceptions.TIMEOUT:
+                break
+        return output
+
+    attempts = 0
+    output = read_buffer(session_data)
+    while not output and attempts < 100:  
+        time.sleep(0.1)
+        session_data.write("\n")
+        output = read_buffer(session_data)
+        attempts += 1
+    output = output.decode("utf-8").replace("\r", "")
+    output = re.sub(r'\n.*\ue0b0', '', output)
+    output = re.sub(r'\[.*\ue0b0', '', output)
+
+    ansi_escape = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
+    output = ansi_escape.sub('', output)
+    output = re.sub(r'[\x00-\x09\x0B-\x1F\x7F-\x9F]', '', output)
+
+    pwncat_prompt_pattern = re.compile(r'\(remote\) .*.')
+    output = pwncat_prompt_pattern.sub('', output)
+    pwncat_msg_pattern = re.compile(r'\(local\) .*.')
+    output = pwncat_msg_pattern.sub('', output)
+
+    lines = output.split("\n")
+    while lines and lines[0].strip() == "":
+        lines.pop(0)
+    while lines and lines[-1].strip() == "":
+        lines.pop(-1)
+    if lines:
+        lines[0] = lines[0].lstrip()
+    output = "\n".join(lines)
+
+    lines = output.split("\n")
+    if command.split()[0] in lines[0].strip():
         output = "\n".join(lines[1:])  
 
     return output
@@ -214,12 +262,7 @@ def read_output_nonblocking(session_data, command):
     prompt_pattern = re.compile(r'\[!\] ')
     output = prompt_pattern.sub('', output)
 
-    pwncat_prompt_pattern = re.compile(r'\(remote\) .*.')
-    output = pwncat_prompt_pattern.sub('', output)
-    pwncat_msg_pattern = re.compile(r'\(local\) .*.')
-    output = pwncat_msg_pattern.sub('', output)
-
-    villain_prompt_pattern = re.compile(r'(.*\\.*> )')
+    villain_prompt_pattern = re.compile(r'(.*\\.*>)')
     output = villain_prompt_pattern.sub('', output)
     villain_prompt_pattern = re.compile(r'(\[Shell\] .*\n)')
     output = villain_prompt_pattern.sub('', output)
@@ -234,7 +277,7 @@ def read_output_nonblocking(session_data, command):
     output = "\n".join(lines)
 
     lines = output.split("\n")
-    if lines[0].strip() == command:
+    if command.split()[0] in lines[0].strip():
         output = "\n".join(lines[1:])  
 
     return output
@@ -349,6 +392,11 @@ def execute_command(app, event):
                                     current_session.session_data.sendline(command)
                                     time.sleep(3)
                                     output = read_output_dnscat2(current_session.session_data, command)
+
+                            elif "pwncat-cs" in str(current_session.session_data):
+                                if command != "help":
+                                    current_session.session_data.write(command + "\n")  
+                                    output = read_output_pwncat(current_session.session_data, command)
 
                             elif "Villain" in str(current_session.session_data):
                                 if command == "upload*":

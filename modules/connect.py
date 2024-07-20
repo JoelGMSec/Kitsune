@@ -15,7 +15,7 @@ from modules.session import Session
 from modules.command import execute_command_nxc
 
 def connect_pwncat(app, params, method, session, restart):
-    from modules.command import read_output_nonblocking
+    from modules.command import read_output_pwncat
 
     ip_address = "ip a | grep inet | grep -v inet6 | grep -v 127 | awk '{print $2}'"
     commands = ["$null", "$null", "$null", "$null", "whoami", "head -1 /etc/hostname", ip_address, "echo $$", "ps -p $$ -o comm=", "uname -m"]
@@ -60,7 +60,8 @@ def connect_pwncat(app, params, method, session, restart):
 
         for cmd in commands:
             session_data.sendline(cmd)  
-            output = read_output_nonblocking(session_data, cmd)
+            output = read_output_pwncat(session_data, cmd)
+            time.sleep(0.2)
 
             try:
                 if cmd.startswith("whoami"):
@@ -71,7 +72,7 @@ def connect_pwncat(app, params, method, session, restart):
                     if "grep" in output:
                         session_info["IP Address"] = output.split("'")[-1].strip().split("/")[0]
                     else:
-                        session_info["IP Address"] = output.split("/").strip()
+                        session_info["IP Address"] = output.split("/")[0].strip()
                 elif cmd.startswith("echo"):
                     session_info["PID"] = output.strip()
                 elif cmd.startswith("ps -p"):
