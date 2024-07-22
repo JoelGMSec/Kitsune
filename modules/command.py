@@ -214,6 +214,8 @@ def read_output_pwncat(session_data, command):
     output = pwncat_prompt_pattern.sub('', output)
     pwncat_msg_pattern = re.compile(r'\(local\) .*.')
     output = pwncat_msg_pattern.sub('', output)
+    pwncat_msg_pattern = re.compile(r'.*  \>\n')
+    output = pwncat_msg_pattern.sub('', output)
 
     lines = output.split("\n")
     while lines and lines[0].strip() == "":

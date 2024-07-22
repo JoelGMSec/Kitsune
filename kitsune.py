@@ -806,7 +806,7 @@ class App(tk.Frame):
         os.execl(sys.executable, sys.executable, *sys.argv)
 
     def on_treeview_doubleclick(self, event):
-        TAB_ORDER = ["Event Viewer", "Team Chat", "Listeners", "Multi Server Log", "Web Server Log"]
+        TAB_ORDER = ["Event Viewer", "Team Chat", "Listeners", "Module Console", "Multi Server Log", "Web Server Log"]
 
         try:
             item = self.treeview.selection()[0]

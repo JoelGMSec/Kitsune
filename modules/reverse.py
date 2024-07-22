@@ -120,7 +120,7 @@ def http_shell_thread(app, host, port, name, session, restart):
     return http_shell_thread
 
 def pwncat(app, host, port, name, session, restart):
-    from modules.command import read_output_nonblocking
+    from modules.command import read_output_pwncat
 
     ip_address = "ip a | grep inet | grep -v inet6 | grep -v 127 | awk '{print $2}'"
     commands = ["$null", "$null", "$null", "$null", "whoami", "head -1 /etc/hostname", ip_address, "echo $$", "ps -p $$ -o comm=", "uname -m"]
@@ -138,7 +138,7 @@ def pwncat(app, host, port, name, session, restart):
     pwncat_path = f'/tmp/pwncat'
     os.makedirs(pwncat_path, exist_ok=True)
     
-    session_data = pexpect.spawn(f'python3.11 /usr/local/bin/pwncat-cs 0.0.0.0 {port}', cwd=pwncat_path, echo=False, use_poll=True)  
+    session_data = pexpect.spawn(f'python3.11 /usr/local/bin/pwncat-cs 0.0.0.0 {port}', cwd=pwncat_path, echo=False, use_poll=False)  
     session_data.timeout = 1
 
     try:
@@ -147,7 +147,8 @@ def pwncat(app, host, port, name, session, restart):
 
         for cmd in commands:
             session_data.sendline(cmd)  
-            output = read_output_nonblocking(session_data, cmd)
+            output = read_output_pwncat(session_data, cmd)
+            time.sleep(0.2)
 
             try:
                 if cmd.startswith("whoami"):
