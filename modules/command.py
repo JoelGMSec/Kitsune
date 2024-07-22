@@ -413,7 +413,7 @@ def execute_command(app, event):
                                         output = read_output_nonblocking(current_session.session_data, command)
                                         current_session.session_data.sendline(shell + " " + villain_id)
 
-                                    if command == "kill":
+                                    elif command == "kill":
                                         current_session.session_data.sendline("exit")
                                         time.sleep(3)
                                         current_session.session_data.sendline("sessions")
@@ -425,9 +425,9 @@ def execute_command(app, event):
                                         output = "Session terminated."
                                         disable_session = True
 
-                                else:
-                                    current_session.session_data.write(command + "\n")  
-                                    output = read_output_nonblocking(current_session.session_data, command)
+                                    else:
+                                        current_session.session_data.write(command + "\n")  
+                                        output = read_output_nonblocking(current_session.session_data, command)
 
                             else:
                                 if command != "help":
