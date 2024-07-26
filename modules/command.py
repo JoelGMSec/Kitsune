@@ -12,6 +12,7 @@ import pexpect
 import tkinter as tk
 from tkinter import ttk
 from threading import Thread
+from modules import custom
 from modules.session import Session
 from modules.chat import TeamChatTab
 from modules.helper import command_help
@@ -377,19 +378,27 @@ def execute_command(app, event):
                         nonlocal current_session
                         nonlocal current_tab
                         disable_session = False
+                        old_command = command
 
                         try:
+                            custom_command = custom.exec_custom_modules(app, "command", current_session.session_data, command)
+                            if custom_command and command != "help":
+                                command = custom_command
+
                             if "netexec" in str(current_session.session_data):
                                 if command != "help":
+                                    custom.exec_custom_modules(app, "command", current_session.session_data, command)
                                     output = execute_command_nxc(app, current_session.session_data, command)
                             
                             elif "wmiexec-pro" in str(current_session.session_data):
                                 if command != "help":
+                                    custom.exec_custom_modules(app, "command", current_session.session_data, command)
                                     current_session.session_data.write(f"powershell '{command}' \n")
                                     output = read_output_wmiexecpro(current_session.session_data, command)
                             
                             elif "dnscat2" in str(current_session.session_data):
                                 if command != "help":
+                                    custom.exec_custom_modules(app, "command", current_session.session_data, command)
                                     current_session.session_data.sendline("\n")
                                     current_session.session_data.sendline(command)
                                     time.sleep(3)
@@ -397,6 +406,7 @@ def execute_command(app, event):
 
                             elif "pwncat-cs" in str(current_session.session_data):
                                 if command != "help":
+                                    custom.exec_custom_modules(app, "command", current_session.session_data, command)
                                     current_session.session_data.write(command + "\n")  
                                     output = read_output_pwncat(current_session.session_data, command)
 
@@ -426,6 +436,7 @@ def execute_command(app, event):
                                         disable_session = True
 
                                     else:
+                                        custom.exec_custom_modules(app, "command", current_session.session_data, command)
                                         current_session.session_data.write(command + "\n")  
                                         output = read_output_nonblocking(current_session.session_data, command)
 
@@ -433,12 +444,17 @@ def execute_command(app, event):
                                 if command != "help":
                                     current_session.session_data.write(command + "\n")  
                                     output = read_output_nonblocking(current_session.session_data, command)
+                            
+                            command = old_command
 
                             if command.startswith("cd "):
                                 output = "Changing directory.."
 
                             if command == "help":
                                 output = command_help(current_session.session_data)
+                                custom_output = custom.exec_custom_modules(app, "command", current_session.session_data, command)
+                                if custom_output:
+                                    output = f"{output}\n\nCustom Modules\n==============\n{custom_output}"
 
                             if command == "kill" or command == "exit":
                                 output = "Disconnected.."
@@ -468,12 +484,6 @@ def execute_command(app, event):
                         current_session.label.insert("end", log_text, "color_reset")
                         current_session.label.config(state="disabled")
                         current_session.label.see("end")
-                        app.update()
-
-                        current_tab = app.notebook.tab(app.notebook.select(), "text")
-                        for session in app.sessions:
-                            if session.title == current_tab:
-                                session.reload_command_session()
                                 
                         app.notify_command_session(current_session.title)
 

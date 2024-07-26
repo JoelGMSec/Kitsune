@@ -19,7 +19,7 @@ def typing(text):
         sys.stdout.flush()
         time.sleep(0.02)
 
-class Session(ttk.Frame):
+class Session(tk.Frame):
     def __init__(self, title, session_data, commands):
         super().__init__()
         self.log = []
@@ -29,12 +29,22 @@ class Session(ttk.Frame):
         self.text_widget = None
         self.commands = commands
         self.session_data = session_data
+        self.config(background="#333333")
 
         self.scrollbar = ttk.Scrollbar(self)
         self.scrollbar.pack(side="right", fill="y")
         
-        self.label = tk.Text(self, yscrollcommand=self.scrollbar.set, bg="#333333",
-                             borderwidth=0, highlightbackground="#333333", highlightthickness=0, state="disabled")
+        self.label = tk.Text(
+            self, 
+            yscrollcommand=self.scrollbar.set, 
+            bg="#333333",   
+            borderwidth=0, 
+            highlightbackground="#333333", 
+            highlightthickness=0,
+            selectbackground="#1B1B1B", 
+            inactiveselectbackground="#1B1B1B",
+            state="disabled")
+
         self.label.config(font=("Consolas", 18, "bold"))
         self.label.pack(fill="both", expand=True)
         self.scrollbar.config(command=self.label.yview)
@@ -268,13 +278,13 @@ class Session(ttk.Frame):
                         item_selected = True
                     else:
                         item_selected = False
-                    app.treeview.delete(item)
+                    old_item = item
                     break
 
             session_ids_tails = [(int(app.treeview.item(child, 'values')[0]), app.treeview.item(child, 'values')[8]) for child in app.treeview.get_children()]
             insert_index = bisect.bisect_left(session_ids_tails, (int(session_info["Session"]), session_info["Tail"]))
-
             app.treeview.insert('', insert_index, values=(session_info["Session"], session_info["User"], session_info["Hostname"], session_info["IP Address"], session_info["Process"], session_info["PID"], session_info["Arch"], session_info["Listener"], session_info["Tail"]), tags=('enabled',))
+            app.treeview.delete(old_item)
 
             try:
                 for item in app.treeview.get_children():
@@ -294,8 +304,6 @@ class Session(ttk.Frame):
             insert_index = bisect.bisect_left(session_ids_tails, (int(session_info["Session"]), session_info["Tail"]))
             app.treeview.insert('', insert_index, values=(session_info["Session"], session_info["User"], session_info["Hostname"], session_info["IP Address"], session_info["Process"], session_info["PID"], session_info["Arch"], session_info["Listener"], session_info["Tail"]), tags=('enabled',))
 
-        app.update()
-
     def disable_session(app, session_title):
         from modules.controller import retry_session
         app.treeview.tag_configure("disabled", foreground="gray") 
@@ -312,8 +320,7 @@ class Session(ttk.Frame):
                     if str(values[0]) == str(session_number):
                         app.treeview.item(item, tags=('disabled',))
                         break
-                
-                app.update()
+
                 retry_session(app, session_title)
 
             except:
@@ -334,8 +341,6 @@ class Session(ttk.Frame):
                     if str(values[0]) == str(session_number):
                         app.treeview.item(item, tags=('enabled',))
                         break
-
-                app.update()
 
             except:
                 pass
@@ -376,5 +381,3 @@ class Session(ttk.Frame):
                         if tab_title == title:
                             app.notebook.select(tab)
                             break
-
-                app.update()

@@ -167,7 +167,7 @@ def setup_widgets(root, app):
     modules_menu = tk.Menu(menu_bar)
     modules_menu.add_command(label="Module Console", command=lambda: custom.show_current_modules(app, False))
     modules_menu.add_command(label="Reload Modules", command=lambda: custom.show_current_modules(app, True))
-    modules_menu.add_command(label="Update Modules", command=app.module_warning)
+    modules_menu.add_command(label="Update Modules", command=lambda: app.update_modules())
     menu_bar.add_cascade(label=" Modules ", menu=modules_menu)
 
     attacks_menu = tk.Menu(menu_bar)
@@ -329,14 +329,16 @@ def setup_widgets(root, app):
     app.paned.add(app.pane_2, weight=1)
 
     separator_paned = ResizablePanedWindow(app.pane_2, orient=tk.VERTICAL)
-    separator_label = ttk.Label(separator_paned, text="•••••", font=("Consolas", 20), foreground="#c0c0c0", cursor="sb_v_double_arrow")
+    separator_label = tk.Label(separator_paned, text="•••••", font=("Consolas", 20), foreground="#c0c0c0", cursor="sb_v_double_arrow")
+    separator_label.config(background="#444444")
     separator_paned.add(separator_label)
     separator_paned.pack(pady=(0, 20))
 
     app.notebook = DraggableTabsNotebook(app.pane_2, height=580)
     app.notebook.pack(fill="both", expand=True)
+    app.tab_1 = tk.Frame(app.notebook)
+    app.tab_1.config(background="#333333")
 
-    app.tab_1 = ttk.Frame(app.notebook)
     for index in [0, 1]:
         app.tab_1.columnconfigure(index=index, weight=1)
         app.tab_1.rowconfigure(index=index, weight=1)
@@ -362,7 +364,9 @@ def setup_widgets(root, app):
         state="disabled",
         highlightthickness=0,
         borderwidth=0,
-        yscrollcommand=app.scrollbar.set  
+        selectbackground="#1B1B1B",
+        inactiveselectbackground="#1B1B1B",
+        yscrollcommand=app.scrollbar.set
     )
     app.text.pack(fill="both", expand=True)
 
@@ -468,8 +472,8 @@ def setup_widgets(root, app):
             return current_tab in ["Event Viewer", "Team Chat", "Listeners", "Module Console", "Multi Server Log", "Web Server Log"]
 
     app.entry = AutoCompleteEntry(app.master, app.command_history, app.notebook)
-    app.entry.config(foreground="#c0c0c0")
     app.entry.pack(side="bottom", fill="x", expand=True, padx=10, pady=10)
+    app.entry.config(foreground="#c0c0c0")
 
     app.entry.bind("<FocusIn>", app.on_entry_focus_in)
     app.entry.bind("<FocusOut>", app.on_entry_focus_out)

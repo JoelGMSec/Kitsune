@@ -4,9 +4,12 @@
 #      darkbyte.net       #
 #=========================#
 
+import sys
+sys.dont_write_bytecode = True
+
 import argparse
 import tkinter as tk
-import os, sys, time, json, shutil, datetime, threading
+import os, time, json, shutil, datetime, threading
 from pathlib import Path
 from neotermcolor import colored
 from tkinter import ttk, filedialog
@@ -16,7 +19,7 @@ from modules.listeners import edit_listener
 from modules.controller import reload_listener
 from modules.widgets import setup_widgets
 from modules.widgets import DraggableTabsNotebook
-from modules import profile, updater, settings, about, delivery, listeners, controller, payloads, tails, reporter, chat, custom, proxy
+from modules import profile, updater, settings, about, delivery, listeners, controller, payloads, tails, reporter, chat, custom, proxy, modules
 
 def typing(text):
     for character in text:
@@ -44,12 +47,13 @@ def check_and_copy_fonts():
 
 class App(tk.Frame):
     def __init__(self, parent, fast_mode):
-        ttk.Frame.__init__(self, parent)
+        tk.Frame.__init__(self, parent)
         self.load_settings()
         self.sort_sessions()
         self.proxy_status = False
         self.silent_error = False
         self.fast_mode = fast_mode
+        self.config(background="#333333")
         parent.protocol("WM_DELETE_WINDOW", self.on_close)
 
         for index in [0, 1]:
@@ -57,7 +61,7 @@ class App(tk.Frame):
             self.rowconfigure(index=index, weight=1)
 
         self.check_repos()
-        self.load_custom_modules()
+        self.check_modules()
         self.text_tag_counter = 0
         self.event_viewer_logs = self.load_event_viewer_logs()
 
@@ -93,6 +97,7 @@ class App(tk.Frame):
             self.username = "root"
 
         chat.start_server(self)
+        self.load_custom_modules()
         self.client_socket = None
         self.team_chat_tab = chat.TeamChatTab(self.notebook)
         self.team_chat_tab.connect_to_server(self.username, "localhost")
@@ -134,6 +139,9 @@ class App(tk.Frame):
 
     def open_settings(self):
         return settings.open_settings(self)
+
+    def update_modules(self):
+        return modules.update_modules(self)
 
     def update_tails(self):
         return tails.update_tails(self)
@@ -196,6 +204,11 @@ class App(tk.Frame):
         tails_dir = "tails"
         if not os.path.exists(tails_dir) or not any(os.path.isdir(os.path.join(tails_dir, entry)) for entry in os.listdir(tails_dir)):
             threading.Thread(target=clone_repos).start()
+
+    def check_modules(self):
+        custom_dir = "custom"
+        if not os.path.exists(custom_dir) or not any(os.path.isdir(os.path.join(custom_dir, entry)) for entry in os.listdir(custom_dir)):
+            threading.Thread(target=modules.clone_repos).start()
 
     def sort_sessions(self):
         try:
@@ -414,10 +427,15 @@ class App(tk.Frame):
                 self.text_tag_counter += 1
         else:
             return
+        
+        self.text.config(state="normal")
+        self.text.tag_config(tag, foreground=color)
+        self.text.insert(tk.END, log, tag)
+        self.text.config(state="disabled")
+        self.text.see("end")
 
         self.save_event_viewer_logs()
         self.notify_event_viewer()
-        self.update_event_viewer()
 
     def show_context_menu(self, event):
         self.context_menu.tk_popup(event.x_root, event.y_root)
@@ -583,30 +601,6 @@ class App(tk.Frame):
         menu.add_command(label="Remove", command=lambda: self.confirm_remove("Remove"))
         menu.tk_popup(event.x_root, event.y_root)
 
-    def module_warning(self):
-        dialog = tk.Toplevel(self)
-        dialog.title("Warning")
-        dialog.focus_force()
-
-        label = ttk.Label(dialog, text="This function is not yet implemented!")
-        label.pack(padx=20, pady=20)
-
-        button_frame = ttk.Frame(dialog)
-        button_frame.pack(padx=20, pady=10)
-
-        def on_enter_key(event):
-            dialog.destroy()
-
-        dialog.bind("<Return>", on_enter_key)
-
-        def on_escape_key(event):
-            dialog.destroy()
-
-        dialog.bind("<Escape>", on_escape_key)
-
-        yes_button = ttk.Button(button_frame, text="Close", command=lambda: dialog.destroy())
-        yes_button.pack(side=tk.LEFT, padx=5, pady=(0, 10))
-
     def report_deleted_success(self):
         dialog = tk.Toplevel(self)
         dialog.title("Success")
@@ -615,7 +609,7 @@ class App(tk.Frame):
         label = ttk.Label(dialog, text="All reports have been deleted!")
         label.pack(padx=20, pady=20)
 
-        button_frame = ttk.Frame(dialog)
+        button_frame = tk.Frame(dialog)
         button_frame.pack(padx=20, pady=10)
 
         def on_enter_key(event):
@@ -639,7 +633,7 @@ class App(tk.Frame):
         label = ttk.Label(dialog, text="All profiles have been deleted!")
         label.pack(padx=20, pady=20)
 
-        button_frame = ttk.Frame(dialog)
+        button_frame = tk.Frame(dialog)
         button_frame.pack(padx=20, pady=10)
 
         def on_enter_key(event):
@@ -663,7 +657,7 @@ class App(tk.Frame):
         label = ttk.Label(dialog, text="Report saved successfully!")
         label.pack(padx=20, pady=20)
 
-        button_frame = ttk.Frame(dialog)
+        button_frame = tk.Frame(dialog)
         button_frame.pack(padx=20, pady=10)
 
         def on_enter_key(event):
@@ -687,7 +681,7 @@ class App(tk.Frame):
         label = ttk.Label(dialog, text="Profile saved successfully!")
         label.pack(padx=20, pady=20)
 
-        button_frame = ttk.Frame(dialog)
+        button_frame = tk.Frame(dialog)
         button_frame.pack(padx=20, pady=10)
 
         def on_enter_key(event):
@@ -712,7 +706,7 @@ class App(tk.Frame):
         label = ttk.Label(dialog, text="Payload generated successfully!")
         label.pack(padx=20, pady=20)
 
-        button_frame = ttk.Frame(dialog)
+        button_frame = tk.Frame(dialog)
         button_frame.pack(padx=20, pady=10)
 
         def on_enter_key(event):
@@ -737,7 +731,7 @@ class App(tk.Frame):
         label = ttk.Label(dialog, text="Modules reloaded successfully!")
         label.pack(padx=20, pady=20)
 
-        button_frame = ttk.Frame(dialog)
+        button_frame = tk.Frame(dialog)
         button_frame.pack(padx=20, pady=10)
 
         def on_enter_key(event):
@@ -761,7 +755,7 @@ class App(tk.Frame):
         label = ttk.Label(dialog, text="Are you sure?")
         label.pack(padx=20, pady=20)
 
-        button_frame = ttk.Frame(dialog)
+        button_frame = tk.Frame(dialog)
         button_frame.pack(padx=20, pady=10)
 
         def set_result(value):

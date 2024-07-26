@@ -231,7 +231,8 @@ def open_webserver_log_tab(app):
             update_webserver_log_tab(app)
             return
 
-    tab = ttk.Frame(app.notebook)
+    tab = tk.Frame(app.notebook)
+    tab.config(background="#333333")
     existing_tabs = app.notebook.tabs()
     tab_texts = [app.notebook.tab(tab_id, "text") for tab_id in existing_tabs]
 
@@ -250,7 +251,8 @@ def open_webserver_log_tab(app):
             insert_index = idx
             break
 
-    tab = ttk.Frame(app.notebook)
+    tab = tk.Frame(app.notebook)
+    tab.config(background="#333333")
     app.notebook.add(tab, text="Web Server Log")
     if insert_index < 0 or insert_index > len(existing_tabs):
         insert_index = len(existing_tabs)
@@ -265,6 +267,8 @@ def open_webserver_log_tab(app):
         pady=5,
         wrap="word",
         highlightthickness=0,
+        selectbackground="#1B1B1B",
+        inactiveselectbackground="#1B1B1B",
         borderwidth=0,
     )
     log_text.pack(fill='both', expand=True)
@@ -317,7 +321,8 @@ def open_multiserver_log_tab(app):
             update_multiserver_log_tab(app)
             return
 
-    tab = ttk.Frame(app.notebook)
+    tab = tk.Frame(app.notebook)
+    tab.config(background="#333333")
     existing_tabs = app.notebook.tabs()
     tab_texts = [app.notebook.tab(tab_id, "text") for tab_id in existing_tabs]
 
@@ -350,6 +355,8 @@ def open_multiserver_log_tab(app):
         pady=5,
         wrap="word",
         highlightthickness=0,
+        selectbackground="#1B1B1B",
+        inactiveselectbackground="#1B1B1B",
         borderwidth=0,
     )
     log_text.pack(fill='both', expand=True)

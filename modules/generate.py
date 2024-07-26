@@ -8,7 +8,7 @@ import os
 import base64
 import shutil
 from modules import compiler
-from modules import obfuscator
+from modules import custom, obfuscator
 
 def generate_webshell(app, tail, format, obfuscate):
     if tail and format and obfuscate:
@@ -126,6 +126,7 @@ def generate_payload(app, tail, file_format, listener_name):
 
                 with open(dst_file, 'w') as file:
                     file.writelines(content)
+                custom.exec_custom_modules(app, "generate", dst_file, file_format)
 
             if file_format == "Exe":
                 dst_name = "Villain_" + str(listener_port)
@@ -137,6 +138,7 @@ def generate_payload(app, tail, file_format, listener_name):
                 content = base64.b64encode(content.encode('utf16')[2:]).decode()
                 compiler.create_c_file(content, dst_file, "exe")
                 compiler.compile_exe_file(dst_file)
+                custom.exec_custom_modules(app, "generate", dst_file, file_format)
 
             if file_format == "Dll":
                 dst_name = "Villain_" + str(listener_port)
@@ -201,6 +203,7 @@ def generate_payload(app, tail, file_format, listener_name):
                 
                 with open(dst_file, 'w') as file:
                     file.writelines(content)
+                custom.exec_custom_modules(app, "generate", dst_file, file_format)                    
 
             if file_format == "Exe":
                 src_file = "tails/dnscat2/client/win32/powercat/powercat.ps1"
@@ -215,6 +218,7 @@ def generate_payload(app, tail, file_format, listener_name):
                 content = base64.b64encode(content.encode('utf16')[2:]).decode()
                 compiler.create_c_file(content, dst_file, "exe")
                 compiler.compile_exe_file(dst_file)
+                custom.exec_custom_modules(app, "generate", dst_file, file_format)
 
             if file_format == "Dll":
                 src_file = "tails/dnscat2/client/win32/powercat/powercat.ps1"
@@ -287,6 +291,7 @@ def generate_payload(app, tail, file_format, listener_name):
                 
                 with open(dst_file, 'w') as file:
                     file.writelines(content)
+                custom.exec_custom_modules(app, "generate", dst_file, file_format)
 
             if file_format == "Exe":
                 src_file = "tails/HTTP-Shell/HTTP-Client.ps1"
@@ -302,6 +307,7 @@ def generate_payload(app, tail, file_format, listener_name):
                 content = base64.b64encode(content.encode('utf16')[2:]).decode()
                 compiler.create_c_file(content, dst_file, "exe")
                 compiler.compile_exe_file(dst_file)
+                custom.exec_custom_modules(app, "generate", dst_file, file_format)
 
             if file_format == "Dll":
                 src_file = "tails/HTTP-Shell/HTTP-Client.ps1"

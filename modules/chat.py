@@ -171,7 +171,8 @@ class TeamChatTab():
                         app.notebook.tab(tab, state="disabled")
   
     def open_team_chat_tab(app):
-        app.chat_tab = ttk.Frame(app.notebook)
+        app.chat_tab = tk.Frame(app.notebook)
+        app.chat_tab.config(background="#333333")
         app.notebook.add(app.chat_tab, text="Team Chat")
         app.scrollbar = ttk.Scrollbar(app.chat_tab)
         app.scrollbar.pack(side="right", fill="y")
@@ -186,6 +187,8 @@ class TeamChatTab():
             padx=5,
             pady=5,
             highlightthickness=0,
+            selectbackground="#1B1B1B",
+            inactiveselectbackground="#1B1B1B",
             borderwidth=0
         )
         app.text_area.pack(expand=True, fill='both')
@@ -238,15 +241,17 @@ class TeamChatTab():
         try:
             current_content = app.text_area.get(1.0, tk.END)
             if message in current_content:
-                return
+                if not message.startswith("/"):
+                    return
 
-            app.last_displayed_message = {"text": message, "color": color}
-            app.text_area.config(font=("Consolas", 18, "bold"))
-            app.text_area.config(state='normal')
-            app.text_area.insert(tk.END, f"{message}\n", (color,))
-            app.text_area.tag_config(color, foreground=color)
-            app.text_area.config(state='disabled')
-            app.text_area.see("end")
+            else:
+                app.last_displayed_message = {"text": message, "color": color}
+                app.text_area.config(font=("Consolas", 18, "bold"))
+                app.text_area.config(state='normal')
+                app.text_area.insert(tk.END, f"{message}\n", (color,))
+                app.text_area.tag_config(color, foreground=color)
+                app.text_area.config(state='disabled')
+                app.text_area.see("end")
         except:
             pass
 
@@ -315,6 +320,8 @@ class TeamChatTab():
         message = app.entry.get()
         if message:
             if message == "/help":
+                notification_message = "[["
+                app.team_chat_tab.display_message(notification_message, "#333333")
                 notification_message = "   .:[ Kitsune Team Server Chat ]:.   "
                 app.team_chat_tab.display_message(notification_message, "white")
                 notification_message = "--------------------------------------"
@@ -327,8 +334,8 @@ class TeamChatTab():
                 app.team_chat_tab.display_message(notification_message, "white")
                 notification_message = "/nick: Change your nick to another one"
                 app.team_chat_tab.display_message(notification_message, "white")
-                notification_message = "--------------------------------------"
-                app.team_chat_tab.display_message(notification_message, "white")
+                notification_message = "]]"
+                app.team_chat_tab.display_message(notification_message, "#333333")
                 app.entry.delete(0, tk.END)
                 return
 

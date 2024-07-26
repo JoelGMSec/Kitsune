@@ -131,13 +131,12 @@ def show_listeners(app):
             app.notebook.select(tab)
             return
 
-    style = ttk.Style()
-    style.configure('Background.TFrame', background='#333333')
-
-    listener_tab = ttk.Frame(app.notebook, style='Background.TFrame')
+    listener_tab = tk.Frame(app.notebook)
+    listener_tab.config(background="#333333")
     listener_tab.pack(fill="both", expand=True)
 
-    app.listener_table_label = ttk.Frame(app.paned)
+    app.listener_table_label = tk.Frame(app.paned)
+    app.listener_table_label.config(background="#333333")
     app.listener_table_label = ttk.Label(listener_tab, text="Listeners")
 
     app.listener_table = ttk.Treeview(listener_tab, columns=("name", "host", "port", "proto", "tail", "blank"), padding=(-4, -4, -4, 0))
@@ -160,8 +159,8 @@ def show_listeners(app):
 
     app.listener_table.bind("<Double-1>", lambda event: app.on_double_click())
 
-    style.configure('Background.TFrame', background='#333333')
-    bottom_frame = ttk.Frame(listener_tab, style='Background.TFrame')
+    bottom_frame = tk.Frame(listener_tab)
+    bottom_frame.config(background="#333333")
     bottom_frame.pack(side="bottom", fill="both", padx=10, pady=10)
     bottom_frame.place(relx=0.5, rely=0.5, anchor="center")
 

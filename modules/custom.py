@@ -4,10 +4,14 @@
 #      darkbyte.net       #
 #=========================#
 
+import sys
+sys.dont_write_bytecode = True
+
 import os
 import json
 import tkinter as tk
 from tkinter import ttk
+import importlib.util
 
 def load_custom_modules(app, reload=False):
     if reload:
@@ -16,18 +20,31 @@ def load_custom_modules(app, reload=False):
     output_file = "data/modules.json"
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
-    folders = [f for f in os.listdir(custom_dir) if os.path.isdir(os.path.join(custom_dir, f))]
+    py_files = [f for f in os.listdir(custom_dir) if f.endswith('.py')]
     data = {
         "modules": []
     }
 
-    for folder in folders:
-        script_name = f"{folder}.py"
-        script_path = os.path.join(custom_dir, script_name)
+    for py_file in py_files:
+        script_path = os.path.join(custom_dir, py_file)
         if os.path.isfile(script_path):
+            description = ""
+            try:
+                module_name = os.path.splitext(py_file)[0]  # Obtener el nombre del módulo sin la extensión .py
+                spec = importlib.util.spec_from_file_location(module_name, script_path)
+                module_obj = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module_obj)
+                if hasattr(module_obj, 'get_description'):
+                    description = module_obj.get_description()
+                else:
+                    description = "No description available"
+            except:
+                pass
+
             data["modules"].append({
-                "name": folder,
-                "script": script_name
+                "name": module_name,
+                "script": py_file,
+                "description": description
             })
 
     with open(output_file, 'w') as json_file:
@@ -42,7 +59,8 @@ def open_module_console(app):
             break
 
     if not module_console_tab_id:
-        module_console_tab = ttk.Frame(app.notebook)
+        module_console_tab = tk.Frame(app.notebook)
+        module_console_tab.config(background="#333333")
         existing_tabs = app.notebook.tabs()
         tab_texts = [app.notebook.tab(tab_id, "text") for tab_id in existing_tabs]
 
@@ -78,6 +96,8 @@ def open_module_console(app):
             padx=5,
             pady=5,
             highlightthickness=0,
+            selectbackground="#1B1B1B",
+            inactiveselectbackground="#1B1B1B",
             borderwidth=0
         )
         app.module_text.pack(expand=True, fill='both')
@@ -122,6 +142,9 @@ def show_current_modules(app, reload):
                 for module in current_modules["modules"]:
                     module_info = f"[>] {module['name']}"
                     display_message(app, module_info, "#00AAFF")
+                    module_info = f"{module.get('description')}\n"
+                    display_message(app, module_info, "#FFFFFF")
+
             else:
                 module_info = "[!] No custom modules found!"
                 display_message(app, module_info, "#FF0055")
@@ -131,3 +154,22 @@ def show_current_modules(app, reload):
 
     app.module_text.config(state='disabled')
 
+def exec_custom_modules(app, caller, param1, param2):
+    modules_file = "data/modules.json"
+    combined_output = []
+
+    if os.path.exists(modules_file):
+        with open(modules_file, "r") as file:
+            current_modules = json.load(file)
+            for module in current_modules.get("modules", []):
+                script_path = os.path.join("custom", module["script"])
+                if os.path.isfile(script_path):
+                    spec = importlib.util.spec_from_file_location(module["name"], script_path)
+                    module_obj = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(module_obj)
+                    if hasattr(module_obj, 'main'):
+                        output = module_obj.main(app, caller, param1, param2)
+                        if output:
+                            combined_output.append(output)
+                            
+    return "\n".join(combined_output) if combined_output else None
