@@ -339,10 +339,10 @@ def villain(app, host, port, name, session, restart):
     }
 
     villain_path = 'tails/Villain'
-    session_data = pexpect.spawn(f'python3.11 Villain.py -i -s -q -n {port} -p 33333 -x 44444 -f 55555', cwd=villain_path, echo=False, use_poll=True)
+    session_data = pexpect.spawn(f'{os.sys.executable} Villain.py -i -q -n {port} -p 33333 -x 44444 -f 55555', cwd=villain_path, echo=False, use_poll=True)
     session_data.timeout = 1
 
-    session_data.expect_exact("Villain", timeout=120) 
+    session_data.expect_exact("Villain", timeout=120)
     session_data.expect("Backdoor", timeout=None)
     session_data.sendline("sessions")
     session_data.expect("Windows", timeout=None)

@@ -23,7 +23,7 @@ def typing(text):
         sys.stdout.flush()
         time.sleep(0.02)
 
-class ResizablePanedWindow(ttk.PanedWindow):
+class ResizablePanedWindow(tk.PanedWindow):
     def __init__(self, master=None, **kwargs):
         super().__init__(master, **kwargs)
         self._drag_data = {"y": 0, "index": None}
@@ -329,7 +329,7 @@ def setup_widgets(root, app):
     app.paned.add(app.pane_2, weight=1)
 
     separator_paned = ResizablePanedWindow(app.pane_2, orient=tk.VERTICAL)
-    separator_label = tk.Label(separator_paned, text="•••••", font=("Consolas", 20), foreground="#c0c0c0", cursor="sb_v_double_arrow")
+    separator_label = tk.Label(separator_paned, text="•••••", font=("Consolas", 20), background="#444444", foreground="#c0c0c0", cursor="sb_v_double_arrow")
     separator_paned.add(separator_label)
     separator_paned.pack(pady=(0, 20))
 
