@@ -330,7 +330,6 @@ def setup_widgets(root, app):
 
     separator_paned = ResizablePanedWindow(app.pane_2, orient=tk.VERTICAL)
     separator_label = tk.Label(separator_paned, text="•••••", font=("Consolas", 20), foreground="#c0c0c0", cursor="sb_v_double_arrow")
-    separator_label.config(background="#444444")
     separator_paned.add(separator_label)
     separator_paned.pack(pady=(0, 20))
 

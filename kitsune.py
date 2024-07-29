@@ -321,6 +321,31 @@ class App(tk.Frame):
             state = 'enabled' if 'disabled' not in self.treeview.item(item, 'tags') else 'disabled'
             self.treeview_state[item_id] = state
 
+    def update_treeview(self):
+        previous_tags = {}
+        for item in self.treeview.get_children():
+            values = self.treeview.item(item, "values")
+            key = (values[1], values[2], values[7], values[8])
+            tags = self.treeview.item(item, "tags")
+            previous_tags[key] = tags
+
+        for item in self.treeview.get_children():
+            self.treeview.delete(item)
+
+        try:
+            with open('data/sessions.json', 'r') as f:
+                sessions_data = json.load(f)
+        except FileNotFoundError:
+            sessions_data = []
+
+        for session in sessions_data:
+            key = (session["User"], session["Hostname"], session["Listener"], session["Tail"])
+            tags = previous_tags.get(key, ('enabled',))
+            self.treeview.insert('', 'end', values=(
+                session["Session"], session["User"], session["Hostname"], session["IP Address"],
+                session["Process"], session["PID"], session["Arch"], session["Listener"], session["Tail"]
+            ), tags=tags)
+
     def count_session(self):
         existing_sessions = [int(session.split()[1]) for session in self.saved_sessions]
         if not existing_sessions:
@@ -552,6 +577,8 @@ class App(tk.Frame):
                         session_id = values[0]
                         self.treeview.delete(item)
                         self.remove_session_json(session_id)
+                        self.sort_sessions()
+                        self.update_treeview()
 
         menu = tk.Menu(self.treeview, tearoff=False)
         menu.add_command(label="Restart", command=restart_session)
@@ -836,7 +863,6 @@ class App(tk.Frame):
 
         self.notebook.insert(insert_index, new_session, text=title)
         self.notebook.select(insert_index)
-        self.update()
 
     def on_double_click(app):
         selected_item = app.listener_table.selection()
