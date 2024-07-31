@@ -9,6 +9,7 @@ import sys
 import json
 import tkinter as tk
 from tkinter import ttk
+from modules import dialog
 
 def on_combobox_focus(event):
     event.widget.selection_clear()
@@ -51,6 +52,7 @@ def set_proxy(app):
             app.proxy_status = tail_entry.get() == "Enabled"
             save_proxy_settings(tail_entry.get(), params_entry.get(), method_combobox.get())
             listener_window.destroy()
+            dialog.proxy_success(app)
 
     def on_enter_key(event):
         get_params_and_generate()

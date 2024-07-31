@@ -9,6 +9,7 @@ import webbrowser
 import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
+from modules import dialog
 
 def callback(event):
     webbrowser.open_new("https://darkbyte.net")
@@ -88,3 +89,4 @@ def save_and_close(settings_window, selected_value, app):
         json.dump(data, json_file, indent=4)
 
     settings_window.destroy()
+    dialog.settings_success(app)

@@ -12,7 +12,7 @@ import pexpect
 import tkinter as tk
 from tkinter import ttk
 from threading import Thread
-from modules import custom
+from modules import custom, dialog
 from modules.session import Session
 from modules.chat import TeamChatTab
 from modules.helper import command_help
@@ -157,7 +157,7 @@ def read_output_dnscat2(session_data, command):
     output = re.sub(r'bash .*?>', '', output)
     output = re.sub(r'cmd .*?>', '', output)
     output = re.sub(r'powershell .*?>', '', output)
-    output = re.sub(r'PS .*?>', '', output)
+    output = re.sub(r'.*?S .*?> ', '', output)
     output = re.sub(r'dnscat2>', '', output)
     output = re.sub(r'unnamed .*?>', '', output)
     output = re.sub(r'POTENTIAL CACHE HIT', '', output)
@@ -335,7 +335,7 @@ def execute_command(app, event):
             current_tab_title = app.notebook.tab(app.notebook.select(), "text")
      
             if current_tab_title in ["Listeners"]:
-                if app.confirm_dialog() == "yes":
+                if dialog.confirm_dialog(app) == "yes":
                     pass
 
             if current_tab_title in ["Event Viewer"]:

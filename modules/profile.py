@@ -11,6 +11,7 @@ import datetime
 import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
+from modules import dialog
 
 def on_combobox_focus(event):
     event.widget.selection_clear()
@@ -117,7 +118,7 @@ def import_profile(app):
 
 def delete_profile(app):
     profiles_path = "profiles"
-    if app.confirm_dialog() == "yes":   
+    if dialog.confirm_dialog(app) == "yes":   
         if os.path.exists(profiles_path) and os.path.isdir(profiles_path):
             try:
                 for folder_name in os.listdir(profiles_path):
@@ -127,7 +128,7 @@ def delete_profile(app):
             except:
                 pass
     
-        app.profile_deleted_success()
+        dialog.profile_deleted_success(app)
 
 def save_profile(settings_window, name_entry, app):
     if name_entry.get():
@@ -148,11 +149,11 @@ def save_profile(settings_window, name_entry, app):
                 pass
 
         settings_window.destroy()
-        app.profile_saved_success()
+        dialog.profile_saved_success(app)
 
 def load_and_close(settings_window, selected_value, app):
     if selected_value.get() != str("No profiles found"):
-        if app.confirm_dialog() == "yes":
+        if dialog.confirm_dialog(app) == "yes":
             settings_window.destroy()
             app.remove_data()
             profile_name = selected_value.get()

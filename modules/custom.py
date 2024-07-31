@@ -12,10 +12,11 @@ import json
 import tkinter as tk
 from tkinter import ttk
 import importlib.util
+from modules import dialog
 
 def load_custom_modules(app, reload=False):
     if reload:
-        app.reload_success()
+        dialog.reload_success(app)
     custom_dir = "custom"
     output_file = "data/modules.json"
     os.makedirs(os.path.dirname(output_file), exist_ok=True)

@@ -19,7 +19,9 @@ from modules.listeners import edit_listener
 from modules.controller import reload_listener
 from modules.widgets import setup_widgets
 from modules.widgets import DraggableTabsNotebook
-from modules import profile, updater, settings, about, delivery, listeners, controller, payloads, tails, reporter, chat, custom, proxy, modules
+from modules import profile, updater, settings, about, delivery
+from modules import listeners, controller, payloads, tails, reporter
+from modules import chat, custom, proxy, modules, dialog
 
 def typing(text):
     for character in text:
@@ -322,15 +324,15 @@ class App(tk.Frame):
             self.treeview_state[item_id] = state
 
     def update_treeview(self):
-        previous_tags = {}
+        previous_items = {}
         for item in self.treeview.get_children():
             values = self.treeview.item(item, "values")
             key = (values[1], values[2], values[7], values[8])
             tags = self.treeview.item(item, "tags")
-            previous_tags[key] = tags
+            previous_items[key] = (item, values, tags)
 
         for item in self.treeview.get_children():
-            self.treeview.delete(item)
+            self.treeview.detach(item)
 
         try:
             with open('data/sessions.json', 'r') as f:
@@ -340,11 +342,18 @@ class App(tk.Frame):
 
         for session in sessions_data:
             key = (session["User"], session["Hostname"], session["Listener"], session["Tail"])
-            tags = previous_tags.get(key, ('enabled',))
-            self.treeview.insert('', 'end', values=(
-                session["Session"], session["User"], session["Hostname"], session["IP Address"],
-                session["Process"], session["PID"], session["Arch"], session["Listener"], session["Tail"]
-            ), tags=tags)
+            if key in previous_items:
+                item_id, values, tags = previous_items[key]
+                self.treeview.move(item_id, '', 'end')
+                self.treeview.item(item_id, values=(
+                    session["Session"], session["User"], session["Hostname"], session["IP Address"],
+                    session["Process"], session["PID"], session["Arch"], session["Listener"], session["Tail"]
+                ), tags=tags)
+            else:
+                self.treeview.insert('', 'end', values=(
+                    session["Session"], session["User"], session["Hostname"], session["IP Address"],
+                    session["Process"], session["PID"], session["Arch"], session["Listener"], session["Tail"]
+                ), tags=('enabled',))
 
     def count_session(self):
         existing_sessions = [int(session.split()[1]) for session in self.saved_sessions]
@@ -493,7 +502,7 @@ class App(tk.Frame):
             pass
 
     def clear_text(self):
-        if self.confirm_dialog() == "yes":
+        if dialog.confirm_dialog(app) == "yes":
             self.remove_data()
 
     def on_entry_focus_in(self, event):
@@ -562,7 +571,7 @@ class App(tk.Frame):
         self.treeview.selection_set(item)
 
         def kill_session():
-            if self.confirm_dialog() == "yes":
+            if dialog.confirm_dialog(app) == "yes":
                 self.treeview.item(item, tags=('disabled'))
 
         def restart_session():
@@ -570,7 +579,7 @@ class App(tk.Frame):
             self.treeview.item(item, tags=('enabled'))
 
         def confirm_remove():
-            if self.confirm_dialog() == "yes":
+            if dialog.confirm_dialog(app) == "yes":
                 if self.treeview.exists(item):
                     values = self.treeview.item(item, "values")
                     if values:
@@ -603,13 +612,13 @@ class App(tk.Frame):
             self.listener_table.item(selected_item, tags=('enabled',))
         
         elif action == "Disable":
-            if self.confirm_dialog() == "yes":
+            if dialog.confirm_dialog(app) == "yes":
                 controller.kill_listeners(self, listener_details)
                 app.listener_table.tag_configure("disabled", foreground="gray")
                 app.listener_table.item(selected_item, tags=('disabled',))
 
         elif action == "Remove":
-            if self.confirm_dialog() == "yes":
+            if dialog.confirm_dialog(app) == "yes":
                 controller.kill_listeners(self, listener_details)
                 self.remove_listener_json(listener_details)
                 self.listener_table.delete(selected_item)
@@ -628,192 +637,9 @@ class App(tk.Frame):
         menu.add_command(label="Remove", command=lambda: self.confirm_remove("Remove"))
         menu.tk_popup(event.x_root, event.y_root)
 
-    def report_deleted_success(self):
-        dialog = tk.Toplevel(self)
-        dialog.title("Success")
-        dialog.focus_force()
-
-        label = ttk.Label(dialog, text="All reports have been deleted!")
-        label.pack(padx=20, pady=20)
-
-        button_frame = tk.Frame(dialog)
-        button_frame.pack(padx=20, pady=10)
-
-        def on_enter_key(event):
-            dialog.destroy()
-
-        dialog.bind("<Return>", on_enter_key)
-
-        def on_escape_key(event):
-            dialog.destroy()
-
-        dialog.bind("<Escape>", on_escape_key)
-
-        yes_button = ttk.Button(button_frame, text="Close", command=lambda: dialog.destroy())
-        yes_button.pack(side=tk.LEFT, padx=5, pady=(0, 10))
-
-    def profile_deleted_success(self):
-        dialog = tk.Toplevel(self)
-        dialog.title("Success")
-        dialog.focus_force()
-
-        label = ttk.Label(dialog, text="All profiles have been deleted!")
-        label.pack(padx=20, pady=20)
-
-        button_frame = tk.Frame(dialog)
-        button_frame.pack(padx=20, pady=10)
-
-        def on_enter_key(event):
-            dialog.destroy()
-
-        dialog.bind("<Return>", on_enter_key)
-
-        def on_escape_key(event):
-            dialog.destroy()
-
-        dialog.bind("<Escape>", on_escape_key)
-
-        yes_button = ttk.Button(button_frame, text="Close", command=lambda: dialog.destroy())
-        yes_button.pack(side=tk.LEFT, padx=5, pady=(0, 10))
-
-    def project_saved_success(self):
-        dialog = tk.Toplevel(self)
-        dialog.title("Success")
-        dialog.focus_force()
-
-        label = ttk.Label(dialog, text="Report saved successfully!")
-        label.pack(padx=20, pady=20)
-
-        button_frame = tk.Frame(dialog)
-        button_frame.pack(padx=20, pady=10)
-
-        def on_enter_key(event):
-            dialog.destroy()
-
-        dialog.bind("<Return>", on_enter_key)
-
-        def on_escape_key(event):
-            dialog.destroy()
-
-        dialog.bind("<Escape>", on_escape_key)
-
-        yes_button = ttk.Button(button_frame, text="Close", command=lambda: dialog.destroy())
-        yes_button.pack(side=tk.LEFT, padx=5, pady=(0, 10))
-
-    def profile_saved_success(self):
-        dialog = tk.Toplevel(self)
-        dialog.title("Success")
-        dialog.focus_force()
-
-        label = ttk.Label(dialog, text="Profile saved successfully!")
-        label.pack(padx=20, pady=20)
-
-        button_frame = tk.Frame(dialog)
-        button_frame.pack(padx=20, pady=10)
-
-        def on_enter_key(event):
-            dialog.destroy()
-
-        dialog.bind("<Return>", on_enter_key)
-
-        def on_escape_key(event):
-            dialog.destroy()
-
-        dialog.bind("<Escape>", on_escape_key)
-
-        yes_button = ttk.Button(button_frame, text="Close", command=lambda: dialog.destroy())
-        yes_button.pack(side=tk.LEFT, padx=5, pady=(0, 10))
-
-    def generate_success(self):
-        dialog = tk.Toplevel(self)
-        dialog.title("Success")
-        dialog.focus_force()
-
-        os.system("chmod +x payloads -R")
-        label = ttk.Label(dialog, text="Payload generated successfully!")
-        label.pack(padx=20, pady=20)
-
-        button_frame = tk.Frame(dialog)
-        button_frame.pack(padx=20, pady=10)
-
-        def on_enter_key(event):
-            dialog.destroy()
-
-        dialog.bind("<Return>", on_enter_key)
-
-        def on_escape_key(event):
-            dialog.destroy()
-
-        dialog.bind("<Escape>", on_escape_key)
-
-        yes_button = ttk.Button(button_frame, text="Close", command=lambda: dialog.destroy())
-        yes_button.pack(side=tk.LEFT, padx=5, pady=(0, 10))
-
-    def reload_success(self):
-        dialog = tk.Toplevel(self)
-        dialog.title("Success")
-        dialog.focus_force()
-
-        os.system("chmod +x payloads -R")
-        label = ttk.Label(dialog, text="Modules reloaded successfully!")
-        label.pack(padx=20, pady=20)
-
-        button_frame = tk.Frame(dialog)
-        button_frame.pack(padx=20, pady=10)
-
-        def on_enter_key(event):
-            dialog.destroy()
-
-        dialog.bind("<Return>", on_enter_key)
-
-        def on_escape_key(event):
-            dialog.destroy()
-
-        dialog.bind("<Escape>", on_escape_key)
-
-        yes_button = ttk.Button(button_frame, text="Close", command=lambda: dialog.destroy())
-        yes_button.pack(side=tk.LEFT, padx=5, pady=(0, 10))
-
-    def confirm_dialog(self):
-        dialog = tk.Toplevel(self)
-        dialog.title("Confirmation")
-        dialog.focus_force()
-
-        label = ttk.Label(dialog, text="Are you sure?")
-        label.pack(padx=20, pady=20)
-
-        button_frame = tk.Frame(dialog)
-        button_frame.pack(padx=20, pady=10)
-
-        def set_result(value):
-            self.result = value
-            dialog.destroy()
-
-        def on_enter_key(event):
-            set_result("yes")
-
-        dialog.bind("<Return>", on_enter_key)
-
-        def on_escape_key(event):
-            set_result("no")
-
-        dialog.bind("<Escape>", on_escape_key)
-
-        yes_button = ttk.Button(button_frame, text="Yes", command=lambda: set_result("yes"))
-        yes_button.pack(side=tk.LEFT, padx=5, pady=(0, 10))
-
-        no_button = ttk.Button(button_frame, text="No", command=lambda: set_result("no"))
-        no_button.pack(side=tk.LEFT, padx=5, pady=(0, 10))
-
-        self.result = None
-        
-        while self.result not in ["yes", "no"]:
-            self.update()
-
-        return self.result
 
     def confirm_and_quit(self):
-        if self.confirm_dialog() == "yes":
+        if dialog.confirm_dialog(self) == "yes":
             if not self.fast_mode:
                 print(colored("\n[!] Exiting.. Goodbye! :)\n", "red"))
             self.destroy()
@@ -875,7 +701,7 @@ class App(tk.Frame):
         self.notebook.forget("current")
 
     def clear_data(self):
-        if self.confirm_dialog() == "yes":
+        if dialog.confirm_dialog(self) == "yes":
             self.remove_data()
 
     def remove_data(self):

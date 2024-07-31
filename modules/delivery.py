@@ -19,6 +19,7 @@ import http.server
 import tkinter as tk
 from tkinter import ttk
 from pathlib import Path
+from modules import dialog
 from impacket import smbserver
 from pyftpdlib.authorizers import DummyAuthorizer
 from pyftpdlib.handlers import FTPHandler
@@ -491,7 +492,7 @@ def stop_webserver(app):
 
 def kill_multiserver(app):
     if app.multi_delivery_process is not None:
-        if app.confirm_dialog() == "yes":
+        if dialog.confirm_dialog(app) == "yes":
             try:
                 app.multi_delivery_process.terminate()
             except:
@@ -504,7 +505,7 @@ def kill_multiserver(app):
 
 def kill_webserver(app):
     if app.web_delivery_process is not None and app.web_delivery_process.poll() is None:
-        if app.confirm_dialog() == "yes":
+        if dialog.confirm_dialog(app) == "yes":
             app.web_delivery_process.terminate()
             app.web_delivery_process = None  
         

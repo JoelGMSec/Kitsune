@@ -13,6 +13,7 @@ import subprocess
 import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
+from modules import dialog
 
 def on_combobox_focus(event):
     event.widget.selection_clear()
@@ -92,11 +93,11 @@ def save_project(settings_window, name_entry, app):
             pass
 
         settings_window.destroy()
-        app.project_saved_success()
+        dialog.project_saved_success(app)
 
 def clear_logs(app):
     profiles_path = "reports"
-    if app.confirm_dialog() == "yes":
+    if dialog.confirm_dialog(app) == "yes":
         if os.path.exists(profiles_path) and os.path.isdir(profiles_path):
             try:
                 for folder_name in os.listdir(profiles_path):
@@ -105,7 +106,7 @@ def clear_logs(app):
                         shutil.rmtree(folder_path)
                     elif os.path.isfile(folder_path):
                         os.remove(folder_path)
-                app.report_deleted_success()
+                dialog.report_deleted_success(app)
 
             except:
                 pass

