@@ -15,7 +15,9 @@ from tkinter import ttk
 from neotermcolor import colored
 from modules.session import Session
 from modules.chat import TeamChatTab
-from modules import command, tails, custom
+from modules import about, delivery, payloads, reporter
+from modules import updater, profile, settings, modules
+from modules import command, tails, custom, proxy, listeners
 
 def typing(text):
     for character in text:
@@ -123,7 +125,7 @@ def setup_widgets(root, app):
     menu_bar = tk.Menu(root, bd=0, relief="flat", tearoff=0)
     root.config(menu=menu_bar)
     home_menu = tk.Menu(menu_bar)
-    home_menu.add_command(label="Settings", command=app.open_settings)
+    home_menu.add_command(label="Settings", command=lambda: settings.open_settings(app))
     theme_submenu = tk.Menu(home_menu)
     theme_var = app.theme_var.get()
 
@@ -133,8 +135,8 @@ def setup_widgets(root, app):
     theme_submenu.add_radiobutton(label="Red", variable=theme_var, value="Red", command=lambda: app.change_theme("Red"), selectcolor="white")
 
     home_menu.add_cascade(label="Change Theme", menu=theme_submenu)
-    home_menu.add_command(label="Proxification", command=lambda: app.set_proxy())
-    home_menu.add_command(label="Update Tails", command=lambda: app.update_tails())
+    home_menu.add_command(label="Proxification", command=lambda: proxy.set_proxy(app))
+    home_menu.add_command(label="Update Tails", command=lambda: tails.update_tails(app))
     home_menu.add_command(label="Exit", command=app.confirm_and_quit)
     menu_bar.add_cascade(label=" Kitsune ", menu=home_menu)
 
@@ -149,49 +151,49 @@ def setup_widgets(root, app):
 
     view_menu = tk.Menu(menu_bar)
     view_menu.add_command(label="Event Viewer", command=app.restore_event_viewer)
-    view_menu.add_command(label="Listeners", command=app.show_listeners)
-    view_menu.add_command(label="Multi Server Log", command=app.open_multiserver_log_tab)
+    view_menu.add_command(label="Listeners", command=lambda: listeners.show_listeners(app))
+    view_menu.add_command(label="Multi Server Log", command=lambda: delivery.open_multiserver_log_tab(app))
     view_menu.add_command(label="Team Chat", command=app.restore_team_chat)
-    view_menu.add_command(label="Web Server Log", command=app.open_webserver_log_tab)
+    view_menu.add_command(label="Web Server Log", command=lambda: delivery.open_webserver_log_tab(app))
     menu_bar.add_cascade(label=" View ", menu=view_menu)
 
     payloads_menu = tk.Menu(menu_bar)
-    payloads_menu.add_command(label="Linux Bind Shell", command=app.pwncat_payload)
-    payloads_menu.add_command(label="Linux Reverse Shell", command=app.linux_payload)
-    payloads_menu.add_command(label="Web Shell (Bind)", command=app.webshell_payload)
-    payloads_menu.add_command(label="Web Shell (Generate)", command=app.webshell_generate)
-    payloads_menu.add_command(label="Windows Bind Shell", command=app.netexec_payload)
-    payloads_menu.add_command(label="Windows Reverse Shell", command=app.windows_payload)
+    payloads_menu.add_command(label="Linux Bind Shell", command=lambda: payloads.pwncat_payload(app))
+    payloads_menu.add_command(label="Linux Reverse Shell", command=lambda: payloads.linux_payload(app))
+    payloads_menu.add_command(label="Web Shell (Bind)", command=lambda: payloads.webshell_payload(app))
+    payloads_menu.add_command(label="Web Shell (Generate)", command=lambda: payloads.webshell_generate(app))
+    payloads_menu.add_command(label="Windows Bind Shell", command=lambda: payloads.netexec_payload(app))
+    payloads_menu.add_command(label="Windows Reverse Shell", command=lambda: payloads.windows_payload(app))
     menu_bar.add_cascade(label=" Payloads ", menu=payloads_menu)
 
     modules_menu = tk.Menu(menu_bar)
     modules_menu.add_command(label="Module Console", command=lambda: custom.show_current_modules(app, False))
     modules_menu.add_command(label="Reload Modules", command=lambda: custom.show_current_modules(app, True))
-    modules_menu.add_command(label="Update Modules", command=lambda: app.update_modules())
+    modules_menu.add_command(label="Update Modules", command=lambda: modules.update_modules(app))
     menu_bar.add_cascade(label=" Modules ", menu=modules_menu)
 
     attacks_menu = tk.Menu(menu_bar)
-    attacks_menu.add_command(label="Multi Server Delivery", command=app.multi_delivery)
-    attacks_menu.add_command(label="Scripted Web Delivery", command=app.web_delivery)
-    attacks_menu.add_command(label="Stop Multi Server", command=app.kill_multiserver)
-    attacks_menu.add_command(label="Stop Web Server", command=app.kill_webserver)
+    attacks_menu.add_command(label="Multi Server Delivery", command=lambda: delivery.multi_delivery(app))
+    attacks_menu.add_command(label="Scripted Web Delivery", command=lambda: delivery.web_delivery(app))
+    attacks_menu.add_command(label="Stop Multi Server", command=lambda: delivery.kill_multiserver(app))
+    attacks_menu.add_command(label="Stop Web Server", command=lambda: delivery.kill_webserver(app))
     menu_bar.add_cascade(label=" Delivery ", menu=attacks_menu)
 
     profile_menu = tk.Menu(menu_bar)
-    profile_menu.add_command(label="Load Profile", command=app.import_profile)
-    profile_menu.add_command(label="Save Profile", command=app.export_profile)
-    profile_menu.add_command(label="Delete Profiles", command=app.delete_profile)
+    profile_menu.add_command(label="Load Profile", command=lambda: profile.import_profile(app))
+    profile_menu.add_command(label="Save Profile", command=lambda: profile.export_profile(app))
+    profile_menu.add_command(label="Delete Profiles", command=lambda: profile.delete_profile(app))
     menu_bar.add_cascade(label=" Profile ", menu=profile_menu)
 
     reporting_menu = tk.Menu(menu_bar)
-    reporting_menu.add_command(label="Clear Logs", command=app.clear_logs)
-    reporting_menu.add_command(label="Export Logs", command=app.export_logs)
+    reporting_menu.add_command(label="Clear Logs", command=lambda: reporter.clear_logs(app))
+    reporting_menu.add_command(label="Export Logs", command=lambda: reporter.export_logs(app))
     reporting_menu.add_command(label="Reset Data", command=app.clear_data)
     menu_bar.add_cascade(label="Reporting", menu=reporting_menu)
 
     Help_menu = tk.Menu(menu_bar)
-    Help_menu.add_command(label="About", command=app.about_window)
-    Help_menu.add_command(label="Updates", command=app.check_updates)
+    Help_menu.add_command(label="About", command=lambda: about.about_window(app))
+    Help_menu.add_command(label="Updates", command=lambda: updater.check_updates(app))
     Help_menu.add_command(label="Wiki", command=lambda: webbrowser.open_new("https://github.com/JoelGMSec/Kitsune"))
     menu_bar.add_cascade(label=" Help ", menu=Help_menu)
 

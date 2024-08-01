@@ -19,8 +19,7 @@ from modules.listeners import edit_listener
 from modules.controller import reload_listener
 from modules.widgets import setup_widgets
 from modules.widgets import DraggableTabsNotebook
-from modules import profile, updater, settings, about, delivery
-from modules import listeners, controller, payloads, tails, reporter
+from modules import delivery, listeners, controller
 from modules import chat, custom, proxy, modules, dialog
 
 def typing(text):
@@ -72,7 +71,7 @@ class App(tk.Frame):
         self.history_index = len(self.command_history)
 
         self.treeview_state = {}
-        self.load_proxy_settings()
+        proxy.load_proxy_settings(self)
         setup_widgets(parent, self)
         self.update_event_viewer()
 
@@ -99,7 +98,7 @@ class App(tk.Frame):
             self.username = "root"
 
         chat.start_server(self)
-        self.load_custom_modules()
+        custom.load_custom_modules(self)
         self.client_socket = None
         self.team_chat_tab = chat.TeamChatTab(self.notebook)
         self.team_chat_tab.connect_to_server(self.username, "localhost")
@@ -119,88 +118,19 @@ class App(tk.Frame):
                 self.saved_value = settings.get("nekomancer", "All Sessions")
  
         except:
-            with open(settings_path, "w") as json_file:
+            with open("data/settings.json", "w") as json_file:
                 json.dump(default_settings, json_file, indent=4)
             self.theme_var = tk.StringVar(value="Blue")
             self.saved_value = "All Sessions"
 
-    def set_proxy(self):
-        return proxy.set_proxy(self)
-
-    def load_proxy_settings(self):
-        return proxy.load_proxy_settings(self)
-
-    def check_updates(self):
-        return updater.check_updates(self)
-
-    def load_custom_modules(self):
-        return custom.load_custom_modules(self)
-
-    def export_profile(self):
-        return profile.export_profile(self)
-
-    def open_settings(self):
-        return settings.open_settings(self)
-
-    def update_modules(self):
-        return modules.update_modules(self)
-
-    def update_tails(self):
-        return tails.update_tails(self)
-
-    def about_window(self):
-        return about.about_window(self)
-
-    def multi_delivery(self):
-        return delivery.multi_delivery(self)
-
-    def web_delivery(self):
-        return delivery.web_delivery(self)
-
     def listener_window(self):
         return listeners.listener_window(self)
-
-    def show_listeners(self):
-        return listeners.show_listeners(self)
 
     def add_listeners(self):
         return listeners.add_listeners(self)
 
     def load_listeners(self):
         return listeners.load_listeners(self)
-
-    def open_multiserver_log_tab(self):
-        return delivery.open_multiserver_log_tab(self)
-
-    def open_webserver_log_tab(self):
-        return delivery.open_webserver_log_tab(self)
-
-    def open_multiserver_log_tab(self):
-        return delivery.open_multiserver_log_tab(self)
-
-    def kill_webserver(self):
-        return delivery.kill_webserver(self)
-
-    def kill_multiserver(self):
-        return delivery.kill_multiserver(self)
-
-    def windows_payload(self):
-        return payloads.windows_payload(self)
-
-    def linux_payload(self):
-        return payloads.linux_payload(self)
-
-    def webshell_payload(self):
-        return payloads.webshell_payload(self)
-
-    def webshell_generate(self):
-        return payloads.webshell_generate(self)
-
-    def pwncat_payload(self):
-        return payloads.pwncat_payload(self)
-
-    def netexec_payload(self):
-        return payloads.netexec_payload(self)
 
     def check_repos(self):
         tails_dir = "tails"
@@ -815,22 +745,6 @@ class App(tk.Frame):
                     f.seek(0)
                     json.dump(data, f, indent=4)
                     f.truncate()
-
-
-    def export_profile(self):
-        profile.export_profile(app)
-
-    def import_profile(self):
-        profile.import_profile(app)
-
-    def delete_profile(self):
-        profile.delete_profile(app)
-
-    def export_logs(self):
-        reporter.export_logs(app)
-
-    def clear_logs(self):
-        reporter.clear_logs(app)
 
     def on_close(self):
         self.confirm_and_quit()
