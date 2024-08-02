@@ -25,14 +25,20 @@ def load_settings():
         pass
         
 def open_settings(app):
+    try:
+        if app.settings_window and tk.Toplevel.winfo_exists(app.settings_window):
+            app.settings_window.focus_force()
+            return
+    except:
+        pass
+
     settings = load_settings()  
+    app.settings_window = tk.Toplevel(app)
+    app.settings_window.geometry("525x255")
+    app.settings_window.title("Settings")
+    app.settings_window.focus_force()
 
-    settings_window = tk.Toplevel(app)
-    settings_window.geometry("525x255")
-    settings_window.title("Settings")
-    settings_window.focus_force()
-
-    image_frame = tk.Frame(settings_window)
+    image_frame = tk.Frame(app.settings_window)
     image_frame.grid(row=0, column=1, padx=(10, 0), pady=20)
 
     image = Image.open("./themes/images/Nekomancer.png")
@@ -44,7 +50,7 @@ def open_settings(app):
     image_label.image = photo  
     image_label.grid(row=0, column=0)
 
-    settings_frame = tk.Frame(settings_window)
+    settings_frame = tk.Frame(app.settings_window)
     settings_frame.grid(row=0, column=0, padx=(15, 0), pady=10, sticky="nsew")
 
     nekomancer_label = tk.Label(settings_frame, text="Auto-Recover Connections")
@@ -63,19 +69,19 @@ def open_settings(app):
     nekomancer_combobox.bind("<FocusIn>", on_combobox_focus)
 
     def on_enter_key(event):
-        save_and_close(settings_window, selected_value, app)
+        save_and_close(app, selected_value)
 
-    settings_window.bind("<Return>", on_enter_key)
+    app.settings_window.bind("<Return>", on_enter_key)
 
     def on_escape_key(event):
-        settings_window.destroy()
+        app.settings_window.destroy()
 
-    settings_window.bind("<Escape>", on_escape_key)
+    app.settings_window.bind("<Escape>", on_escape_key)
 
-    save_button = ttk.Button(settings_frame, text="Save", command=lambda: save_and_close(settings_window, selected_value, app))
+    save_button = ttk.Button(settings_frame, text="Save", command=lambda: save_and_close(app, selected_value))
     save_button.grid(row=3, column=0, pady=(35, 10))  
 
-def save_and_close(settings_window, selected_value, app):
+def save_and_close(app, selected_value):
     app.saved_value = selected_value.get()  
 
     data = {
@@ -88,5 +94,5 @@ def save_and_close(settings_window, selected_value, app):
     with open("data/settings.json", "w") as json_file:
         json.dump(data, json_file, indent=4)
 
-    settings_window.destroy()
+    app.settings_window.destroy()
     dialog.settings_success(app)

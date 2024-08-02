@@ -19,12 +19,19 @@ def on_combobox_focus(event):
     event.widget.selection_clear()
 
 def export_logs(app):
-    settings_window = tk.Toplevel(app)
-    settings_window.geometry("525x255")
-    settings_window.title("Export Logs")
-    settings_window.focus_force()
+    try:
+        if app.report_window and tk.Toplevel.winfo_exists(app.report_window):
+            app.report_window.focus_force()
+            return
+    except:
+        pass
 
-    image_frame = tk.Frame(settings_window)
+    app.report_window = tk.Toplevel(app)
+    app.report_window.geometry("525x255")
+    app.report_window.title("Export Logs")
+    app.report_window.focus_force()
+
+    image_frame = tk.Frame(app.report_window)
     image_frame.grid(row=0, column=1, padx=(10, 0), pady=20)
 
     image = Image.open("./themes/images/Logs.png")
@@ -36,7 +43,7 @@ def export_logs(app):
     image_label.image = photo  
     image_label.grid(row=0, column=0)
 
-    settings_frame = tk.Frame(settings_window)
+    settings_frame = tk.Frame(app.report_window)
     settings_frame.grid(row=0, column=0, padx=(15, 0), pady=10, sticky="nsew")
 
     nekomancer_label = tk.Label(settings_frame, text="Enter project name")
@@ -51,19 +58,19 @@ def export_logs(app):
     name_entry.grid(row=2, column=0, padx=(15, 0), pady=(20, 0))
 
     def on_enter_key(event):
-        save_project(settings_window, name_entry, app)
+        save_project(app, name_entry)
 
-    settings_window.bind("<Return>", on_enter_key)
+    app.report_window.bind("<Return>", on_enter_key)
 
     def on_escape_key(event):
-        settings_window.destroy()
+        app.report_window.destroy()
 
-    settings_window.bind("<Escape>", on_escape_key)
+    app.report_window.bind("<Escape>", on_escape_key)
 
-    save_button = ttk.Button(settings_frame, text="Save", command=lambda: save_project(settings_window, name_entry, app))
+    save_button = ttk.Button(settings_frame, text="Save", command=lambda: save_project(app, name_entry))
     save_button.grid(row=3, column=0, pady=(35, 10))  
 
-def save_project(settings_window, name_entry, app):
+def save_project(app, name_entry):
     if name_entry.get():
         profile_name = name_entry.get().strip()
         if profile_name:  
@@ -92,7 +99,7 @@ def save_project(settings_window, name_entry, app):
         except:
             pass
 
-        settings_window.destroy()
+        app.report_window.destroy()
         dialog.project_saved_success(app)
 
 def clear_logs(app):

@@ -17,12 +17,19 @@ def on_combobox_focus(event):
     event.widget.selection_clear()
 
 def export_profile(app):
-    settings_window = tk.Toplevel(app)
-    settings_window.geometry("525x255")
-    settings_window.title("Save Profile")
-    settings_window.focus_force()
+    try:
+        if app.export_window and tk.Toplevel.winfo_exists(app.export_window):
+            app.export_window.focus_force()
+            return
+    except:
+        pass
 
-    image_frame = tk.Frame(settings_window)
+    app.export_window = tk.Toplevel(app)
+    app.export_window.geometry("525x255")
+    app.export_window.title("Save Profile")
+    app.export_window.focus_force()
+
+    image_frame = tk.Frame(app.export_window)
     image_frame.grid(row=0, column=1, padx=(10, 0), pady=20)
 
     image = Image.open("./themes/images/Floppy.png")
@@ -34,40 +41,47 @@ def export_profile(app):
     image_label.image = photo  
     image_label.grid(row=0, column=0)
 
-    settings_frame = tk.Frame(settings_window)
-    settings_frame.grid(row=0, column=0, padx=(15, 0), pady=10, sticky="nsew")
+    export_frame = tk.Frame(app.export_window)
+    export_frame.grid(row=0, column=0, padx=(15, 0), pady=10, sticky="nsew")
 
-    nekomancer_label = tk.Label(settings_frame, text="Enter profile name")
+    nekomancer_label = tk.Label(export_frame, text="Enter profile name")
     nekomancer_label.grid(row=0, column=0, padx=(15, 0), pady=(20, 0))
 
-    name_label = tk.Label(settings_frame, text="*Overwrited if exists*", fg="#00FF99")
+    name_label = tk.Label(export_frame, text="*Overwrited if exists*", fg="#00FF99")
     name_label.grid(row=1, column=0, padx=(15, 0), pady=(0, 5))
 
     selected_value = tk.StringVar(value="")  
 
-    name_entry = ttk.Entry(settings_frame, textvariable=tk.StringVar())
+    name_entry = ttk.Entry(export_frame, textvariable=tk.StringVar())
     name_entry.grid(row=2, column=0, padx=(15, 0), pady=(20, 0))
 
     def on_enter_key(event):
-        save_profile(settings_window, name_entry, app)
+        save_profile(app, name_entry)
 
-    settings_window.bind("<Return>", on_enter_key)
+    app.export_window.bind("<Return>", on_enter_key)
 
     def on_escape_key(event):
-        settings_window.destroy()
+        app.export_window.destroy()
 
-    settings_window.bind("<Escape>", on_escape_key)
+    app.export_window.bind("<Escape>", on_escape_key)
 
-    save_button = ttk.Button(settings_frame, text="Save", command=lambda: save_profile(settings_window, name_entry, app))
+    save_button = ttk.Button(export_frame, text="Save", command=lambda: save_profile(app, name_entry))
     save_button.grid(row=3, column=0, pady=(35, 10))  
 
 def import_profile(app):
-    settings_window = tk.Toplevel(app)
-    settings_window.geometry("525x255")
-    settings_window.title("Load Profile")
-    settings_window.focus_force()
+    try:
+        if app.import_window and tk.Toplevel.winfo_exists(app.import_window):
+            app.import_window.focus_force()
+            return
+    except:
+        pass
 
-    image_frame = tk.Frame(settings_window)
+    app.import_window = tk.Toplevel(app)
+    app.import_window.geometry("525x255")
+    app.import_window.title("Load Profile")
+    app.import_window.focus_force()
+
+    image_frame = tk.Frame(app.import_window)
     image_frame.grid(row=0, column=0, padx=(10, 0), pady=20)
 
     image = Image.open("./themes/images/Folder.png")
@@ -79,7 +93,7 @@ def import_profile(app):
     image_label.image = photo  
     image_label.grid(row=0, column=0)
 
-    settings_frame = tk.Frame(settings_window)
+    settings_frame = tk.Frame(app.import_window)
     settings_frame.grid(row=0, column=1, padx=(5, 0), pady=10, sticky="nsew")
 
     nekomancer_label = tk.Label(settings_frame, text="Select profile name")
@@ -104,16 +118,16 @@ def import_profile(app):
     nekomancer_combobox.bind("<FocusIn>", on_combobox_focus)
 
     def on_enter_key(event):
-        load_and_close(settings_window, selected_value, app)
+        load_and_close(app, selected_value)
 
-    settings_window.bind("<Return>", on_enter_key)
+    app.import_window.bind("<Return>", on_enter_key)
 
     def on_escape_key(event):
-        settings_window.destroy()
+        app.import_window.destroy()
 
-    settings_window.bind("<Escape>", on_escape_key)
+    app.import_window.bind("<Escape>", on_escape_key)
 
-    save_button = ttk.Button(settings_frame, text="Load", command=lambda: load_and_close(settings_window, selected_value, app))
+    save_button = ttk.Button(settings_frame, text="Load", command=lambda: load_and_close(app, selected_value))
     save_button.grid(row=3, column=1, pady=(35, 10))  
 
 def delete_profile(app):
@@ -130,7 +144,7 @@ def delete_profile(app):
     
         dialog.profile_deleted_success(app)
 
-def save_profile(settings_window, name_entry, app):
+def save_profile(app, name_entry):
     if name_entry.get():
         profile_name = name_entry.get().strip()
         if profile_name:  
@@ -148,13 +162,13 @@ def save_profile(settings_window, name_entry, app):
             except:
                 pass
 
-        settings_window.destroy()
+        app.export_window.destroy()
         dialog.profile_saved_success(app)
 
-def load_and_close(settings_window, selected_value, app):
+def load_and_close(app, selected_value):
     if selected_value.get() != str("No profiles found"):
         if dialog.confirm_dialog(app) == "yes":
-            settings_window.destroy()
+            app.import_window.destroy()
             app.remove_data()
             profile_name = selected_value.get()
             profile_path = os.path.join("profiles", profile_name)
@@ -184,4 +198,4 @@ def load_and_close(settings_window, selected_value, app):
             except:
                 pass
 
-            settings_window.destroy()
+            app.import_window.destroy()

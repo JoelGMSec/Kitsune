@@ -4,11 +4,13 @@
 #      darkbyte.net       #
 #=========================#
 
+import time
+import requests
+import subprocess
+import threading
 import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
-import requests
-import subprocess
 
 def get_local_version():
     try:
@@ -21,12 +23,19 @@ def get_local_version():
 version = get_local_version()
 
 def check_updates(app):
-    updates_window = tk.Toplevel(app)
-    updates_window.geometry("525x255")
-    updates_window.title("Updates")
-    updates_window.focus_force()
+    try:
+        if app.updates_window and tk.Toplevel.winfo_exists(app.updates_window):
+            app.updates_window.focus_force()
+            return
+    except:
+        pass
+    
+    app.updates_window = tk.Toplevel(app)
+    app.updates_window.geometry("525x255")
+    app.updates_window.title("Updates")
+    app.updates_window.focus_force()
 
-    image_frame = tk.Frame(updates_window)
+    image_frame = tk.Frame(app.updates_window)
     image_frame.grid(row=0, column=1, padx=(30, 0), pady=(20, 0))
 
     image = Image.open("./themes/images/Updates.png")
@@ -38,7 +47,7 @@ def check_updates(app):
     image_label.image = photo  
     image_label.grid(row=0, column=0)
 
-    updates_frame = tk.Frame(updates_window)
+    updates_frame = tk.Frame(app.updates_window)
     updates_frame.grid(row=0, column=0, padx=(20, 0), pady=10, sticky="nsew")
 
     updates_label = tk.Label(updates_frame, text="Checking for updates..")
@@ -52,6 +61,7 @@ def check_updates(app):
     progressbar.start()  
 
     def check_version():
+        time.sleep(1)
         try:
             response = requests.get("https://raw.githubusercontent.com/JoelGMSec/Kitsune/main/version.txt")
             response.raise_for_status()  
@@ -64,17 +74,17 @@ def check_updates(app):
         except:
             name_label.config(text="No updates found!", fg="#00AAFF")
 
-    updates_window.after(1000, check_version)
+    threading.Thread(target=check_version).start()
 
     def on_enter_key(event):
-        updates_window.destroy()
+        app.updates_window.destroy()
 
-    updates_window.bind("<Return>", on_enter_key)
+    app.updates_window.bind("<Return>", on_enter_key)
 
     def on_escape_key(event):
-        updates_window.destroy()
+        app.updates_window.destroy()
 
-    updates_window.bind("<Escape>", on_escape_key)
+    app.updates_window.bind("<Escape>", on_escape_key)
 
-    save_button = ttk.Button(updates_frame, text="Close", command=lambda: updates_window.destroy())
+    save_button = ttk.Button(updates_frame, text="Close", command=lambda: app.updates_window.destroy())
     save_button.grid(row=3, column=0, pady=(25, 0))  

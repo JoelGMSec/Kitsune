@@ -7,6 +7,7 @@
 import os
 import shutil
 import subprocess
+import threading
 import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
@@ -46,12 +47,19 @@ def clone_repos(name_label=None):
         name_label.config(text="All are up to date!", fg="#00AAFF")
 
 def update_modules(app):
-    updates_window = tk.Toplevel(app)
-    updates_window.geometry("525x255")
-    updates_window.title("Update Modules")
-    updates_window.focus_force()
+    try:
+        if app.modules_window and tk.Toplevel.winfo_exists(app.modules_window):
+            app.modules_window.focus_force()
+            return
+    except:
+        pass
+        
+    app.modules_window = tk.Toplevel(app)
+    app.modules_window.geometry("525x255")
+    app.modules_window.title("Update Modules")
+    app.modules_window.focus_force()
 
-    image_frame = tk.Frame(updates_window)
+    image_frame = tk.Frame(app.modules_window)
     image_frame.grid(row=0, column=1, padx=(20, 30), pady=(20, 0))
 
     image = Image.open("./themes/images/Modules.png")
@@ -63,7 +71,7 @@ def update_modules(app):
     image_label.image = photo  
     image_label.grid(row=0, column=0)
 
-    updates_frame = tk.Frame(updates_window)
+    updates_frame = tk.Frame(app.modules_window)
     updates_frame.grid(row=0, column=0, padx=(20, 0), pady=10, sticky="nsew")
 
     updates_label = tk.Label(updates_frame, text="Downloading modules..")
@@ -76,17 +84,20 @@ def update_modules(app):
     progressbar.grid(row=2, column=0, pady=(20, 10))
     progressbar.start()  
 
-    updates_window.after(1000, lambda: clone_repos(name_label))
+    def clone_repos_thread():
+        clone_repos(name_label)
+
+    threading.Thread(target=clone_repos_thread).start()
 
     def on_enter_key(event):
-        updates_window.destroy()
+        app.modules_window.destroy()
 
-    updates_window.bind("<Return>", on_enter_key)
+    app.modules_window.bind("<Return>", on_enter_key)
 
     def on_escape_key(event):
-        updates_window.destroy()
+        app.modules_window.destroy()
 
-    updates_window.bind("<Escape>", on_escape_key)
+    app.modules_window.bind("<Escape>", on_escape_key)
 
-    save_button = ttk.Button(updates_frame, text="Close", command=lambda: updates_window.destroy())
+    save_button = ttk.Button(updates_frame, text="Close", command=lambda: app.modules_window.destroy())
     save_button.grid(row=3, column=0, pady=(25, 0))  

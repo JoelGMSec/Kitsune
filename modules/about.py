@@ -24,12 +24,19 @@ def callback(event):
     webbrowser.open_new("https://darkbyte.net")
 
 def about_window(app):
-    about_window = tk.Toplevel(app)
-    about_window.geometry("525x255")
-    about_window.title("About")
-    about_window.focus_force()
+    try:
+        if app.about_window and tk.Toplevel.winfo_exists(app.about_window):
+            app.about_window.focus_force()
+            return
+    except:
+        pass
+
+    app.about_window = tk.Toplevel(app)
+    app.about_window.geometry("525x255")
+    app.about_window.title("About")
+    app.about_window.focus_force()
     
-    image_frame = tk.Frame(about_window)
+    image_frame = tk.Frame(app.about_window)
     image_frame.pack(side="left", padx=(10, 0), pady=10)
     
     image = Image.open("themes/images/Kitsune.png")
@@ -41,7 +48,7 @@ def about_window(app):
     image_label.image = photo  
     image_label.pack()
     
-    info_frame = tk.Frame(about_window)
+    info_frame = tk.Frame(app.about_window)
     info_frame.pack(side="right", padx=(0, 10), pady=10, fill="both")
     
     kitsune_label = tk.Label(info_frame, text="Kitsune Command & Control")
@@ -61,11 +68,11 @@ def about_window(app):
     license_label.pack(padx=(0, 10), pady=20)
 
     def on_enter_key(event):
-        about_window.destroy()
+        app.about_window.destroy()
 
-    about_window.bind("<Return>", on_enter_key)
+    app.about_window.bind("<Return>", on_enter_key)
 
     def on_escape_key(event):
-        about_window.destroy()
+        app.about_window.destroy()
 
-    about_window.bind("<Escape>", on_escape_key)
+    app.about_window.bind("<Escape>", on_escape_key)

@@ -395,32 +395,39 @@ def open_multiserver_log_tab(app):
     periodically_update_multiserver(app)
 
 def web_delivery(app):
-    delivery_window = tk.Toplevel(app)
-    delivery_window.geometry("570x330")
-    delivery_window.title("Scripted Web Delivery")
-    delivery_window.focus_force()
+    try:
+        if app.web_window and tk.Toplevel.winfo_exists(app.web_window):
+            app.web_window.focus_force()
+            return
+    except:
+        pass
 
-    white_label = ttk.Label(delivery_window, text="")
+    app.web_window = tk.Toplevel(app)
+    app.web_window.geometry("570x330")
+    app.web_window.title("Scripted Web Delivery")
+    app.web_window.focus_force()
+
+    white_label = ttk.Label(app.web_window, text="")
     white_label.grid(row=0, column=0, padx=0, pady=0)
 
-    ip_label = ttk.Label(delivery_window, text="IP Address")
+    ip_label = ttk.Label(app.web_window, text="IP Address")
     ip_label.grid(row=1, column=0, padx=0, pady=15)
 
-    ip_entry = ttk.Entry(delivery_window)
+    ip_entry = ttk.Entry(app.web_window)
     ip_entry.insert(0, "0.0.0.0")
     ip_entry.grid(row=1, column=1, padx=0, pady=15)
 
-    port_label = ttk.Label(delivery_window, text="Port")
+    port_label = ttk.Label(app.web_window, text="Port")
     port_label.grid(row=2, column=0, padx=0, pady=15)
 
-    port_entry = ttk.Entry(delivery_window)
+    port_entry = ttk.Entry(app.web_window)
     port_entry.insert(0, "80")
     port_entry.grid(row=2, column=1, padx=0, pady=15)
 
-    script_label = ttk.Label(delivery_window, text="Protocol")
+    script_label = ttk.Label(app.web_window, text="Protocol")
     script_label.grid(row=3, column=0, padx=0, pady=15)
 
-    http_combobox = ttk.Combobox(delivery_window, values=["HTTP", "HTTPS"], state="readonly")
+    http_combobox = ttk.Combobox(app.web_window, values=["HTTP", "HTTPS"], state="readonly")
     http_combobox.grid(row=3, column=1, padx=0, pady=15)
     http_combobox.current(0)
     
@@ -437,22 +444,22 @@ def web_delivery(app):
     http_combobox.bind("<FocusIn>", on_combobox_focus)
 
     def on_enter_key(event):
-        server_status(ip_entry.get(), port_entry.get(), http_combobox.get(), app, delivery_window)
+        server_status(ip_entry.get(), port_entry.get(), http_combobox.get(), app)
 
-    delivery_window.bind("<Return>", on_enter_key)
+    app.web_window.bind("<Return>", on_enter_key)
 
     def on_escape_key(event):
-        delivery_window.destroy()
+        app.web_window.destroy()
 
-    delivery_window.bind("<Escape>", on_escape_key)
+    app.web_window.bind("<Escape>", on_escape_key)
 
-    save_button = ttk.Button(delivery_window, text="Publish", command=lambda: server_status(ip_entry.get(), port_entry.get(), http_combobox.get(), app, delivery_window))
+    save_button = ttk.Button(app.web_window, text="Publish", command=lambda: server_status(ip_entry.get(), port_entry.get(), http_combobox.get(), app))
     save_button.grid(row=4, column=0, padx=50, pady=20)
 
-    cancel_button = ttk.Button(delivery_window, text="Cancel", command=delivery_window.destroy)
+    cancel_button = ttk.Button(app.web_window, text="Cancel", command=app.web_window.destroy)
     cancel_button.grid(row=4, column=1, padx=20, pady=20)
 
-def server_status(ip, port, protocol, app, delivery_window):
+def server_status(ip, port, protocol, app):
     process = start_web_delivery(ip, port, protocol, app)
 
     if process is not None:
@@ -465,7 +472,7 @@ def server_status(ip, port, protocol, app, delivery_window):
         new_line = f"[{current_time}] Error starting Web Server on {port}!\n"
         app.add_event_viewer_log(new_line, 'color_error', "#FF0055")  
 
-    delivery_window.destroy()
+    app.web_window.destroy()
     app.web_delivery_port = port
     return app.web_delivery_port
 
@@ -514,32 +521,39 @@ def kill_webserver(app):
             app.add_event_viewer_log(new_line, 'color_error', "#FF0055")  
 
 def multi_delivery(app):
-    delivery_window = tk.Toplevel(app)
-    delivery_window.geometry("570x330")
-    delivery_window.title("Multi-Server Delivery")
-    delivery_window.focus_force()
+    try:
+        if app.multi_window and tk.Toplevel.winfo_exists(app.multi_window):
+            app.multi_window.focus_force()
+            return
+    except:
+        pass
 
-    white_label = ttk.Label(delivery_window, text="")
+    app.multi_window = tk.Toplevel(app)
+    app.multi_window.geometry("570x330")
+    app.multi_window.title("Multi-Server Delivery")
+    app.multi_window.focus_force()
+
+    white_label = ttk.Label(app.multi_window, text="")
     white_label.grid(row=0, column=0, padx=0, pady=0)
 
-    ip_label = ttk.Label(delivery_window, text="IP Address")
+    ip_label = ttk.Label(app.multi_window, text="IP Address")
     ip_label.grid(row=1, column=0, padx=0, pady=15)
 
-    ip_entry = ttk.Entry(delivery_window)
+    ip_entry = ttk.Entry(app.multi_window)
     ip_entry.insert(0, "0.0.0.0")
     ip_entry.grid(row=1, column=1, padx=0, pady=15)
 
-    port_label = ttk.Label(delivery_window, text="Port")
+    port_label = ttk.Label(app.multi_window, text="Port")
     port_label.grid(row=2, column=0, padx=0, pady=15)
 
-    port_entry = ttk.Entry(delivery_window)
+    port_entry = ttk.Entry(app.multi_window)
     port_entry.insert(0, "21")
     port_entry.grid(row=2, column=1, padx=0, pady=15)
 
-    script_label = ttk.Label(delivery_window, text="Protocol")
+    script_label = ttk.Label(app.multi_window, text="Protocol")
     script_label.grid(row=3, column=0, padx=0, pady=15)
 
-    multi_combobox = ttk.Combobox(delivery_window, values=["FTP", "NFS", "SMB"], state="readonly")
+    multi_combobox = ttk.Combobox(app.multi_window, values=["FTP", "NFS", "SMB"], state="readonly")
     multi_combobox.grid(row=3, column=1, padx=0, pady=15)
     multi_combobox.current(0)
     
@@ -563,22 +577,22 @@ def multi_delivery(app):
         ip = ip_entry.get()
         port = port_entry.get()
         start_multi_server(ip, port, protocol, app)
-        delivery_window.destroy()
+        app.multi_window.destroy()
 
     def on_enter_key(event):
         start_server()
 
-    delivery_window.bind("<Return>", on_enter_key)
+    app.multi_window.bind("<Return>", on_enter_key)
 
     def on_escape_key(event):
-        delivery_window.destroy()
+        app.multi_window.destroy()
 
-    delivery_window.bind("<Escape>", on_escape_key)
+    app.multi_window.bind("<Escape>", on_escape_key)
             
-    save_button = ttk.Button(delivery_window, text="Publish", command=start_server)
+    save_button = ttk.Button(app.multi_window, text="Publish", command=start_server)
     save_button.grid(row=4, column=0, padx=50, pady=20)
 
-    cancel_button = ttk.Button(delivery_window, text="Cancel", command=delivery_window.destroy)
+    cancel_button = ttk.Button(app.multi_window, text="Cancel", command=app.multi_window.destroy)
     cancel_button.grid(row=4, column=1, padx=20, pady=20)
 
 def start_ftp_server(ip, port, app):

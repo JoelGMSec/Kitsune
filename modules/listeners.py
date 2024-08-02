@@ -23,7 +23,7 @@ def load_listeners(app):
 
     return app.listeners
 
-def add_listeners(app, listener_window, name, host, port, protocol, tail):
+def add_listeners(app, name, host, port, protocol, tail):
     if name and host and port and protocol and tail:
         from modules.session import Session
 
@@ -41,50 +41,57 @@ def add_listeners(app, listener_window, name, host, port, protocol, tail):
         session = Session.load_sessions()
         app.listeners = listeners
         controller.new_listener(app, session, reload_listeners=False)
-        listener_window.destroy()
+        app.listener_window.destroy()
 
 def on_combobox_focus(event):
     event.widget.selection_clear()
 
 def listener_window(app):
-    listener_window = tk.Toplevel(app)
-    listener_window.geometry("570x475")
-    listener_window.title("New Listener")
-    listener_window.focus_force()
+    try:
+        if app.listener_window and tk.Toplevel.winfo_exists(app.listener_window):
+            app.listener_window.focus_force()
+            return
+    except:
+        pass
 
-    white_label = ttk.Label(listener_window, text="")
+    app.listener_window = tk.Toplevel(app)
+    app.listener_window.geometry("570x475")
+    app.listener_window.title("New Listener")
+    app.listener_window.focus_force()
+
+    white_label = ttk.Label(app.listener_window, text="")
     white_label.grid(row=0, column=0, padx=0, pady=0)
 
-    name_label = ttk.Label(listener_window, text="Name")
+    name_label = ttk.Label(app.listener_window, text="Name")
     name_label.grid(row=1, column=0, padx=0, pady=15)
 
-    name_entry = ttk.Entry(listener_window)
+    name_entry = ttk.Entry(app.listener_window)
     name_entry.grid(row=1, column=1, padx=0, pady=15)
 
-    host_label = ttk.Label(listener_window, text="Host")
+    host_label = ttk.Label(app.listener_window, text="Host")
     host_label.grid(row=2, column=0, padx=0, pady=15)
 
-    host_entry = ttk.Entry(listener_window)
+    host_entry = ttk.Entry(app.listener_window)
     host_entry.grid(row=2, column=1, padx=0, pady=15)
 
-    port_label = ttk.Label(listener_window, text="Port")
+    port_label = ttk.Label(app.listener_window, text="Port")
     port_label.grid(row=3, column=0, padx=0, pady=15)
 
-    port_entry = ttk.Entry(listener_window)
+    port_entry = ttk.Entry(app.listener_window)
     port_entry.grid(row=3, column=1, padx=0, pady=15)
 
-    tail_label = ttk.Label(listener_window, text="Tail")
+    tail_label = ttk.Label(app.listener_window, text="Tail")
     tail_label.grid(row=4, column=0, padx=0, pady=15)
 
-    tail_combo = ttk.Combobox(listener_window, values=["HTTP-Shell", "DnsCat2", "PwnCat-CS", "Villain"], state="readonly")
+    tail_combo = ttk.Combobox(app.listener_window, values=["HTTP-Shell", "DnsCat2", "PwnCat-CS", "Villain"], state="readonly")
     tail_combo.grid(row=4, column=1, padx=0, pady=15)
 
     tail_combo.bind("<FocusIn>", on_combobox_focus)
 
-    proto_label = ttk.Label(listener_window, text="Protocol")
+    proto_label = ttk.Label(app.listener_window, text="Protocol")
     proto_label.grid(row=5, column=0, padx=0, pady=15)
 
-    proto_combo = ttk.Combobox(listener_window, values=[""], state="disable")
+    proto_combo = ttk.Combobox(app.listener_window, values=[""], state="disable")
     proto_combo.grid(row=5, column=1, padx=0, pady=15)
 
     proto_combo.bind("<FocusIn>", on_combobox_focus)
@@ -110,20 +117,20 @@ def listener_window(app):
     tail_combo.bind("<<ComboboxSelected>>", set_tail)
 
     def on_enter_key(event):
-        add_listeners(app, listener_window, name_entry.get(), host_entry.get(), port_entry.get(), proto_combo.get(), tail_combo.get())
+        add_listeners(app, name_entry.get(), host_entry.get(), port_entry.get(), proto_combo.get(), tail_combo.get())
 
-    listener_window.bind("<Return>", on_enter_key)
+    app.listener_window.bind("<Return>", on_enter_key)
 
     def on_escape_key(event):
-        listener_window.destroy()
+        app.listener_window.destroy()
 
-    listener_window.bind("<Escape>", on_escape_key)
+    app.listener_window.bind("<Escape>", on_escape_key)
 
-    listener_window.save_button = ttk.Button(listener_window, text="Save", command=lambda: add_listeners(app, listener_window, name_entry.get(), host_entry.get(), port_entry.get(), proto_combo.get(), tail_combo.get()))
-    listener_window.save_button.grid(row=6, column=0, padx=50, pady=20)
+    app.listener_window.save_button = ttk.Button(app.listener_window, text="Save", command=lambda: add_listeners(app, name_entry.get(), host_entry.get(), port_entry.get(), proto_combo.get(), tail_combo.get()))
+    app.listener_window.save_button.grid(row=6, column=0, padx=50, pady=20)
 
-    listener_window.cancel_button = ttk.Button(listener_window, text="Cancel", command=listener_window.destroy)
-    listener_window.cancel_button.grid(row=6, column=1, padx=20, pady=20)
+    app.listener_window.cancel_button = ttk.Button(app.listener_window, text="Cancel", command=app.listener_window.destroy)
+    app.listener_window.cancel_button.grid(row=6, column=1, padx=20, pady=20)
 
 def show_listeners(app):
     for tab in app.notebook.tabs():
@@ -164,22 +171,22 @@ def show_listeners(app):
     bottom_frame.pack(side="bottom", fill="both", padx=10, pady=10)
     bottom_frame.place(relx=0.5, rely=0.5, anchor="center")
 
-    def edit_listener():
+    def edit_listener(app):
         selected_item = app.listener_table.selection()
         if selected_item:
             app.confirm_remove("Edit")
 
-    def enable_listener():
+    def enable_listener(app):
         selected_item = app.listener_table.selection()
         if selected_item:
             app.confirm_remove("Enable")
 
-    def disable_listener():
+    def disable_listener(app):
         selected_item = app.listener_table.selection()
         if selected_item:
             app.confirm_remove("Disable")
 
-    def remove_listener():
+    def remove_listener(app):
         selected_item = app.listener_table.selection()
         if selected_item:
             app.confirm_remove("Remove")
@@ -200,16 +207,16 @@ def show_listeners(app):
     new_listener_button = ttk.Button(bottom_frame, text="Add", command=lambda: listener_window(app))
     new_listener_button.pack(side="left", padx=5, pady=5)
 
-    edit_listener_button = ttk.Button(bottom_frame, text="Edit", command=edit_listener)
+    edit_listener_button = ttk.Button(bottom_frame, text="Edit", command=lambda: edit_listener(app))
     edit_listener_button.pack(side="left", padx=5, pady=5)
 
-    enable_listener_button = ttk.Button(bottom_frame, text="Enable", command=enable_listener)
+    enable_listener_button = ttk.Button(bottom_frame, text="Enable", command=lambda: enable_listener(app))
     enable_listener_button.pack(side="left", padx=5, pady=5)
 
-    remove_listener_button = ttk.Button(bottom_frame, text="Disable", command=disable_listener)
+    remove_listener_button = ttk.Button(bottom_frame, text="Disable", command=lambda: disable_listener(app))
     remove_listener_button.pack(side="left", padx=5, pady=5)
 
-    restart_listener_button = ttk.Button(bottom_frame, text="Remove", command=remove_listener)
+    restart_listener_button = ttk.Button(bottom_frame, text="Remove", command=lambda: remove_listener(app))
     restart_listener_button.pack(side="left", padx=5, pady=5)
 
     bottom_frame.pack_configure(anchor="center")
@@ -258,43 +265,50 @@ def show_listeners(app):
         app.notebook.select(listener_tab)
 
 def edit_listener(app, listener_details):
-    listener_window = tk.Toplevel(app)
-    listener_window.geometry("570x475")
-    listener_window.title("Edit Listener")
-    listener_window.focus_force()
+    try:
+        if app.editlist_window and tk.Toplevel.winfo_exists(app.editlist_window):
+            app.editlist_window.focus_force()
+            return
+    except:
+        pass
 
-    white_label = ttk.Label(listener_window, text="")
+    app.editlist_window = tk.Toplevel(app)
+    app.editlist_window.geometry("570x475")
+    app.editlist_window.title("Edit Listener")
+    app.editlist_window.focus_force()
+
+    white_label = ttk.Label(app.editlist_window, text="")
     white_label.grid(row=0, column=0, padx=0, pady=0)
 
-    name_label = ttk.Label(listener_window, text="Name")
+    name_label = ttk.Label(app.editlist_window, text="Name")
     name_label.grid(row=1, column=0, padx=0, pady=15)
-    name_entry = ttk.Entry(listener_window)
+    name_entry = ttk.Entry(app.editlist_window)
     name_entry.grid(row=1, column=1, padx=0, pady=15)
     name_entry.insert(0, listener_details[0])  
 
-    host_label = ttk.Label(listener_window, text="Host")
+    host_label = ttk.Label(app.editlist_window, text="Host")
     host_label.grid(row=2, column=0, padx=0, pady=15)
-    host_entry = ttk.Entry(listener_window)
+    host_entry = ttk.Entry(app.editlist_window)
     host_entry.grid(row=2, column=1, padx=0, pady=15)
     host_entry.insert(0, listener_details[1])  
 
-    port_label = ttk.Label(listener_window, text="Port")
+    port_label = ttk.Label(app.editlist_window, text="Port")
     port_label.grid(row=3, column=0, padx=0, pady=15)
-    port_entry = ttk.Entry(listener_window)
+    port_entry = ttk.Entry(app.editlist_window)
     port_entry.grid(row=3, column=1, padx=0, pady=15)
     port_entry.insert(0, listener_details[2])  
 
-    tail_label = ttk.Label(listener_window, text="Tail")
+    tail_label = ttk.Label(app.editlist_window, text="Tail")
     tail_label.grid(row=4, column=0, padx=0, pady=15)
-    tail_combo = ttk.Combobox(listener_window, values=["HTTP-Shell", "DnsCat2", "PwnCat-CS", "Villain"], state="readonly")
+    tail_combo = ttk.Combobox(app.editlist_window, values=["HTTP-Shell", "DnsCat2", "PwnCat-CS", "Villain"], state="readonly")
     tail_combo.grid(row=4, column=1, padx=0, pady=15)
     tail_combo.set(listener_details[4])  
 
     tail_combo.bind("<FocusIn>", on_combobox_focus)
 
-    proto_label = ttk.Label(listener_window, text="Protocol")
+    proto_label = ttk.Label(app.editlist_window, text="Protocol")
     proto_label.grid(row=5, column=0, padx=0, pady=15)
-    proto_combo = ttk.Combobox(listener_window, values=[""], state="disabled")
+    proto_combo = ttk.Combobox(app.editlist_window, values=[""], state="disabled")
     proto_combo.grid(row=5, column=1, padx=0, pady=15)
     proto_combo.set(listener_details[3])  
 
@@ -321,26 +335,26 @@ def edit_listener(app, listener_details):
     tail_combo.bind("<<ComboboxSelected>>", set_tail)
 
     def on_enter_key(event):
-        update_listener(app, listener_window, listener_details, name_entry.get(), host_entry.get(), port_entry.get(), proto_combo.get(), tail_combo.get())
+        update_listener(app, listener_details, name_entry.get(), host_entry.get(), port_entry.get(), proto_combo.get(), tail_combo.get())
 
-    listener_window.bind("<Return>", on_enter_key)
+    app.editlist_window.bind("<Return>", on_enter_key)
 
     def on_escape_key(event):
-        listener_window.destroy()
+        app.editlist_window.destroy()
 
-    listener_window.bind("<Escape>", on_escape_key)
+    app.editlist_window.bind("<Escape>", on_escape_key)
 
-    save_button = ttk.Button(listener_window, text="Save", command=lambda: update_listener(app, listener_window, listener_details, name_entry.get(), host_entry.get(), port_entry.get(), proto_combo.get(), tail_combo.get()))
+    save_button = ttk.Button(app.editlist_window, text="Save", command=lambda: update_listener(app, listener_details, name_entry.get(), host_entry.get(), port_entry.get(), proto_combo.get(), tail_combo.get()))
     save_button.grid(row=6, column=0, padx=50, pady=20)
 
-    cancel_button = ttk.Button(listener_window, text="Cancel", command=listener_window.destroy)
+    cancel_button = ttk.Button(app.editlist_window, text="Cancel", command=app.editlist_window.destroy)
     cancel_button.grid(row=6, column=1, padx=20, pady=20)
 
-def update_listener(app, listener_window, old_details, name, host, port, protocol, tail):
+def update_listener(app, old_details, name, host, port, protocol, tail):
     if name and host and port and protocol and tail:
         new_details = (name, host, port, protocol, tail)
         if old_details == new_details:
-            listener_window.destroy()
+            app.editlist_window.destroy()
             return
 
         with open('data/listeners.json', 'r') as file:
@@ -358,7 +372,7 @@ def update_listener(app, listener_window, old_details, name, host, port, protoco
         with open('data/listeners.json', 'w') as file:
             json.dump(listeners, file, indent=4)
 
-        listener_window.destroy()
+        app.editlist_window.destroy()
 
         try:
             selected = app.listener_table.selection()

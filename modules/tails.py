@@ -7,6 +7,7 @@
 import os
 import shutil
 import subprocess
+import threading
 import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
@@ -45,28 +46,41 @@ def clone_repos(name_label=None):
     
     try:
         subprocess.run(["git", "clone", powercat_repo, powercat_dir], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    except:
-        name_label.config(text="Error updating tails!", fg="red")
+    except subprocess.CalledProcessError:
+        if name_label:
+            name_label.config(text="Error updating tails!", fg="red")
         return
 
     dnscat2_client_url = "https://downloads.skullsecurity.org/dnscat2/dnscat2-v0.07-client-x86.tar.bz2"
     dnscat2_client_dir = os.path.join(base_dir, "dnscat2", "client")
     
     os.makedirs(dnscat2_client_dir, exist_ok=True)
-    subprocess.run(["wget", "-q", dnscat2_client_url, "-O", os.path.join(dnscat2_client_dir, "dnscat2-v0.07-client-x86.tar.bz2")], check=True)
-    subprocess.run(["tar", "-xf", os.path.join(dnscat2_client_dir, "dnscat2-v0.07-client-x86.tar.bz2"), "-C", dnscat2_client_dir], check=True)
-    os.remove(os.path.join(dnscat2_client_dir, "dnscat2-v0.07-client-x86.tar.bz2"))
+    try:
+        subprocess.run(["wget", "-q", dnscat2_client_url, "-O", os.path.join(dnscat2_client_dir, "dnscat2-v0.07-client-x86.tar.bz2")], check=True)
+        subprocess.run(["tar", "-xf", os.path.join(dnscat2_client_dir, "dnscat2-v0.07-client-x86.tar.bz2"), "-C", dnscat2_client_dir], check=True)
+        os.remove(os.path.join(dnscat2_client_dir, "dnscat2-v0.07-client-x86.tar.bz2"))
+    except subprocess.CalledProcessError:
+        if name_label:
+            name_label.config(text="Error updating tails!", fg="red")
+        return
 
     if name_label:
         name_label.config(text="All are up to date!", fg="#00AAFF")
 
 def update_tails(app):
-    updates_window = tk.Toplevel(app)
-    updates_window.geometry("525x255")
-    updates_window.title("Update Tails")
-    updates_window.focus_force()
+    try:
+        if app.tails_window and tk.Toplevel.winfo_exists(app.tails_window):
+            app.tails_window.focus_force()
+            return
+    except:
+        pass
+        
+    app.tails_window = tk.Toplevel(app)
+    app.tails_window.geometry("525x255")
+    app.tails_window.title("Update Tails")
+    app.tails_window.focus_force()
 
-    image_frame = tk.Frame(updates_window)
+    image_frame = tk.Frame(app.tails_window)
     image_frame.grid(row=0, column=1, padx=(50, 0), pady=(20, 0))
 
     image = Image.open("./themes/images/GitHub.png")
@@ -78,7 +92,7 @@ def update_tails(app):
     image_label.image = photo  
     image_label.grid(row=0, column=0)
 
-    updates_frame = tk.Frame(updates_window)
+    updates_frame = tk.Frame(app.tails_window)
     updates_frame.grid(row=0, column=0, padx=(20, 0), pady=10, sticky="nsew")
 
     updates_label = tk.Label(updates_frame, text="Downloading tails..")
@@ -91,17 +105,21 @@ def update_tails(app):
     progressbar.grid(row=2, column=0, pady=(20, 10))
     progressbar.start()  
 
-    updates_window.after(1000, lambda: clone_repos(name_label))
+    def clone_repos_thread():
+        clone_repos(name_label)
+
+    threading.Thread(target=clone_repos_thread).start()
 
     def on_enter_key(event):
-        updates_window.destroy()
+        app.tails_window.destroy()
 
-    updates_window.bind("<Return>", on_enter_key)
+    app.tails_window.bind("<Return>", on_enter_key)
 
     def on_escape_key(event):
-        updates_window.destroy()
+        app.tails_window.destroy()
 
-    updates_window.bind("<Escape>", on_escape_key)
+    app.tails_window.bind("<Escape>", on_escape_key)
 
-    save_button = ttk.Button(updates_frame, text="Close", command=lambda: updates_window.destroy())
-    save_button.grid(row=3, column=0, pady=(25, 0))  
+    save_button = ttk.Button(updates_frame, text="Close", command=lambda: app.tails_window.destroy())
+    save_button.grid(row=3, column=0, pady=(25, 0))
+
