@@ -21,7 +21,7 @@ def load_settings():
     try:
         with open("data/settings.json", "r") as json_file:
             return json.load(json_file)["settings"]
-    except (FileNotFoundError, KeyError):
+    except:
         pass
         
 def open_settings(app):

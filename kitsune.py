@@ -684,11 +684,8 @@ class App(tk.Frame):
             current_user = "root"
         
         label_text = f"[{current_time}] User *{current_user}* has reset all data!"
-
         self.text.config(state="normal")
         self.text.delete("1.0", tk.END)
-        self.text.config(foreground="#FF00FF")
-        self.text.insert("end", label_text + "\n")
         self.text.config(state="disabled")
         self.add_event_viewer_log(label_text + "\n", 'color_login', "#FF00FF")
         self.treeview.delete(*self.treeview.get_children())

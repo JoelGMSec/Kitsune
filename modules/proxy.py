@@ -92,7 +92,7 @@ def load_proxy_settings(app):
                 update_proxychains_conf(protocol, host, port)
             return proxy_settings
 
-    except FileNotFoundError:
+    except:
         app.proxy_status = False
         return {"status": "Disabled", "ip_port": "127.0.0.1:1080", "protocol": "SOCKS"}
 
@@ -118,7 +118,7 @@ def load_proxy_window(app, tail_entry, params_entry, method_combobox):
             params_entry.insert(0, proxy_settings.get("ip_port", "127.0.0.1:1080"))
             method_combobox.set(proxy_settings.get("protocol", "SOCKS"))
             app.proxy_status = proxy_settings.get("status", "Disabled") == "Enabled"
-    except FileNotFoundError:
+    except:
         app.proxy_status = False
 
 def update_proxychains_conf(proto, host, port):

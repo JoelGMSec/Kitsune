@@ -15,7 +15,7 @@ def get_local_version():
         result = subprocess.run(["cat", "version.txt"], capture_output=True, text=True, check=True)
         local_version = result.stdout.strip()
         return local_version
-    except subprocess.CalledProcessError as e:
+    except:
         return None
 
 version = get_local_version()

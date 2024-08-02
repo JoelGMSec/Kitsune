@@ -437,7 +437,7 @@ namespace eval ttk::theme::azure-blue {
                 {readonly hover} $I(box-accent) \
                 {focus hover} $I(box-accent) \
                 readonly $I(box-basic) \
-                invalid $I(box-basic) \
+                invalid $I(box-invalid) \
                 disabled $I(box-basic) \
                 focus $I(box-accent) \
                 hover $I(box-accent) \
@@ -453,7 +453,7 @@ namespace eval ttk::theme::azure-blue {
                 {readonly hover} $I(combo-button-hover) \
                 {focus hover} $I(combo-button-hover) \
                 readonly $I(combo-button-basic) \
-                invalid $I(combo-button-basic) \
+                invalid $I(combo-button-invalid) \
                 disabled $I(combo-button-basic) \
                 focus $I(combo-button-hover) \
                 hover $I(combo-button-hover) \

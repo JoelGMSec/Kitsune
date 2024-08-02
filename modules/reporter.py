@@ -46,7 +46,7 @@ def export_logs(app):
     settings_frame = tk.Frame(app.report_window)
     settings_frame.grid(row=0, column=0, padx=(15, 0), pady=10, sticky="nsew")
 
-    nekomancer_label = tk.Label(settings_frame, text="Enter project name")
+    nekomancer_label = tk.Label(settings_frame, text="Enter report name")
     nekomancer_label.grid(row=0, column=0, padx=(15, 0), pady=(20, 0))
 
     name_label = tk.Label(settings_frame, text="*Overwrited if exists*", fg="#00FF99")
@@ -66,21 +66,28 @@ def export_logs(app):
         app.report_window.destroy()
 
     app.report_window.bind("<Escape>", on_escape_key)
+    
+    def on_click_entry(event):
+        name_entry.state(["!invalid"])
+        name_entry.delete(0, tk.END)
+        name_entry.configure(foreground="white")
+
+    name_entry.bind("<Button-1>", on_click_entry)
 
     save_button = ttk.Button(settings_frame, text="Save", command=lambda: save_project(app, name_entry))
     save_button.grid(row=3, column=0, pady=(35, 10))  
 
 def save_project(app, name_entry):
     if name_entry.get():
-        profile_name = name_entry.get().strip()
-        if profile_name:  
-            profile_path = os.path.join("reports")
+        report_name = name_entry.get().strip()
+        if report_name and report_name != "Invalid report name!": 
+            report_path = os.path.join("reports")
             data_path = "data"
             try:
-                os.makedirs(profile_path, exist_ok=True)  
+                os.makedirs(report_path, exist_ok=True)  
                 for item in os.listdir(data_path):  
                     s = os.path.join(data_path, item)
-                    d = os.path.join(profile_path, item)
+                    d = os.path.join(report_path, item)
                     if os.path.isdir(s):
                         shutil.copytree(s, d, dirs_exist_ok=True)
                     else:
@@ -88,19 +95,31 @@ def save_project(app, name_entry):
             except:
                 pass
 
+            app.report_window.destroy()
+            dialog.report_saved_success(app)
+
+        else:
+            name_entry.state(["invalid"])
+            name_entry.delete(0, tk.END)
+            name_entry.insert(0, "Invalid report name!")
+            name_entry.configure(foreground="#c0c0c0")
+
         try:
-            json_file_path = os.path.join(profile_path, "sessions.json")
-            html_file_path = os.path.join(profile_path + "/" + profile_name + ".html")
+            json_file_path = os.path.join(report_path, "sessions.json")
+            html_file_path = os.path.join(report_path + "/" + report_name + ".html")
             json_to_html(json_file_path, html_file_path)
 
-            for file_name in os.listdir(profile_path):
+            for file_name in os.listdir(report_path):
                 if file_name.endswith('.json'):
-                    os.remove(os.path.join(profile_path, file_name))
+                    os.remove(os.path.join(report_path, file_name))
         except:
             pass
 
-        app.report_window.destroy()
-        dialog.project_saved_success(app)
+    else:
+        name_entry.state(["invalid"])
+        name_entry.delete(0, tk.END)
+        name_entry.insert(0, "Invalid report name!")
+        name_entry.configure(foreground="#c0c0c0")
 
 def clear_logs(app):
     profiles_path = "reports"

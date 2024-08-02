@@ -223,7 +223,7 @@ def open_webserver_log_tab(app):
         with open(webserver_file, 'r') as f:
             log_data = json.load(f)
 
-    except FileNotFoundError:
+    except:
         log_data = {}
 
     for tab in app.notebook.tabs():
@@ -313,7 +313,7 @@ def open_multiserver_log_tab(app):
         with open(multiserver_file, 'r') as f:
             log_data = json.load(f)
 
-    except FileNotFoundError:
+    except:
         log_data = {}
 
     for tab in app.notebook.tabs():

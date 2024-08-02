@@ -36,7 +36,7 @@ def clone_repos(name_label=None):
         
         try:
             subprocess.run(["git", "clone", repo, repo_dir], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        except subprocess.CalledProcessError:
+        except:
             if name_label:
                 name_label.config(text="Error updating tails!", fg="red")
             return
@@ -46,7 +46,7 @@ def clone_repos(name_label=None):
     
     try:
         subprocess.run(["git", "clone", powercat_repo, powercat_dir], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    except subprocess.CalledProcessError:
+    except:
         if name_label:
             name_label.config(text="Error updating tails!", fg="red")
         return
@@ -59,7 +59,7 @@ def clone_repos(name_label=None):
         subprocess.run(["wget", "-q", dnscat2_client_url, "-O", os.path.join(dnscat2_client_dir, "dnscat2-v0.07-client-x86.tar.bz2")], check=True)
         subprocess.run(["tar", "-xf", os.path.join(dnscat2_client_dir, "dnscat2-v0.07-client-x86.tar.bz2"), "-C", dnscat2_client_dir], check=True)
         os.remove(os.path.join(dnscat2_client_dir, "dnscat2-v0.07-client-x86.tar.bz2"))
-    except subprocess.CalledProcessError:
+    except:
         if name_label:
             name_label.config(text="Error updating tails!", fg="red")
         return

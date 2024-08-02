@@ -137,7 +137,7 @@ def profile_deleted_success(app):
     yes_button = ttk.Button(button_frame, text="Close", command=lambda: dialog.destroy())
     yes_button.pack(side=tk.LEFT, padx=5, pady=(0, 10))
 
-def project_saved_success(app):
+def report_saved_success(app):
     try:
         if app.dialog_window and tk.Toplevel.winfo_exists(app.dialog_window):
             app.dialog_window.focus_force()

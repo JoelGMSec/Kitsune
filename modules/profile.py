@@ -44,8 +44,8 @@ def export_profile(app):
     export_frame = tk.Frame(app.export_window)
     export_frame.grid(row=0, column=0, padx=(15, 0), pady=10, sticky="nsew")
 
-    nekomancer_label = tk.Label(export_frame, text="Enter profile name")
-    nekomancer_label.grid(row=0, column=0, padx=(15, 0), pady=(20, 0))
+    export_label = tk.Label(export_frame, text="Enter profile name")
+    export_label.grid(row=0, column=0, padx=(15, 0), pady=(20, 0))
 
     name_label = tk.Label(export_frame, text="*Overwrited if exists*", fg="#00FF99")
     name_label.grid(row=1, column=0, padx=(15, 0), pady=(0, 5))
@@ -64,6 +64,13 @@ def export_profile(app):
         app.export_window.destroy()
 
     app.export_window.bind("<Escape>", on_escape_key)
+
+    def on_click_entry(event):
+        name_entry.state(["!invalid"])
+        name_entry.delete(0, tk.END)
+        name_entry.configure(foreground="white")
+
+    name_entry.bind("<Button-1>", on_click_entry)
 
     save_button = ttk.Button(export_frame, text="Save", command=lambda: save_profile(app, name_entry))
     save_button.grid(row=3, column=0, pady=(35, 10))  
@@ -96,26 +103,27 @@ def import_profile(app):
     settings_frame = tk.Frame(app.import_window)
     settings_frame.grid(row=0, column=1, padx=(5, 0), pady=10, sticky="nsew")
 
-    nekomancer_label = tk.Label(settings_frame, text="Select profile name")
-    nekomancer_label.grid(row=0, column=1, padx=(5, 0), pady=(20, 0))
+    export_label = tk.Label(settings_frame, text="Select profile name")
+    export_label.grid(row=0, column=1, padx=(5, 0), pady=(20, 0))
 
     name_label = tk.Label(settings_frame, text="*Loaded after restart*", fg="#FFCC00")
     name_label.grid(row=1, column=1, padx=(5, 0), pady=(0, 5))
 
     profiles = [name for name in os.listdir("profiles") if os.path.isdir(os.path.join("profiles", name))]
     if not profiles:  
-        profiles = ["No profiles found"]
+        profiles = ["No profiles found!"]
 
     selected_value = tk.StringVar(value=profiles[0])
 
-    nekomancer_combobox = ttk.Combobox(settings_frame, values=profiles, textvariable=selected_value, state="readonly")
-    nekomancer_combobox.grid(row=2, column=1, padx=(15, 0), pady=(20, 0))
+    app.profile_combobox = ttk.Combobox(settings_frame, values=profiles, textvariable=selected_value, state="readonly")
+    app.profile_combobox.grid(row=2, column=1, padx=(15, 0), pady=(20, 0))
 
-    if selected_value.get() == str("No profiles found"):
-        nekomancer_combobox.configure(state="disabled")
-    nekomancer_combobox.set(selected_value.get())
+    if selected_value.get() == str("No profiles found!"):
+        app.profile_combobox.configure(state="disabled")
+        app.profile_combobox.configure(foreground="#c0c0c0")
+    app.profile_combobox.set(selected_value.get())
 
-    nekomancer_combobox.bind("<FocusIn>", on_combobox_focus)
+    app.profile_combobox.bind("<FocusIn>", on_combobox_focus)
 
     def on_enter_key(event):
         load_and_close(app, selected_value)
@@ -147,7 +155,7 @@ def delete_profile(app):
 def save_profile(app, name_entry):
     if name_entry.get():
         profile_name = name_entry.get().strip()
-        if profile_name:  
+        if profile_name and profile_name != "Invalid profile name!": 
             profile_path = os.path.join("profiles", profile_name)
             data_path = "data"
             try:
@@ -162,11 +170,23 @@ def save_profile(app, name_entry):
             except:
                 pass
 
-        app.export_window.destroy()
-        dialog.profile_saved_success(app)
+            app.export_window.destroy()
+            dialog.profile_saved_success(app)
+
+        else:
+            name_entry.state(["invalid"])
+            name_entry.delete(0, tk.END)
+            name_entry.insert(0, "Invalid profile name!")
+            name_entry.configure(foreground="#c0c0c0")
+
+    else:
+        name_entry.state(["invalid"])
+        name_entry.delete(0, tk.END)
+        name_entry.insert(0, "Invalid profile name!")
+        name_entry.configure(foreground="#c0c0c0")
 
 def load_and_close(app, selected_value):
-    if selected_value.get() != str("No profiles found"):
+    if selected_value.get() != str("No profiles found!"):
         if dialog.confirm_dialog(app) == "yes":
             app.import_window.destroy()
             app.remove_data()
@@ -199,3 +219,6 @@ def load_and_close(app, selected_value):
                 pass
 
             app.import_window.destroy()
+
+    else:
+        app.profile_combobox.state(["invalid"])

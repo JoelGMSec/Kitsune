@@ -97,9 +97,7 @@ class Session(tk.Frame):
         try:
             with open('data/sessions.json', 'r') as file:
                 sessions_data = json.load(file)
-        except FileNotFoundError:
-            return None
-        except json.JSONDecodeError:       
+        except:
             return None
 
         for session in sessions_data:
@@ -122,7 +120,7 @@ class Session(tk.Frame):
         try:
             with open('data/sessions.json', 'r') as f:
                 sessions_data = json.load(f)
-        except FileNotFoundError:
+        except:
             sessions_data = []
             app.session_id = 0
 
@@ -224,7 +222,7 @@ class Session(tk.Frame):
                     if session['Session'] == session_id:  
                         self.log = session.get('Commands', [])
                         break
-        except FileNotFoundError:
+        except:
             pass
 
     def update_log_display(self):
@@ -253,7 +251,7 @@ class Session(tk.Frame):
         try:
             with open('data/commands.json', 'r') as f:
                 return json.load(f)
-        except FileNotFoundError:
+        except:
             return []
 
     def save_command_history(history):

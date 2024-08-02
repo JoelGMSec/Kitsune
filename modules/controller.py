@@ -107,10 +107,6 @@ def start_listeners(app, session, reload_listeners=False):
             if not app.fast_mode:
                 typing(colored("\n[>] Reloading previous listeners..\n", "yellow"))
             label_text = f"[{current_time}] Listeners found in JSON file! Reloading.."
-            app.text.config(state="normal")
-            app.text.config(foreground="#FF0055")
-            app.text.insert("end", label_text + "\n")
-            app.text.config(state="disabled")
             app.add_event_viewer_log(label_text + "\n", 'color_error', "#FF0055")
 
     for listener in app.listeners:

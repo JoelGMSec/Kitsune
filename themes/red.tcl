@@ -202,7 +202,7 @@ namespace eval ttk::theme::azure-red {
 
         ttk::style element create Button.button image \
             [list $I(rect-basic) \
-            	{selected disabled} $I(rect-basic) \
+                {selected disabled} $I(rect-basic) \
                 disabled $I(rect-basic) \
                 pressed $I(rect-accent) \
                 selected $I(rect-accent) \
@@ -214,7 +214,7 @@ namespace eval ttk::theme::azure-red {
 
         ttk::style element create Toolbutton.button image \
             [list $I(empty) \
-            	{selected disabled} $I(empty) \
+                {selected disabled} $I(empty) \
                 disabled $I(empty) \
                 pressed $I(rect-basic) \
                 selected $I(rect-basic) \
@@ -260,7 +260,7 @@ namespace eval ttk::theme::azure-red {
 
         ttk::style element create AccentButton.button image \
             [list $I(rect-accent) \
-            	{selected disabled} $I(rect-accent-hover) \
+                {selected disabled} $I(rect-accent-hover) \
                 disabled $I(rect-accent-hover) \
                 pressed $I(rect-accent) \
                 selected $I(rect-accent) \
@@ -437,7 +437,7 @@ namespace eval ttk::theme::azure-red {
                 {readonly hover} $I(box-accent) \
                 {focus hover} $I(box-accent) \
                 readonly $I(box-basic) \
-                invalid $I(box-basic) \
+                invalid $I(box-invalid) \
                 disabled $I(box-basic) \
                 focus $I(box-accent) \
                 hover $I(box-accent) \
@@ -453,7 +453,7 @@ namespace eval ttk::theme::azure-red {
                 {readonly hover} $I(combo-button-hover) \
                 {focus hover} $I(combo-button-hover) \
                 readonly $I(combo-button-basic) \
-                invalid $I(combo-button-basic) \
+                invalid $I(combo-button-invalid) \
                 disabled $I(combo-button-basic) \
                 focus $I(combo-button-hover) \
                 hover $I(combo-button-hover) \

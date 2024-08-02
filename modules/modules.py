@@ -38,7 +38,7 @@ def clone_repos(name_label=None):
         
         try:
             subprocess.run(["git", "clone", repo, repo_dir], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        except subprocess.CalledProcessError:
+        except:
             if name_label:
                 name_label.config(text="Error updating modules!", fg="red")
             return
