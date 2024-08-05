@@ -64,6 +64,7 @@ class App(tk.Frame):
         self.check_repos()
         self.check_modules()
         self.text_tag_counter = 0
+        self.used_ports = [61098, 61099, 61100]
         self.event_viewer_logs = self.load_event_viewer_logs()
 
         self.clear_command = False
@@ -141,6 +142,12 @@ class App(tk.Frame):
         custom_dir = "custom"
         if not os.path.exists(custom_dir) or not any(os.path.isdir(os.path.join(custom_dir, entry)) for entry in os.listdir(custom_dir)):
             threading.Thread(target=modules.clone_repos).start()
+
+    def get_next_ports(self):
+        next_ports = self.used_ports[-3:]
+        new_ports = [port + 3 for port in next_ports]
+        self.used_ports.extend(new_ports)
+        return new_ports
 
     def sort_sessions(self):
         try:

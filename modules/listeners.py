@@ -11,6 +11,51 @@ from tkinter import ttk
 from modules import controller
 from modules.controller import reload_listener
 
+def validate_entries(entries):
+    all_valid = True
+    for entry in entries:
+        if isinstance(entry, ttk.Combobox):
+            if not entry.get().strip() or entry.get() == "":
+                try:
+                    entry.current(0)
+                except:
+                    pass
+                entry.set("Invalid parameter!")
+                entry.configure(foreground="#c0c0c0")
+                entry.state(["invalid"])
+                entry['state'] = 'invalid'
+                all_valid = False
+            elif "Invalid parameter!" in entry.get():
+                entry.configure(foreground="#c0c0c0")
+                entry.state(["invalid"])
+                entry['state'] = 'invalid'
+                all_valid = False
+            else:
+                entry.configure(foreground="#ffffff")
+                entry.state(["!invalid"])
+                entry.state(["readonly"])
+                entry['state'] = '!invalid'
+                entry['state'] = 'readonly'
+
+        elif isinstance(entry, ttk.Entry):
+            if not entry.get().strip() or entry.get() == "":
+                entry.state(["invalid"])
+                entry.delete(0, tk.END)
+                entry.insert(0, "Invalid parameter!")
+                entry.configure(foreground="#c0c0c0")
+                all_valid = False
+            elif "Invalid parameter!" in entry.get():
+                entry.configure(foreground="#c0c0c0")
+                entry.state(["invalid"])
+                all_valid = False
+            else:
+                entry.configure(foreground="#ffffff")
+                entry.state(["!invalid"])
+        else:
+            pass
+            
+    return all_valid
+
 def load_listeners(app):
     try:
         with open('data/listeners.json', 'r') as file:
@@ -100,24 +145,36 @@ def listener_window(app):
         selected_tail = tail_combo.get()
         if selected_tail == "HTTP-Shell":
             proto_combo.set("HTTP/S")
+            proto_combo.state(["!invalid"])
             proto_combo['state'] = 'disabled'
         elif selected_tail == "DnsCat2":
             proto_combo.set("DNS")
+            proto_combo.state(["!invalid"])
             proto_combo['state'] = 'disabled'
         elif selected_tail == "PwnCat-CS":
             proto_combo.set("TCP")
+            proto_combo.state(["!invalid"])
             proto_combo['state'] = 'disabled'
         elif selected_tail == "Villain":
             proto_combo.set("TCP")
+            proto_combo.state(["!invalid"])
             proto_combo['state'] = 'disabled'
         else:
             proto_combo.set("")
+            proto_combo.state(["!invalid"])
             proto_combo['state'] = 'readonly'
+        tail_combo.configure(foreground="#ffffff")
+        proto_combo.configure(foreground="#ffffff")
+        tail_combo.state(["!invalid"])
+        tail_combo['state'] = '!invalid'
+        tail_combo['state'] = 'readonly'
 
     tail_combo.bind("<<ComboboxSelected>>", set_tail)
 
     def on_enter_key(event):
-        add_listeners(app, name_entry.get(), host_entry.get(), port_entry.get(), proto_combo.get(), tail_combo.get())
+        entries = [name_entry, host_entry, port_entry, proto_combo, tail_combo]
+        if validate_entries(entries):
+            add_listeners(app, name_entry.get(), host_entry.get(), port_entry.get(), proto_combo.get(), tail_combo.get())
 
     app.listener_window.bind("<Return>", on_enter_key)
 
@@ -126,7 +183,15 @@ def listener_window(app):
 
     app.listener_window.bind("<Escape>", on_escape_key)
 
-    app.listener_window.save_button = ttk.Button(app.listener_window, text="Save", command=lambda: add_listeners(app, name_entry.get(), host_entry.get(), port_entry.get(), proto_combo.get(), tail_combo.get()))
+    def on_click_entry(event):
+        event.widget.state(["!invalid"])
+        event.widget.delete(0, tk.END)
+        event.widget.configure(foreground="white")
+
+    for entry in (name_entry, host_entry, port_entry):
+        entry.bind("<Button-1>", on_click_entry)
+
+    app.listener_window.save_button = ttk.Button(app.listener_window, text="Save", command=lambda: on_enter_key(None))
     app.listener_window.save_button.grid(row=6, column=0, padx=50, pady=20)
 
     app.listener_window.cancel_button = ttk.Button(app.listener_window, text="Cancel", command=app.listener_window.destroy)
@@ -318,24 +383,36 @@ def edit_listener(app, listener_details):
         selected_tail = tail_combo.get()
         if selected_tail == "HTTP-Shell":
             proto_combo.set("HTTP/S")
+            proto_combo.state(["!invalid"])
             proto_combo['state'] = 'disabled'
         elif selected_tail == "DnsCat2":
             proto_combo.set("DNS")
+            proto_combo.state(["!invalid"])
             proto_combo['state'] = 'disabled'
         elif selected_tail == "PwnCat-CS":
             proto_combo.set("TCP")
+            proto_combo.state(["!invalid"])
             proto_combo['state'] = 'disabled'
         elif selected_tail == "Villain":
             proto_combo.set("TCP")
+            proto_combo.state(["!invalid"])
             proto_combo['state'] = 'disabled'
         else:
             proto_combo.set("")
+            proto_combo.state(["!invalid"])
             proto_combo['state'] = 'readonly'
+        proto_combo.configure(foreground="#ffffff")
+        tail_combo.configure(foreground="#ffffff")
+        tail_combo.state(["!invalid"])
+        tail_combo['state'] = '!invalid'
+        tail_combo['state'] = 'readonly'
 
     tail_combo.bind("<<ComboboxSelected>>", set_tail)
 
     def on_enter_key(event):
-        update_listener(app, listener_details, name_entry.get(), host_entry.get(), port_entry.get(), proto_combo.get(), tail_combo.get())
+        entries = [name_entry, host_entry, port_entry, proto_combo, tail_combo]
+        if validate_entries(entries):
+            update_listener(app, listener_details, name_entry.get(), host_entry.get(), port_entry.get(), proto_combo.get(), tail_combo.get())
 
     app.editlist_window.bind("<Return>", on_enter_key)
 
@@ -344,74 +421,33 @@ def edit_listener(app, listener_details):
 
     app.editlist_window.bind("<Escape>", on_escape_key)
 
-    save_button = ttk.Button(app.editlist_window, text="Save", command=lambda: update_listener(app, listener_details, name_entry.get(), host_entry.get(), port_entry.get(), proto_combo.get(), tail_combo.get()))
-    save_button.grid(row=6, column=0, padx=50, pady=20)
+    def on_click_entry(event):
+        event.widget.state(["!invalid"])
+        event.widget.delete(0, tk.END)
+        event.widget.configure(foreground="white")
 
-    cancel_button = ttk.Button(app.editlist_window, text="Cancel", command=app.editlist_window.destroy)
-    cancel_button.grid(row=6, column=1, padx=20, pady=20)
+    for entry in (name_entry, host_entry, port_entry):
+        entry.bind("<Button-1>", on_click_entry)
+
+    app.editlist_window.save_button = ttk.Button(app.editlist_window, text="Save", command=lambda: on_enter_key(None))
+    app.editlist_window.save_button.grid(row=6, column=0, padx=50, pady=20)
+
+    app.editlist_window.cancel_button = ttk.Button(app.editlist_window, text="Cancel", command=app.editlist_window.destroy)
+    app.editlist_window.cancel_button.grid(row=6, column=1, padx=20, pady=20)
 
 def update_listener(app, old_details, name, host, port, protocol, tail):
     if name and host and port and protocol and tail:
         new_details = (name, host, port, protocol, tail)
-        if old_details == new_details:
+        if "Invalid parameter!" in new_details:
+            return
+
+        elif old_details == new_details:
             app.editlist_window.destroy()
             return
 
-        with open('data/listeners.json', 'r') as file:
-            listeners = json.load(file)
-
-        for listener in listeners:
-            if listener["Name"] == old_details[0]:  
-                listener["Name"] = name
-                listener["Host"] = host
-                listener["Port"] = port
-                listener["Protocol"] = protocol
-                listener["Tail"] = tail
-                break
-
-        with open('data/listeners.json', 'w') as file:
-            json.dump(listeners, file, indent=4)
-
-        app.editlist_window.destroy()
-
-        try:
-            selected = app.listener_table.selection()
-            selected_id = None
-            if selected:
-                selected_details = app.listener_table.item(selected, "values")
-                selected_id = selected_details[0]  
-
-            listener_states = {}
-            for item in app.listener_table.get_children():
-                item_details = app.listener_table.item(item, "values")
-                item_state = app.listener_table.item(item, "tags")
-                listener_states[item_details[0]] = item_state[0]  
-
-            for item in app.listener_table.get_children():
-                app.listener_table.delete(item)
-            
-            for listener in load_listeners(app):
-                item_id = app.listener_table.insert('', 'end', values=(listener["Name"], listener["Host"], listener["Port"], listener["Protocol"], listener["Tail"]))
-                
-                if listener["Name"] in listener_states and listener_states[listener["Name"]] == "disabled":
-                    listener_state = "disabled"
-                    app.listener_table.item(item_id, tags=('disabled',))
-                else:
-                    app.listener_table.item(item_id, tags=('enabled',))
-                    if listener["Name"] == new_details[0]:
-                        listener_state = "enabled"
-                        controller.kill_listeners(app, old_details)
-                        reload_listener(app, app.session_id, new_details, reload_listeners=True)
-
-            app.listener_table.tag_configure("enabled", foreground="#FFFFFF")  
-            app.listener_table.tag_configure("disabled", foreground="gray")
-            
-            if selected_id:
-                for item in app.listener_table.get_children():
-                    item_details = app.listener_table.item(item, "values")
-                    if item_details[0] == selected_id:  
-                        app.listener_table.selection_set(item)
-                        break
+        else:
+            with open('data/listeners.json', 'r') as file:
+                listeners = json.load(file)
 
             for listener in listeners:
                 if listener["Name"] == old_details[0]:  
@@ -420,11 +456,64 @@ def update_listener(app, old_details, name, host, port, protocol, tail):
                     listener["Port"] = port
                     listener["Protocol"] = protocol
                     listener["Tail"] = tail
-                    listener["State"] = listener_state
                     break
 
             with open('data/listeners.json', 'w') as file:
                 json.dump(listeners, file, indent=4)
 
-        except:
-            pass
+            app.editlist_window.destroy()
+
+            try:
+                selected = app.listener_table.selection()
+                selected_id = None
+                if selected:
+                    selected_details = app.listener_table.item(selected, "values")
+                    selected_id = selected_details[0]  
+
+                listener_states = {}
+                for item in app.listener_table.get_children():
+                    item_details = app.listener_table.item(item, "values")
+                    item_state = app.listener_table.item(item, "tags")
+                    listener_states[item_details[0]] = item_state[0]  
+
+                for item in app.listener_table.get_children():
+                    app.listener_table.delete(item)
+                
+                for listener in load_listeners(app):
+                    item_id = app.listener_table.insert('', 'end', values=(listener["Name"], listener["Host"], listener["Port"], listener["Protocol"], listener["Tail"]))
+                    
+                    if listener["Name"] in listener_states and listener_states[listener["Name"]] == "disabled":
+                        listener_state = "disabled"
+                        app.listener_table.item(item_id, tags=('disabled',))
+                    else:
+                        app.listener_table.item(item_id, tags=('enabled',))
+                        if listener["Name"] == new_details[0]:
+                            listener_state = "enabled"
+                            controller.kill_listeners(app, old_details)
+                            reload_listener(app, app.session_id, new_details, reload_listeners=True)
+
+                app.listener_table.tag_configure("enabled", foreground="#FFFFFF")  
+                app.listener_table.tag_configure("disabled", foreground="gray")
+                
+                if selected_id:
+                    for item in app.listener_table.get_children():
+                        item_details = app.listener_table.item(item, "values")
+                        if item_details[0] == selected_id:  
+                            app.listener_table.selection_set(item)
+                            break
+
+                for listener in listeners:
+                    if listener["Name"] == old_details[0]:  
+                        listener["Name"] = name
+                        listener["Host"] = host
+                        listener["Port"] = port
+                        listener["Protocol"] = protocol
+                        listener["Tail"] = tail
+                        listener["State"] = listener_state
+                        break
+
+                with open('data/listeners.json', 'w') as file:
+                    json.dump(listeners, file, indent=4)
+
+            except:
+                pass
