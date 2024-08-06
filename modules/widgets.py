@@ -244,17 +244,29 @@ def setup_widgets(root, app):
                 app.treeview.move(moving_item, '', item_index)
 
     def on_up(app, event):
-        if app.command_history:
+        if hasattr(app.entry, 'matches') and app.entry.matches:
+            app.entry.match_index = max(0, app.entry.match_index - 1)
+            app.entry.delete(0, tk.END)
+            app.entry.insert(tk.END, app.entry.matches[app.entry.match_index])
+            app.entry.icursor(tk.END)
+        elif app.command_history:
             app.history_index = max(0, app.history_index - 1)
             app.entry.delete(0, tk.END)
             app.entry.insert(tk.END, app.command_history[app.history_index])
+            app.entry.icursor(tk.END)
 
     def on_down(app, event):
-        if app.command_history:
+        if hasattr(app.entry, 'matches') and app.entry.matches:
+            app.entry.match_index = min(len(app.entry.matches) - 1, app.entry.match_index + 1)
+            app.entry.delete(0, tk.END)
+            app.entry.insert(tk.END, app.entry.matches[app.entry.match_index])
+            app.entry.icursor(tk.END)
+        elif app.command_history:
             app.history_index = min(len(app.command_history), app.history_index + 1)
             app.entry.delete(0, tk.END)
             if app.history_index != len(app.command_history):  
                 app.entry.insert(tk.END, app.command_history[app.history_index])
+            app.entry.icursor(tk.END)
 
     def on_ctrl_l(app, event):
         app.clear_command = True
@@ -401,6 +413,7 @@ def setup_widgets(root, app):
         def __init__(self, master, history, notebook, *args, **kwargs):
             self.command_history = history
             self.matches = []
+            self.match_index = 0
             self.notebook = notebook
             super().__init__(master, *args, **kwargs)
             self.bind("<KeyRelease>", self.on_key_release)
@@ -424,6 +437,7 @@ def setup_widgets(root, app):
                 self.icursor(current_index)
                 self.matches = [cmd for cmd in self.command_history if cmd.startswith(prefix)]
                 if self.matches:
+                    self.match_index = 0
                     self.show_match()
                     self.icursor(current_index)
                     return
@@ -437,7 +451,7 @@ def setup_widgets(root, app):
                 current_index = self.index(tk.INSERT)
                 text = self.get()
                 prefix = text[:current_index]
-                match = self.matches[0]
+                match = self.matches[self.match_index]
                 match_text = match[len(prefix):]
                 if match_text:
                     self.icursor(current_index)
@@ -452,7 +466,7 @@ def setup_widgets(root, app):
 
             if self.matches:
                 self.delete(0, tk.END)
-                self.insert(tk.END, self.matches[0])
+                self.insert(tk.END, self.matches[self.match_index])
                 self.icursor(tk.END)
                 return
 

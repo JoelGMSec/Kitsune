@@ -54,6 +54,26 @@ def regex_multi_text(text):
 
     return regex_text
 
+def copy_text(app, log_text):
+    try:
+        selected_text = log_text.selection_get()
+        log_text.clipboard_clear()
+        log_text.clipboard_append(selected_text)
+        log_text.tag_remove(tk.SEL, "1.0", tk.END)
+    except Exception as e:
+        print(e)
+        pass
+
+def start_updating_multiserver_log(app):
+    def update_loop():
+        while True:
+            time.sleep(1)
+            update_multiserver_log_tab(app)
+
+    thread = threading.Thread(target=update_loop)
+    thread.daemon = True
+    thread.start()
+
 def start_web_delivery(ip, port, protocol, app):
     stop_webserver(app)
     webserver_file = Path('data/webserver.json')
@@ -92,6 +112,7 @@ def start_web_delivery(ip, port, protocol, app):
 
         def capture_output(process, filename):
             while True:
+                time.sleep(1)
                 output = process.stdout.readline()
                 if process.poll() is not None and not output:
                     break
@@ -105,22 +126,19 @@ def start_web_delivery(ip, port, protocol, app):
                         json.dump(log_data, f, indent=4)
                         f.truncate()
                     app.notify_web_delivery()
+                    update_webserver_log_tab(app)
 
         thread = threading.Thread(target=capture_output, args=(app.web_delivery_process, 'data/webserver.json'))
         thread.daemon = True
         thread.start()
         
         atexit.register(app.web_delivery_process.terminate)
+        update_webserver_log_tab(app)
+        app.notify_web_delivery()
         return app.web_delivery_process
 
     except:
         pass
-
-def periodically_update_multiserver(app):
-    def update():
-        update_multiserver_log_tab(app)
-        app.after(500, update)
-    update()
 
 def update_multiserver_log_tab(app):
     multiserver_file = Path("data/multiserver.json")
@@ -134,7 +152,7 @@ def update_multiserver_log_tab(app):
         else:
             return
 
-        log_text = app.notebook.nametowidget(multiserver_tab).winfo_children()[0]
+        log_text = app.notebook.nametowidget(multiserver_tab).winfo_children()[1]
         log_text.config(state="normal")
         log_text.delete(1.0, 'end')
 
@@ -166,12 +184,6 @@ def update_multiserver_log_tab(app):
     except:
         pass
 
-def periodically_update_webserver(app):
-    def update():
-        update_webserver_log_tab(app)
-        app.after(500, update)
-    update()
-
 def update_webserver_log_tab(app):
     webserver_file = Path("data/webserver.json")
     try:
@@ -184,7 +196,7 @@ def update_webserver_log_tab(app):
         else:
             return
 
-        log_text = app.notebook.nametowidget(webserver_tab).winfo_children()[0]
+        log_text = app.notebook.nametowidget(webserver_tab).winfo_children()[1]
         log_text.config(state="normal")
         log_text.delete(1.0, 'end')
 
@@ -258,10 +270,11 @@ def open_webserver_log_tab(app):
     if insert_index < 0 or insert_index > len(existing_tabs):
         insert_index = len(existing_tabs)
     app.notebook.insert(insert_index, tab, text="Web Server Log")
-    app.notebook.select(tab)
+    scrollbar = ttk.Scrollbar(tab)
+    scrollbar.pack(side="right", fill="y")
 
-    log_text = tk.Text(tab)
-    log_text.config(
+    log_text = tk.Text(
+        tab,
         background="#333333",
         foreground="#FFCC00",
         padx=5,
@@ -271,8 +284,11 @@ def open_webserver_log_tab(app):
         selectbackground="#1B1B1B",
         inactiveselectbackground="#1B1B1B",
         borderwidth=0,
+        yscrollcommand=scrollbar.set
     )
-    log_text.pack(fill='both', expand=True)
+    log_text.pack(fill="both", expand=True)
+    scrollbar.config(command=log_text.yview)
+
     log_text.config(state="normal")
     log_text.delete(1.0, 'end')
 
@@ -282,7 +298,7 @@ def open_webserver_log_tab(app):
     log_text.tag_configure("color_input", foreground="#00AAFF")
 
     app.delivery_menu = tk.Menu(log_text, tearoff=0)
-    app.delivery_menu.add_command(label="Copy", command=app.copy_text)
+    app.delivery_menu.add_command(label="Copy", command=lambda: copy_text(app, log_text))
     app.delivery_menu.add_command(label="Clear", command=lambda: app.clear_delivery_logs(log_text, "web"))
     log_text.bind("<Button-3>", app.show_delivery_menu)
 
@@ -304,7 +320,7 @@ def open_webserver_log_tab(app):
     log_text.config(font=("Consolas", 18, "bold"))
     log_text.config(state="disabled")
     app.notebook.select(tab)
-    periodically_update_webserver(app)
+    update_webserver_log_tab(app)
 
 def open_multiserver_log_tab(app):
     multiserver_file = Path("data/multiserver.json")
@@ -346,10 +362,11 @@ def open_multiserver_log_tab(app):
         app.notebook.insert(insert_index, tab, text="Multi Server Log")
     except:
         app.notebook.add(tab, text="Multi Server Log")
-    app.notebook.select(tab)
+    scrollbar = ttk.Scrollbar(tab)
+    scrollbar.pack(side="right", fill="y")
 
-    log_text = tk.Text(tab)
-    log_text.config(
+    log_text = tk.Text(
+        tab,
         background="#333333",
         foreground="#FFCC00",
         padx=5,
@@ -359,8 +376,11 @@ def open_multiserver_log_tab(app):
         selectbackground="#1B1B1B",
         inactiveselectbackground="#1B1B1B",
         borderwidth=0,
+        yscrollcommand=scrollbar.set
     )
-    log_text.pack(fill='both', expand=True)
+    log_text.pack(fill="both", expand=True)
+    scrollbar.config(command=log_text.yview)
+
     log_text.config(state="normal")
     log_text.delete(1.0, 'end')
 
@@ -370,7 +390,7 @@ def open_multiserver_log_tab(app):
     log_text.tag_configure("color_input", foreground="#00AAFF")
 
     app.multi_menu = tk.Menu(log_text, tearoff=0)
-    app.multi_menu.add_command(label="Copy", command=app.copy_text)
+    app.multi_menu.add_command(label="Copy", command=lambda: copy_text(app, log_text))
     app.multi_menu.add_command(label="Clear", command=lambda: app.clear_delivery_logs(log_text, "multi"))
     log_text.bind("<Button-3>", app.show_multi_menu)
 
@@ -392,7 +412,7 @@ def open_multiserver_log_tab(app):
     log_text.config(font=("Consolas", 18, "bold"))
     log_text.config(state="disabled")
     app.notebook.select(tab)
-    periodically_update_multiserver(app)
+    update_multiserver_log_tab(app)
 
 def web_delivery(app):
     try:
@@ -487,6 +507,7 @@ def stop_multiserver(app):
         current_time = datetime.datetime.now().strftime("%H:%M:%S")  
         new_line = f"[{current_time}] {app.multi_delivery_protocol} Server on port {app.multi_delivery_port} was killed!\n"
         app.add_event_viewer_log(new_line, 'color_error', "#FF0055")
+        update_multiserver_log_tab(app)
 
 def stop_webserver(app):
     if app.web_delivery_process is not None and app.web_delivery_process.poll() is None:
@@ -496,6 +517,7 @@ def stop_webserver(app):
         current_time = datetime.datetime.now().strftime("%H:%M:%S")  
         new_line = f"[{current_time}] Web Server on port {app.web_delivery_port} was killed!\n"
         app.add_event_viewer_log(new_line, 'color_error', "#FF0055") 
+        update_webserver_log_tab(app)
 
 def kill_multiserver(app):
     if app.multi_delivery_process is not None:
@@ -509,6 +531,7 @@ def kill_multiserver(app):
             current_time = datetime.datetime.now().strftime("%H:%M:%S")  
             new_line = f"[{current_time}] {app.multi_delivery_protocol} Server on port {app.multi_delivery_port} was killed!\n"
             app.add_event_viewer_log(new_line, 'color_error', "#FF0055")
+            update_multiserver_log_tab(app)
 
 def kill_webserver(app):
     if app.web_delivery_process is not None and app.web_delivery_process.poll() is None:
@@ -518,7 +541,8 @@ def kill_webserver(app):
         
             current_time = datetime.datetime.now().strftime("%H:%M:%S")  
             new_line = f"[{current_time}] Web Server on port {app.web_delivery_port} was killed!\n"
-            app.add_event_viewer_log(new_line, 'color_error', "#FF0055")  
+            app.add_event_viewer_log(new_line, 'color_error', "#FF0055")
+            update_webserver_log_tab(app)
 
 def multi_delivery(app):
     try:
@@ -634,6 +658,7 @@ def start_ftp_server(ip, port, app):
                     clean_data = clean_data.replace('["','').replace('"]','')
                     data["Log"].append(clean_data)
                     app.notify_multi_delivery()
+                    update_multiserver_log_tab(app)
 
             with open(json_file_path, "w") as json_file:
                 json.dump(data, json_file, indent=4)
@@ -651,9 +676,13 @@ def start_ftp_server(ip, port, app):
     server.max_cons = 256
     server.max_cons_per_ip = 5
 
-    logging.basicConfig(filename="/tmp/Kitsune/ftp.log", level=logging.INFO)
-    app.ftp_server_process = server
-    server.serve_forever()
+    try:
+        logging.basicConfig(filename="/tmp/Kitsune/ftp.log", level=logging.INFO)
+        app.ftp_server_process = server
+        server.serve_forever()
+
+    except:
+        pass
 
 def start_smb_server(ip, port, app):
     def read_smb_logs():
@@ -692,6 +721,7 @@ def start_smb_server(ip, port, app):
                         clean_data = clean_data.replace('["','').replace('"]','')
                         data["Log"].append(clean_data)
                         app.notify_multi_delivery()
+                        update_multiserver_log_tab(app)
 
                 with open(json_file_path, "w") as json_file:
                     json.dump(data, json_file, indent=4)
@@ -704,12 +734,16 @@ def start_smb_server(ip, port, app):
     os.makedirs(smb_server_path, exist_ok=True)
     logging.basicConfig(filename="/tmp/Kitsune/smb.log", level=logging.INFO)
 
-    server = smbserver.SimpleSMBServer(listenAddress=ip, listenPort=int(port))
-    server.addShare("payloads", "payloads", "payloads")
-    server.setSMB2Support(True)
-    server.setSMBChallenge("")
-    server.setLogFile(os.path.join(smb_server_path, "smb.log"))
-    server.start()
+    try:
+        server = smbserver.SimpleSMBServer(listenAddress=ip, listenPort=int(port))
+        server.addShare("payloads", "payloads", "payloads")
+        server.setSMB2Support(True)
+        server.setSMBChallenge("")
+        server.setLogFile(os.path.join(smb_server_path, "smb.log"))
+        server.start()
+    
+    except:
+        pass
 
 def start_nfs_server(ip, port, app):
     def read_nfs_logs():
@@ -748,6 +782,7 @@ def start_nfs_server(ip, port, app):
                         clean_data = clean_data.replace('["','').replace('"]','')
                         data["Log"].append(clean_data)
                         app.notify_multi_delivery()
+                        update_multiserver_log_tab(app)
 
                 with open(json_file_path, "w") as json_file:
                     json.dump(data, json_file, indent=4)
@@ -781,6 +816,7 @@ def start_nfs_server(ip, port, app):
     try:
         asyncio.run(run_nfs_server())
         start_nfs_server(ip, port, app)
+
     except:
         pass
 
@@ -817,5 +853,5 @@ def start_multi_server(ip, port, protocol, app):
     current_time = datetime.datetime.now().strftime("%H:%M:%S")  
     new_line = f"[{current_time}] {protocol} Server is listening on port {port} now..\n"
     app.add_event_viewer_log(new_line, 'color_login', "#FF00FF")
-
+    update_multiserver_log_tab(app)
     return app.multi_delivery_process

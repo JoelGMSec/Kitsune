@@ -83,8 +83,7 @@ class App(tk.Frame):
 
         listeners.load_listeners(self)
         self.update_listeners_settings()
-        delivery.periodically_update_webserver(self)
-        delivery.periodically_update_multiserver(self)
+        delivery.start_updating_multiserver_log(self)
 
         self.sessions = []
         self.session_id = 0
@@ -793,8 +792,7 @@ if __name__ == "__main__":
     try:
         app = App(root, fast_mode)
         app.pack(fill="both", expand=True)
-        app_thread = threading.Thread(target=root.mainloop())
-        app_thread.start()
+        root.mainloop()
 
     except KeyboardInterrupt:
         if not fast_mode:
