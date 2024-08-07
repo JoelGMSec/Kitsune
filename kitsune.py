@@ -202,13 +202,13 @@ class App(tk.Frame):
 
                 if sessions_data:
                     for session in sessions_data:
-                        app.treeview.insert('', 'end', tags=['disabled'] ,values=(session["Session"], session["User"], session["Hostname"], session["IP Address"], session["Process"], session["PID"], session["Arch"], session["Listener"], session["Tail"]))
+                        self.treeview.insert('', 'end', tags=['disabled'] ,values=(session["Session"], session["User"], session["Hostname"], session["IP Address"], session["Process"], session["PID"], session["Arch"], session["Listener"], session["Tail"]))
 
             except:
                 pass
 
             for item in self.treeview.get_children():
-                item_info = app.treeview.item(item)
+                item_info = self.treeview.item(item)
                 session_number = item_info['values']
 
                 for item_id, state in self.treeview_state.items():
@@ -438,7 +438,7 @@ class App(tk.Frame):
             pass
 
     def clear_text(self):
-        if dialog.confirm_dialog(app) == "yes":
+        if dialog.confirm_dialog(self) == "yes":
             self.remove_data()
 
     def on_entry_focus_in(self, event):
@@ -507,15 +507,20 @@ class App(tk.Frame):
         self.treeview.selection_set(item)
 
         def kill_session():
-            if dialog.confirm_dialog(app) == "yes":
+            if dialog.confirm_dialog(self) == "yes":
                 self.treeview.item(item, tags=('disabled'))
 
         def restart_session():
-            time.sleep(5)
-            self.treeview.item(item, tags=('enabled'))
+            if dialog.confirm_dialog(self) == "yes":
+                if self.treeview.exists(item):
+                    values = self.treeview.item(item, "values")
+                    if values:
+                        session_id = values[0]
+                        session_title = "Session " + str(session_id)
+                        controller.retry_session(self, session_title)
 
         def confirm_remove():
-            if dialog.confirm_dialog(app) == "yes":
+            if dialog.confirm_dialog(self) == "yes":
                 if self.treeview.exists(item):
                     values = self.treeview.item(item, "values")
                     if values:
@@ -548,13 +553,13 @@ class App(tk.Frame):
             self.listener_table.item(selected_item, tags=('enabled',))
         
         elif action == "Disable":
-            if dialog.confirm_dialog(app) == "yes":
+            if dialog.confirm_dialog(self) == "yes":
                 controller.kill_listeners(self, listener_details)
-                app.listener_table.tag_configure("disabled", foreground="gray")
-                app.listener_table.item(selected_item, tags=('disabled',))
+                self.listener_table.tag_configure("disabled", foreground="gray")
+                self.listener_table.item(selected_item, tags=('disabled',))
 
         elif action == "Remove":
-            if dialog.confirm_dialog(app) == "yes":
+            if dialog.confirm_dialog(self) == "yes":
                 controller.kill_listeners(self, listener_details)
                 self.remove_listener_json(listener_details)
                 self.listener_table.delete(selected_item)
@@ -626,12 +631,12 @@ class App(tk.Frame):
         self.notebook.insert(insert_index, new_session, text=title)
         self.notebook.select(insert_index)
 
-    def on_double_click(app):
-        selected_item = app.listener_table.selection()
+    def on_double_click(self):
+        selected_item = self.listener_table.selection()
         if selected_item:
-            listener_details = app.listener_table.item(selected_item, "values")
+            listener_details = self.listener_table.item(selected_item, "values")
             if listener_details:
-                edit_listener(app, listener_details)
+                edit_listener(self, listener_details)
 
     def close_session(self):
         self.notebook.forget("current")
@@ -728,6 +733,7 @@ class App(tk.Frame):
                     f.seek(0)
                     json.dump(data, f, indent=4)
                     f.truncate()
+            delivery.open_multiserver_log_tab(self)
 
         if log_type == "web":
             if self.web_delivery_process and self.web_delivery_process.poll() is None:
@@ -748,6 +754,7 @@ class App(tk.Frame):
                     f.seek(0)
                     json.dump(data, f, indent=4)
                     f.truncate()
+            delivery.open_webserver_log_tab(self)
 
     def on_close(self):
         self.confirm_and_quit()

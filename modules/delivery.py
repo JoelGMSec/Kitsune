@@ -67,8 +67,23 @@ def copy_text(app, log_text):
 def start_updating_multiserver_log(app):
     def update_loop():
         while True:
-            time.sleep(1)
-            update_multiserver_log_tab(app)
+            try:
+                multiserver_file = Path('data/multiserver.json')
+                if multiserver_file.exists():
+                    with open(multiserver_file, 'r') as f:
+                        log_data = json.load(f)
+                        old_entries = log_data.get("Log", [])
+
+                time.sleep(0.2)
+                if multiserver_file.exists():
+                    with open(multiserver_file, 'r') as f:
+                        log_data = json.load(f)
+                        log_entries = log_data.get("Log", [])
+
+                    if log_entries != old_entries:
+                        update_multiserver_log_tab(app)
+            except:
+                pass
 
     thread = threading.Thread(target=update_loop)
     thread.daemon = True
@@ -112,7 +127,7 @@ def start_web_delivery(ip, port, protocol, app):
 
         def capture_output(process, filename):
             while True:
-                time.sleep(1)
+                time.sleep(0.2)
                 output = process.stdout.readline()
                 if process.poll() is not None and not output:
                     break
@@ -179,7 +194,6 @@ def update_multiserver_log_tab(app):
 
         log_text.config(state="disabled")
         log_text.see("end")
-        # app.notify_multi_delivery()
 
     except:
         pass
@@ -223,7 +237,6 @@ def update_webserver_log_tab(app):
 
         log_text.config(state="disabled")
         log_text.see("end")
-        # app.notify_web_delivery()
 
     except:
         pass

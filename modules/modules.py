@@ -77,7 +77,7 @@ def update_modules(app):
     updates_label = tk.Label(updates_frame, text="Downloading modules..")
     updates_label.grid(row=0, column=0, padx=(20, 0), pady=(20, 0))
 
-    name_label = tk.Label(updates_frame, text="")
+    name_label = tk.Label(updates_frame, text="*Please wait*", fg="#00AAFF")
     name_label.grid(row=1, column=0, padx=(20, 0), pady=10)
 
     progressbar = ttk.Progressbar(updates_frame, mode="indeterminate", length=200)

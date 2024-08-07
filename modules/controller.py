@@ -298,24 +298,21 @@ def retry_session(app, session_title):
         nekomancer_setting = settings_data.get('settings', {}).get('nekomancer', '')
 
     if nekomancer_setting == "All Sessions" or nekomancer_setting == "Bind Only":
+        try:
+            with open('data/sessions.json', 'r') as f:
+                sessions_data = json.load(f)
+        except:
+            sessions_data = []
+            pass
+        
+        for session in sessions_data:
+            if str(session['Session']) == str(session_title.split()[1]):
+                for item in app.treeview.get_children():
+                    item_info = app.treeview.item(item)
+                    session_number = item_info['values']
 
-        while True:
-            try:
-                with open('data/sessions.json', 'r') as f:
-                    sessions_data = json.load(f)
-            except:
-                sessions_data = []
-                pass
-            
-            for session in sessions_data:
-                if str(session['Session']) == str(session_title.split()[1]):
-                    for item in app.treeview.get_children():
-                        item_info = app.treeview.item(item)
-                        session_number = item_info['values']
-
-                        if str(session['Session']) == str(session_number[0]):
-                            if str(item_info['tags']) == "['disabled']":
-                                restart_session(app, session)
-                                time.sleep(30)
-                            else:
-                                return  
+                    if str(session['Session']) == str(session_number[0]):
+                        if str(item_info['tags']) == "['disabled']":
+                            restart_session(app, session)
+                        else:
+                            return  

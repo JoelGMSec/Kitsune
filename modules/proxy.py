@@ -81,7 +81,15 @@ def set_proxy(app):
     load_proxy_window(app, tail_entry, params_entry, method_combobox)
 
 def load_proxy_settings(app):
+    default_values = {"status": "Disabled", "ip_port": "127.0.0.1:1080", "protocol": "SOCKS"}
+    
     try:
+        if not os.path.exists("data/proxy.json"):
+            with open("data/proxy.json", "w") as f:
+                json.dump(default_values, f, indent=4)
+            app.proxy_status = False
+            return default_values
+
         with open("data/proxy.json", "r") as f:
             proxy_settings = json.load(f)
             app.proxy_status = proxy_settings.get("status", "Disabled") == "Enabled"
@@ -93,9 +101,11 @@ def load_proxy_settings(app):
             return proxy_settings
 
     except:
+        with open("data/proxy.json", "w") as f:
+            json.dump(default_values, f, indent=4)
         app.proxy_status = False
-        return {"status": "Disabled", "ip_port": "127.0.0.1:1080", "protocol": "SOCKS"}
-
+        return default_values
+        
 def save_proxy_settings(status, ip_port, protocol):
     proxy_settings = {
         "status": status,

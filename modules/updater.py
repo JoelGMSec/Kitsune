@@ -53,7 +53,7 @@ def check_updates(app):
     updates_label = tk.Label(updates_frame, text="Checking for updates..")
     updates_label.grid(row=0, column=0, padx=(20, 0), pady=(20, 0))
 
-    name_label = tk.Label(updates_frame, text="")
+    name_label = tk.Label(updates_frame, text="*Please wait*", fg="#00AAFF")
     name_label.grid(row=1, column=0, padx=(20, 0), pady=10)
 
     progressbar = ttk.Progressbar(updates_frame, mode="indeterminate", length=200)
@@ -61,7 +61,7 @@ def check_updates(app):
     progressbar.start()  
 
     def check_version():
-        time.sleep(1)
+        time.sleep(2)
         try:
             response = requests.get("https://raw.githubusercontent.com/JoelGMSec/Kitsune/main/version.txt")
             response.raise_for_status()  
