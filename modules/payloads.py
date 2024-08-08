@@ -80,7 +80,8 @@ def windows_payload(app):
     app.winpay_window.geometry("570x330")
     app.winpay_window.title("Windows Reverse Shell")
     app.winpay_window.focus_force()
-
+    app.winpay_window.resizable(False, False)
+    
     selected_tail = tk.StringVar()
     selected_output = tk.StringVar()
 
@@ -173,6 +174,7 @@ def linux_payload(app):
     app.linrev_window.geometry("570x330")
     app.linrev_window.title("Linux Reverse Shell")
     app.linrev_window.focus_force()
+    app.linrev_window.resizable(False, False)
 
     selected_tail = tk.StringVar()
     selected_output = tk.StringVar()
@@ -265,6 +267,7 @@ def webshell_payload(app):
     app.webpay_window.geometry("570x330")
     app.webpay_window.title("Web Shell (Bind)")
     app.webpay_window.focus_force()
+    app.webpay_window.resizable(False, False)
 
     white_label = ttk.Label(app.webpay_window, text="")
     white_label.grid(row=0, column=0, padx=0, pady=0)
@@ -341,6 +344,7 @@ def webshell_generate(app):
     app.webgen_window.geometry("570x330")
     app.webgen_window.title("Web Shell (Generate)")
     app.webgen_window.focus_force()
+    app.webgen_window.resizable(False, False)
 
     white_label = ttk.Label(app.webgen_window, text="")
     white_label.grid(row=0, column=0, padx=0, pady=0)
@@ -419,6 +423,7 @@ def pwncat_payload(app):
     app.linbind_window.geometry("570x330")
     app.linbind_window.title("Linux Bind Shell")
     app.linbind_window.focus_force()
+    app.linbind_window.resizable(False, False)
 
     white_label = ttk.Label(app.linbind_window, text="")
     white_label.grid(row=0, column=0, padx=0, pady=0)
@@ -497,6 +502,7 @@ def netexec_payload(app):
     app.winbind_window.geometry("570x615")
     app.winbind_window.title("Windows Bind Shell")
     app.winbind_window.focus_force()
+    app.winbind_window.resizable(False, False)
 
     white_label = ttk.Label(app.winbind_window, text="")
     white_label.grid(row=0, column=0, padx=0, pady=0)

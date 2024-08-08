@@ -28,6 +28,7 @@ def export_profile(app):
     app.export_window.geometry("525x255")
     app.export_window.title("Save Profile")
     app.export_window.focus_force()
+    app.export_window.resizable(False, False)
 
     image_frame = tk.Frame(app.export_window)
     image_frame.grid(row=0, column=1, padx=(10, 0), pady=20)
@@ -87,6 +88,7 @@ def import_profile(app):
     app.import_window.geometry("525x255")
     app.import_window.title("Load Profile")
     app.import_window.focus_force()
+    app.import_window.resizable(False, False)
 
     image_frame = tk.Frame(app.import_window)
     image_frame.grid(row=0, column=0, padx=(10, 0), pady=20)

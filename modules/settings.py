@@ -37,6 +37,7 @@ def open_settings(app):
     app.settings_window.geometry("525x255")
     app.settings_window.title("Settings")
     app.settings_window.focus_force()
+    app.settings_window.resizable(False, False)
 
     image_frame = tk.Frame(app.settings_window)
     image_frame.grid(row=0, column=1, padx=(10, 0), pady=20)

@@ -30,6 +30,7 @@ def export_logs(app):
     app.report_window.geometry("525x255")
     app.report_window.title("Export Logs")
     app.report_window.focus_force()
+    app.report_window.resizable(False, False)
 
     image_frame = tk.Frame(app.report_window)
     image_frame.grid(row=0, column=1, padx=(10, 0), pady=20)

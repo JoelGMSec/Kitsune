@@ -79,6 +79,7 @@ def update_tails(app):
     app.tails_window.geometry("525x255")
     app.tails_window.title("Update Tails")
     app.tails_window.focus_force()
+    app.tails_window.resizable(False, False)
 
     image_frame = tk.Frame(app.tails_window)
     image_frame.grid(row=0, column=1, padx=(50, 0), pady=(20, 0))

@@ -21,6 +21,7 @@ def settings_success(app):
     app.dialog_window = dialog 
     dialog.title("Success")
     dialog.focus_force()
+    dialog.resizable(False, False)
 
     label = ttk.Label(dialog, text="Settings saved successfully!")
     label.pack(padx=20, pady=20)
@@ -53,6 +54,7 @@ def proxy_success(app):
     app.dialog_window = dialog 
     dialog.title("Success")
     dialog.focus_force()
+    dialog.resizable(False, False)
 
     label = ttk.Label(dialog, text="Proxy configured successfully!")
     label.pack(padx=20, pady=20)
@@ -85,6 +87,7 @@ def report_deleted_success(app):
     app.dialog_window = dialog 
     dialog.title("Success")
     dialog.focus_force()
+    dialog.resizable(False, False)
 
     label = ttk.Label(dialog, text="All reports have been deleted!")
     label.pack(padx=20, pady=20)
@@ -117,6 +120,7 @@ def profile_deleted_success(app):
     app.dialog_window = dialog 
     dialog.title("Success")
     dialog.focus_force()
+    dialog.resizable(False, False)
 
     label = ttk.Label(dialog, text="All profiles have been deleted!")
     label.pack(padx=20, pady=20)
@@ -149,6 +153,7 @@ def report_saved_success(app):
     app.dialog_window = dialog 
     dialog.title("Success")
     dialog.focus_force()
+    dialog.resizable(False, False)
 
     label = ttk.Label(dialog, text="Report saved successfully!")
     label.pack(padx=20, pady=20)
@@ -181,6 +186,7 @@ def profile_saved_success(app):
     app.dialog_window = dialog 
     dialog.title("Success")
     dialog.focus_force()
+    dialog.resizable(False, False)
 
     label = ttk.Label(dialog, text="Profile saved successfully!")
     label.pack(padx=20, pady=20)
@@ -213,6 +219,7 @@ def generate_success(app):
     app.dialog_window = dialog 
     dialog.title("Success")
     dialog.focus_force()
+    dialog.resizable(False, False)
 
     os.system("chmod +x payloads -R")
     label = ttk.Label(dialog, text="Payload generated successfully!")
@@ -246,6 +253,7 @@ def reload_success(app):
     app.dialog_window = dialog 
     dialog.title("Success")
     dialog.focus_force()
+    dialog.resizable(False, False)
 
     os.system("chmod +x payloads -R")
     label = ttk.Label(dialog, text="Modules reloaded successfully!")
@@ -279,7 +287,8 @@ def confirm_dialog(app):
     app.dialog_window = dialog 
     dialog.title("Confirmation")
     dialog.focus_force()
-
+    dialog.resizable(False, False)
+    
     label = ttk.Label(dialog, text="Are you sure?")
     label.pack(padx=20, pady=20)
 

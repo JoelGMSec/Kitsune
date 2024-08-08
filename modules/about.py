@@ -35,6 +35,7 @@ def about_window(app):
     app.about_window.geometry("525x255")
     app.about_window.title("About")
     app.about_window.focus_force()
+    app.about_window.resizable(False, False)
     
     image_frame = tk.Frame(app.about_window)
     image_frame.pack(side="left", padx=(10, 0), pady=10)

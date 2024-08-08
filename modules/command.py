@@ -131,6 +131,9 @@ def read_output_wmiexecpro(session_data, command):
         if command.split()[0] in lines[0].strip():
             output = "\n".join(lines[1:])  
     
+    if "command results failed" in output:
+        output = None
+
     output = re.sub(r'C:\\Windows\\System32>', '', output).strip()
     return output
 
@@ -232,7 +235,7 @@ def read_output_pwncat(session_data, command):
 
     if not "not found" in output or not "error" in output:
         lines = output.split("\n")
-        if command.split()[0] == lines[0].strip():
+        if command.split()[0] in lines[0].strip():
             output = "\n".join(lines[1:])  
 
     return output
@@ -285,7 +288,7 @@ def read_output_nonblocking(session_data, command):
 
     if not "not found" in output or not "error" in output:
         lines = output.split("\n")
-        if command.split()[0] in lines[0].strip():
+        if command.split()[0] == lines[0].strip():
             output = "\n".join(lines[1:])  
 
     return output

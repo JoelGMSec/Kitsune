@@ -26,7 +26,8 @@ def set_proxy(app):
     app.proxy_window.geometry("570x330")
     app.proxy_window.title("Proxification")
     app.proxy_window.focus_force()
-
+    app.proxy_window.resizable(False, False)
+    
     white_label = ttk.Label(app.proxy_window, text="")
     white_label.grid(row=0, column=0, padx=0, pady=0)
 
@@ -105,7 +106,7 @@ def load_proxy_settings(app):
             json.dump(default_values, f, indent=4)
         app.proxy_status = False
         return default_values
-        
+
 def save_proxy_settings(status, ip_port, protocol):
     proxy_settings = {
         "status": status,

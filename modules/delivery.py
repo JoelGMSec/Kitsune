@@ -439,6 +439,7 @@ def web_delivery(app):
     app.web_window.geometry("570x330")
     app.web_window.title("Scripted Web Delivery")
     app.web_window.focus_force()
+    app.web_window.resizable(False, False)
 
     white_label = ttk.Label(app.web_window, text="")
     white_label.grid(row=0, column=0, padx=0, pady=0)
@@ -512,15 +513,23 @@ def server_status(ip, port, protocol, app):
 def stop_multiserver(app):
     if app.multi_delivery_process is not None:
         try:
-            app.multi_delivery_process.terminate()
+            if app.multi_delivery_protocol == "FTP":
+                app.ftp_server_process.close_all()
+            elif app.multi_delivery_protocol == "SMB":
+                app.smb_server_process.stop()
+            elif app.multi_delivery_protocol == "NFS":
+                app.nfs_server_process.stop()
+                app.nfs_server_process.close()
+        
         except:
             pass
-
-        app.multi_delivery_process = None
-        current_time = datetime.datetime.now().strftime("%H:%M:%S")  
-        new_line = f"[{current_time}] {app.multi_delivery_protocol} Server on port {app.multi_delivery_port} was killed!\n"
-        app.add_event_viewer_log(new_line, 'color_error', "#FF0055")
-        update_multiserver_log_tab(app)
+        
+        finally:
+            app.multi_delivery_process = None
+            current_time = datetime.datetime.now().strftime("%H:%M:%S")  
+            new_line = f"[{current_time}] {app.multi_delivery_protocol} Server on port {app.multi_delivery_port} was killed!\n"
+            app.add_event_viewer_log(new_line, 'color_error', "#FF0055")
+            update_multiserver_log_tab(app)
 
 def stop_webserver(app):
     if app.web_delivery_process is not None and app.web_delivery_process.poll() is None:
@@ -536,15 +545,9 @@ def kill_multiserver(app):
     if app.multi_delivery_process is not None:
         if dialog.confirm_dialog(app) == "yes":
             try:
-                app.multi_delivery_process.terminate()
+                stop_multiserver(app)
             except:
                 pass
-
-            app.multi_delivery_process = None
-            current_time = datetime.datetime.now().strftime("%H:%M:%S")  
-            new_line = f"[{current_time}] {app.multi_delivery_protocol} Server on port {app.multi_delivery_port} was killed!\n"
-            app.add_event_viewer_log(new_line, 'color_error', "#FF0055")
-            update_multiserver_log_tab(app)
 
 def kill_webserver(app):
     if app.web_delivery_process is not None and app.web_delivery_process.poll() is None:
@@ -569,6 +572,7 @@ def multi_delivery(app):
     app.multi_window.geometry("570x330")
     app.multi_window.title("Multi-Server Delivery")
     app.multi_window.focus_force()
+    app.multi_window.resizable(False, False)
 
     white_label = ttk.Label(app.multi_window, text="")
     white_label.grid(row=0, column=0, padx=0, pady=0)
@@ -753,6 +757,7 @@ def start_smb_server(ip, port, app):
         server.setSMB2Support(True)
         server.setSMBChallenge("")
         server.setLogFile(os.path.join(smb_server_path, "smb.log"))
+        app.smb_server_process = server
         server.start()
     
     except:
@@ -805,30 +810,33 @@ def start_nfs_server(ip, port, app):
 
     threading.Thread(target=read_nfs_logs, daemon=True).start()
     
-    async def run_nfs_server():
-        fs_manager = EvictingFileSystemManager(
-            VerifyingFileHandleEncoder(os.urandom(32)),
-            factories={
-                b"/tmp/Kitsune/Payloads": lambda call_ctx: create_fs(
-                    lambda *args, **kwargs: SimpleFS(
-                        size_quota=100*1024, 
-                        entries_quota=100, 
-                        *args, **kwargs
+    async def run_nfs_server(app):
+        try:
+            fs_manager = EvictingFileSystemManager(
+                VerifyingFileHandleEncoder(os.urandom(32)),
+                factories={
+                    b"/tmp/Kitsune/Payloads": lambda call_ctx: create_fs(
+                        lambda *args, **kwargs: SimpleFS(
+                            size_quota=100*1024, 
+                            entries_quota=100, 
+                            *args, **kwargs
+                        ),
+                        call_ctx,
+                        read_only=False
                     ),
-                    call_ctx,
-                    read_only=False
-                ),
-            },
-        )
-        await serve_nfs(fs_manager, use_internal_rpcbind=True)
+                },
+            )
+            await serve_nfs(fs_manager, use_internal_rpcbind=True)
+
+        except:
+            pass
 
     nfs_server_path = '/tmp/Kitsune'
     os.makedirs(nfs_server_path, exist_ok=True)
     logging.basicConfig(filename="/tmp/Kitsune/nfs.log", level=logging.INFO)
 
     try:
-        asyncio.run(run_nfs_server())
-        start_nfs_server(ip, port, app)
+        app.nfs_server_process = asyncio.run(run_nfs_server(app))
 
     except:
         pass

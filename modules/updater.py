@@ -34,6 +34,7 @@ def check_updates(app):
     app.updates_window.geometry("525x255")
     app.updates_window.title("Updates")
     app.updates_window.focus_force()
+    app.updates_window.resizable(False, False)
 
     image_frame = tk.Frame(app.updates_window)
     image_frame.grid(row=0, column=1, padx=(30, 0), pady=(20, 0))
@@ -72,7 +73,7 @@ def check_updates(app):
             else:
                 name_label.config(text="No updates found!", fg="#00AAFF")
         except:
-            name_label.config(text="No updates found!", fg="#00AAFF")
+            pass
 
     threading.Thread(target=check_version).start()
 

@@ -58,6 +58,7 @@ def update_modules(app):
     app.modules_window.geometry("525x255")
     app.modules_window.title("Update Modules")
     app.modules_window.focus_force()
+    app.modules_window.resizable(False, False)
 
     image_frame = tk.Frame(app.modules_window)
     image_frame.grid(row=0, column=1, padx=(20, 30), pady=(20, 0))

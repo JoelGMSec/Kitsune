@@ -103,6 +103,7 @@ def listener_window(app):
     app.listener_window.geometry("570x475")
     app.listener_window.title("New Listener")
     app.listener_window.focus_force()
+    app.listener_window.resizable(False, False)
 
     white_label = ttk.Label(app.listener_window, text="")
     white_label.grid(row=0, column=0, padx=0, pady=0)
@@ -341,6 +342,7 @@ def edit_listener(app, listener_details):
     app.editlist_window.geometry("570x475")
     app.editlist_window.title("Edit Listener")
     app.editlist_window.focus_force()
+    app.editlist_window.resizable(False, False)
 
     white_label = ttk.Label(app.editlist_window, text="")
     white_label.grid(row=0, column=0, padx=0, pady=0)
