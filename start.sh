@@ -14,6 +14,10 @@ if [[ -z $(sudo docker image ls | grep kitsune) ]]; then
   sudo docker build -t joelgmsec/kitsune .
 fi
 
+# Copy fonts to ~/.local/share/fonts/
+mkdir -p ~/.local/share/fonts > /dev/null 2>&1
+cp -rf ./themes/fonts/* ~/.local/share/fonts/
+
 # Main Function
 sudo xhost +local: > /dev/null
 sudo docker run -it --rm --net host -v /tmp:/tmp -v "$(pwd):/opt/Kitsune" joelgmsec/kitsune
