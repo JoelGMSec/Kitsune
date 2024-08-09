@@ -380,19 +380,13 @@ def execute_command(app, event):
                     current_session.label.insert("end", log_text, "color_reset")
                     current_session.label.config(state="disabled")
                     current_session.label.see("end")
+                    old_command = command
 
-                    def execute_read_output_nonblocking():
-                        nonlocal command
-                        nonlocal current_session
-                        nonlocal current_tab
+                    def execute_read_output_nonblocking(command, current_session, current_tab):
                         disable_session = False
-                        old_command = command
-
+                        nonlocal old_command
+                        
                         try:
-                            custom_command = custom.exec_custom_modules(app, "command", current_session.session_data, command)
-                            if custom_command and command != "help":
-                                command = custom_command
-
                             if "netexec" in str(current_session.session_data):
                                 if command != "help":
                                     custom.exec_custom_modules(app, "command", current_session.session_data, command)
@@ -406,8 +400,6 @@ def execute_command(app, event):
 
                             elif "pyshell" in str(current_session.session_data):
                                 if command != "help":
-                                    if command == "id" or command.startswith("ls"):
-                                        command = f"/bin/sh -c \"{command}\""
                                     current_session.session_data.write(command + "\n")  
                                     output = read_output_nonblocking(current_session.session_data, command)
                                     command = old_command
@@ -485,17 +477,45 @@ def execute_command(app, event):
                             if command == "del*" or command == "rm*":
                                 output = "Success!"
 
-                            if not output:
+                            if not output and not custom_command:
                                 output = "Error: No output from command!"
                         
                         except:
-                            output = "Error: No response from client!"
-                            disable_session = True
+                            if not custom_command:
+                                output = "Error: No response from client!"
+                                disable_session = True
 
+                        try:
+                            if output:
+                                command = old_command
+                                current_session.text_widget = current_session.label
+                                current_session.log.append({"Command": command, "Output": output})
+                                current_session.save_logs()
+                                current_session.label.config(state="normal")
+                                log_text = "[>] Output:\n"
+                                current_session.label.insert("end", log_text, "color_output")
+                                current_session.label.config(state="disabled")
+                                current_session.label.see("end")
+                                current_session.label.config(state="normal")
+                                log_text = f"{output}\n\n"
+                                current_session.label.insert("end", log_text, "color_reset")
+                                current_session.label.config(state="disabled")
+                                current_session.label.see("end")
+                                        
+                                app.notify_command_session(current_session.title)
+
+                                if disable_session and not custom_command:
+                                    Session.disable_session(app, current_tab)
+                                    disable_session = False
+                        except:
+                            pass
+
+                    custom_command = custom.exec_custom_modules(app, "command", current_tab, command)
+                    if custom_command and command != "help":
+                        output = "Please wait, this can take a while.."
                         current_session.text_widget = current_session.label
-                        current_session.log.append({"Command": command, "Output": output})
+                        current_session.log.append({"Command": old_command, "Output": output})
                         current_session.save_logs()
-
                         current_session.label.config(state="normal")
                         log_text = "[>] Output:\n"
                         current_session.label.insert("end", log_text, "color_output")
@@ -506,15 +526,17 @@ def execute_command(app, event):
                         current_session.label.insert("end", log_text, "color_reset")
                         current_session.label.config(state="disabled")
                         current_session.label.see("end")
-                                
-                        app.notify_command_session(current_session.title)
+                        
+                        try:
+                            thread = Thread(target=execute_read_output_nonblocking, args=(custom_command, current_session, current_tab))
+                            thread.start()
 
-                        if disable_session:
-                            Session.disable_session(app, current_tab)
-                            disable_session = False
-
-                    thread = Thread(target=execute_read_output_nonblocking)
-                    thread.start()
+                        except Exception as e:
+                            print(e)
+                            pass
+                    else:
+                        thread = Thread(target=execute_read_output_nonblocking, args=(command, current_session, current_tab))
+                        thread.start()
 
                 app.entry.delete(0, tk.END)
 

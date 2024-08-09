@@ -696,6 +696,7 @@ def start_ftp_server(ip, port, app):
     try:
         logging.basicConfig(filename="/tmp/Kitsune/ftp.log", level=logging.INFO)
         app.ftp_server_process = server
+        atexit.register(app.ftp_server_process.close_all)
         server.serve_forever()
 
     except:
@@ -750,7 +751,7 @@ def start_smb_server(ip, port, app):
     smb_server_path = '/tmp/Kitsune'
     os.makedirs(smb_server_path, exist_ok=True)
     logging.basicConfig(filename="/tmp/Kitsune/smb.log", level=logging.INFO)
-
+    
     try:
         server = smbserver.SimpleSMBServer(listenAddress=ip, listenPort=int(port))
         server.addShare("payloads", "payloads", "payloads")
@@ -758,6 +759,7 @@ def start_smb_server(ip, port, app):
         server.setSMBChallenge("")
         server.setLogFile(os.path.join(smb_server_path, "smb.log"))
         app.smb_server_process = server
+        atexit.register(app.smb_server_process.stop)
         server.start()
     
     except:
@@ -834,9 +836,10 @@ def start_nfs_server(ip, port, app):
     nfs_server_path = '/tmp/Kitsune'
     os.makedirs(nfs_server_path, exist_ok=True)
     logging.basicConfig(filename="/tmp/Kitsune/nfs.log", level=logging.INFO)
-
+    
     try:
         app.nfs_server_process = asyncio.run(run_nfs_server(app))
+        atexit.register(app.nfs_server_process.stop)
 
     except:
         pass
