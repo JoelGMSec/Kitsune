@@ -16,13 +16,8 @@ def get_description():
 
 def main(app, caller, payload, format):
     if caller == "generate" and "Ps1" in format:
+        tmp_payload = os.path.join("/tmp", os.path.basename(payload))
         payload_obfuscated = str(payload).split(".")[0] + "_obfuscated.ps1"
-        shutil.copyfile(payload, payload_obfuscated)
-
-        subprocess.run(["pwsh", "custom/Invoke-Stealth/Invoke-Stealth.ps1", payload_obfuscated, "-t", "all"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-        try:
-            if os.path.isfile(signature_path):
-                os.remove(signature_path)
-        except:
-                pass
+        shutil.copyfile(payload, tmp_payload)
+        subprocess.run(["pwsh", "Invoke-Stealth.ps1", tmp_payload, "-t", "all"], check=True, cwd="custom/Invoke-Stealth/", stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        shutil.move(tmp_payload, payload_obfuscated)
