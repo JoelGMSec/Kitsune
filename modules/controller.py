@@ -115,7 +115,6 @@ def start_listeners(app, session, reload_listeners=False):
         port = listener.get("Port")
         protocol = listener.get("Protocol")
         tail = listener.get("Tail")
-        time.sleep(0.1)
         if not app.fast_mode:
             print(colored(f"[+] {name} - {host}:{port} - {protocol} - {tail}","green"))
         listener_details = (name, host, port, protocol, tail)
@@ -148,15 +147,8 @@ def kill_listeners(app, listener_details):
     current_time = now.strftime("%H:%M:%S")
 
     label_text = f"[{current_time}] Listener {listener_details[0]} on port {listener_details[2]} was killed!"
-
-    app.text.config(state="normal")
-    app.text.config(foreground="#FF0055")
-    app.text.insert("end", label_text + "\n")
-    app.text.config(state="disabled")
-
-    time.sleep(0.2)
-    app.silent_error = False
     app.add_event_viewer_log(label_text + "\n", 'color_error', "#FF0055")
+    app.silent_error = False
 
     listeners = app.load_listeners()
 
@@ -196,9 +188,8 @@ def stop_listeners(app, listener_details):
     except:
         pass
 
-    time.sleep(0.2)
+
     app.silent_error = False
- 
     listeners = app.load_listeners()
 
     for listener in listeners:

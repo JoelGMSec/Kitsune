@@ -8,7 +8,7 @@ import sys
 sys.dont_write_bytecode = True
 
 def get_description():
-    return "This module adds LinPeas & WinPeas to custom commands"
+    return "This module adds LinPEAS & WinPEAS to custom commands"
 
 def main(app, caller, session, command):
     if caller == "command" and command == "help":

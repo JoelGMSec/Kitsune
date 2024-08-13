@@ -34,7 +34,7 @@ def http_shell(app, host, port, name, session, restart):
         session_data.sendline("$null")
         session_data.sendline("$null")
         session_data.expect("HTTP-Shell", timeout=None)
-        time.sleep(0.5)
+        time.sleep(0.2)
 
         session_data.sendline("whoami")
         output = read_output_nonblocking(session_data, "whoami")
@@ -55,8 +55,7 @@ def http_shell(app, host, port, name, session, restart):
             session_info["User"] = output.lower().split()[-1].strip()
     
         for cmd in commands:
-            session_data.sendline(cmd)
-            time.sleep(0.5)
+            session_data.sendline(cmd) ; time.sleep(0.2)
             output = read_output_nonblocking(session_data, cmd)
 
             if "GetHostByName" in cmd or cmd.startswith("head -1 /etc/hostname"):
@@ -146,9 +145,8 @@ def pwncat(app, host, port, name, session, restart):
         session_data.sendline("back")
 
         for cmd in commands:
-            session_data.sendline(cmd)  
+            session_data.sendline(cmd) ; time.sleep(0.2)
             output = read_output_pwncat(session_data, cmd)
-            time.sleep(0.2)
 
             try:
                 if cmd.startswith("whoami"):
@@ -365,8 +363,7 @@ def villain(app, host, port, name, session, restart):
 
         for cmd in commands:
             session_data.sendline("$null")
-            session_data.sendline(cmd)
-            time.sleep(3)           
+            session_data.sendline(cmd) ; time.sleep(3)           
             output = read_output_nonblocking(session_data, cmd)
             
             if "GetHostByName" in cmd:

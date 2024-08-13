@@ -578,7 +578,6 @@ class App(tk.Frame):
         menu.add_command(label="Remove", command=lambda: self.confirm_remove("Remove"))
         menu.tk_popup(event.x_root, event.y_root)
 
-
     def confirm_and_quit(self):
         if dialog.confirm_dialog(self) == "yes":
             if not self.fast_mode:
@@ -586,12 +585,11 @@ class App(tk.Frame):
             self.destroy()
             self.quit()
 
-    def restart_app(self):
+    def restart_app(self, profile):
         if not self.fast_mode:
-            print(colored("\n[!] Loading new profile..", "red"))
+            print(colored(f"\n[!] Loading \"{profile}\" profile..", "red"))
         self.destroy()
-
-        os.execl(sys.executable, sys.executable, *sys.argv)
+        os.execl(sys.executable, sys.executable, *sys.argv, "-restart")
 
     def on_treeview_doubleclick(self, event):
         TAB_ORDER = ["Event Viewer", "Team Chat", "Listeners", "Module Console", "Multi Server Log", "Web Server Log"]
@@ -764,7 +762,9 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-fast', action='store_true')
+    parser.add_argument('-restart', action='store_true')
     args = parser.parse_args()
+    restart_mode = args.restart
     fast_mode = args.fast
 
     root = tk.Tk()
@@ -792,7 +792,7 @@ if __name__ == "__main__":
     temp_path = f'/tmp/Kitsune'
     shutil.rmtree(temp_path, ignore_errors=True)
 
-    if not fast_mode:
+    if not fast_mode and not restart_mode:
         print(open("./themes/banner.txt", "r").read())
         print(colored("     -------- by @JoelGMSec --------\n", "blue"))
 

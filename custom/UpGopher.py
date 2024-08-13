@@ -17,11 +17,35 @@ sys.dont_write_bytecode = True
 def get_description():
     return "This module adds UpGopher to custom commands"
 
+def compile_upgopher():
+    try:
+        subprocess.run('cd custom/upgopher/ && go build upgopher.go > /dev/null 2>&1', shell=True, check=True)
+        subprocess.run('cd custom/upgopher/ && env GOOS=windows GOARCH=amd64 go build upgopher.go > /dev/null 2>&1', shell=True, check=True)
+    except:
+        return False
+    return True
+
+def compile_upgopher_thread():
+    compile_thread = threading.Thread(target=compile_upgopher)
+    compile_thread.start()
+
+def check_upgopher_exists():
+    linux_path = "custom/upgopher/upgopher"
+    windows_path = "custom/upgopher/upgopher.exe"    
+    if not (os.path.exists(linux_path) and os.path.exists(windows_path)):
+        compile_upgopher_thread()
+        return False
+    return True
+
 def main(app, caller, session, command):
     if caller == "command" and command == "help":
         return "- upgopher: Execute UpGopher on current session and return URL:PORT"
     
-    if caller == "command" and command == "upgopher":
+    if caller == "command" and command == "upgopher": 
+        inital_check = check_upgopher_exists()
+        if not inital_check:
+            return "print: [+] First time execution detected! Compiling UpGopher, please wait.."
+   
         def get_localip():
             try:
                 result = subprocess.run(
@@ -110,8 +134,6 @@ def main(app, caller, session, command):
             output_list = []
             steps = [
                 'print: "[+] Loading Custom Module: UpGopher"',
-                'local: cd custom/upgopher/ && go build upgopher.go > /dev/null 2>&1',
-                'local: cd custom/upgopher/ && env GOOS=windows GOARCH=amd64 go build upgopher.go > /dev/null 2>&1',
                 'print: "- Step 1: Build Go Solution.. OK!"',
                  str(custom_step1), str(custom_step2), str(custom_step3),
                 'print: "- Step 2: Transfer UpGopher.. OK!"', 

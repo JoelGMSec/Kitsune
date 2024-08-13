@@ -59,9 +59,8 @@ def connect_pwncat(app, params, method, session, restart):
         session_data.sendline("back")
 
         for cmd in commands:
-            session_data.sendline(cmd)  
+            session_data.sendline(cmd) ; time.sleep(0.2)
             output = read_output_pwncat(session_data, cmd)
-            time.sleep(0.2)
 
             try:
                 if cmd.startswith("whoami"):
@@ -355,7 +354,7 @@ def connect_evilwinrm(app, params, method, session, restart):
         commands = ["whoami", get_host, get_ip, "$pid", get_process, get_arch]
 
         for cmd in commands:
-            session_data.sendline(cmd) ; time.sleep(1)
+            session_data.sendline(cmd) ; time.sleep(0.2)
             output = read_output_nonblocking(session_data, cmd)
 
             if output:

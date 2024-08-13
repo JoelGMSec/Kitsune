@@ -223,7 +223,7 @@ def load_and_close(app, selected_value):
                 app.event_viewer_logs.clear()
                 app.event_viewer_logs = []
                 app.event_viewer_logs = app.load_event_viewer_logs()
-                app.restart_app()
+                app.restart_app(selected_value.get())
 
             except:
                 pass

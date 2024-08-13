@@ -7,6 +7,7 @@
 import os
 import json
 import time
+import base64
 import shutil
 import datetime
 import subprocess
@@ -152,8 +153,10 @@ def json_to_html(json_file_path, html_file_path):
     with open(json_file_path, 'r') as file:
         sessions = json.load(file)
     
-    logo_filename = "Kitsune.png"
-    logo_path = os.path.join(os.path.dirname(html_file_path), logo_filename)
+
+    logo_path = "./themes/images/Kitsune.png"
+    with open(logo_path, "rb") as image_file:
+        image_base64 = base64.b64encode(image_file.read()).decode('utf-8')
 
     html_content = f"""
     <!DOCTYPE html>
@@ -241,7 +244,7 @@ def json_to_html(json_file_path, html_file_path):
                 margin-block: 0px;
             }}
             th.command, td.command {{
-                width: 175px; /* Ajusta el valor según el ancho deseado */
+                width: 175px;
             }}
             th.user, td.user {{
                 width: 175px;
@@ -271,7 +274,7 @@ def json_to_html(json_file_path, html_file_path):
     </head>
     <body>
         <div class="header">
-            <img src="../themes/images/Kitsune.png" alt="">
+            <img src="data:image/png;base64,{image_base64}" alt="">
             <div class="title-container">
                 <h1>Kitsune</h1>
                 <h2>Command & Control</h2>
