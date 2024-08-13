@@ -68,15 +68,19 @@ def export_logs(app):
 
     app.report_window.bind("<Escape>", on_escape_key)
     
-    def on_click_entry(event):
+    def on_focus_entry(event):
+        name_entry.configure(state="normal")
         name_entry.state(["!invalid"])
         name_entry.delete(0, tk.END)
         name_entry.configure(foreground="white")
+        app.save_button.state(["!invalid"])
+        app.save_button['state'] = '!invalid'
 
-    name_entry.bind("<Button-1>", on_click_entry)
+    name_entry.bind("<Button-1>", on_focus_entry)
+    name_entry.bind("<FocusIn>", on_focus_entry)
 
-    save_button = ttk.Button(settings_frame, text="Save", command=lambda: save_project(app, name_entry))
-    save_button.grid(row=3, column=0, pady=(35, 10))  
+    app.save_button = ttk.Button(settings_frame, text="Save", command=lambda: save_project(app, name_entry))
+    app.save_button.grid(row=3, column=0, pady=(35, 10))  
 
 def save_project(app, name_entry):
     if name_entry.get():
@@ -104,6 +108,9 @@ def save_project(app, name_entry):
             name_entry.delete(0, tk.END)
             name_entry.insert(0, "Invalid report name!")
             name_entry.configure(foreground="#c0c0c0")
+            name_entry.state(["readonly"])
+            app.save_button.state(["invalid"])
+            app.save_button['state'] = 'invalid'
 
         try:
             json_file_path = os.path.join(report_path, "sessions.json")
@@ -121,6 +128,9 @@ def save_project(app, name_entry):
         name_entry.delete(0, tk.END)
         name_entry.insert(0, "Invalid report name!")
         name_entry.configure(foreground="#c0c0c0")
+        name_entry.state(["readonly"])
+        app.save_button.state(["invalid"])
+        app.save_button['state'] = 'invalid'
 
 def clear_logs(app):
     profiles_path = "reports"

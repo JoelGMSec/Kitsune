@@ -66,15 +66,19 @@ def export_profile(app):
 
     app.export_window.bind("<Escape>", on_escape_key)
 
-    def on_click_entry(event):
+    def on_focus_entry(event):
+        name_entry.configure(state="normal")
         name_entry.state(["!invalid"])
         name_entry.delete(0, tk.END)
         name_entry.configure(foreground="white")
+        app.save_button.state(["!invalid"])
+        app.save_button['state'] = '!invalid'
 
-    name_entry.bind("<Button-1>", on_click_entry)
+    name_entry.bind("<Button-1>", on_focus_entry)
+    name_entry.bind("<FocusIn>", on_focus_entry)
 
-    save_button = ttk.Button(export_frame, text="Save", command=lambda: save_profile(app, name_entry))
-    save_button.grid(row=3, column=0, pady=(35, 10))  
+    app.save_button = ttk.Button(export_frame, text="Save", command=lambda: save_profile(app, name_entry))
+    app.save_button.grid(row=3, column=0, pady=(35, 10))  
 
 def import_profile(app):
     try:
@@ -123,22 +127,20 @@ def import_profile(app):
     if selected_value.get() == str("No profiles found!"):
         app.profile_combobox.configure(state="disabled")
         app.profile_combobox.configure(foreground="#c0c0c0")
-    app.profile_combobox.set(selected_value.get())
-
-    app.profile_combobox.bind("<FocusIn>", on_combobox_focus)
 
     def on_enter_key(event):
         load_and_close(app, selected_value)
 
-    app.import_window.bind("<Return>", on_enter_key)
-
     def on_escape_key(event):
         app.import_window.destroy()
 
+    app.profile_combobox.set(selected_value.get())
+    app.import_window.bind("<Return>", on_enter_key)
+    app.profile_combobox.bind("<FocusIn>", on_combobox_focus)
     app.import_window.bind("<Escape>", on_escape_key)
 
-    save_button = ttk.Button(settings_frame, text="Load", command=lambda: load_and_close(app, selected_value))
-    save_button.grid(row=3, column=1, pady=(35, 10))  
+    app.save_button = ttk.Button(settings_frame, text="Load", command=lambda: load_and_close(app, selected_value))
+    app.save_button.grid(row=3, column=1, pady=(35, 10))  
 
 def delete_profile(app):
     profiles_path = "profiles"
@@ -180,12 +182,18 @@ def save_profile(app, name_entry):
             name_entry.delete(0, tk.END)
             name_entry.insert(0, "Invalid profile name!")
             name_entry.configure(foreground="#c0c0c0")
+            name_entry.state(["readonly"])
+            app.save_button.state(["invalid"])
+            app.save_button['state'] = 'invalid'
 
     else:
         name_entry.state(["invalid"])
         name_entry.delete(0, tk.END)
         name_entry.insert(0, "Invalid profile name!")
         name_entry.configure(foreground="#c0c0c0")
+        name_entry.state(["readonly"])
+        app.save_button.state(["invalid"])
+        app.save_button['state'] = 'invalid'
 
 def load_and_close(app, selected_value):
     if selected_value.get() != str("No profiles found!"):
@@ -224,3 +232,5 @@ def load_and_close(app, selected_value):
 
     else:
         app.profile_combobox.state(["invalid"])
+        app.save_button.state(["invalid"])
+        app.save_button['state'] = 'invalid'

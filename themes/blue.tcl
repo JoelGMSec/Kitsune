@@ -204,6 +204,7 @@ namespace eval ttk::theme::azure-blue {
             [list $I(rect-basic) \
             	{selected disabled} $I(rect-basic) \
                 disabled $I(rect-basic) \
+                invalid $I(rect-invalid) \
                 pressed $I(rect-accent) \
                 selected $I(rect-accent) \
                 active $I(button-accent) \

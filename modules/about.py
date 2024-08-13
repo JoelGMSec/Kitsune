@@ -4,11 +4,12 @@
 #      darkbyte.net       #
 #=========================#
 
+import subprocess
 import webbrowser
 import tkinter as tk
 from tkinter import ttk
+from tkinter import font
 from PIL import Image, ImageTk
-import subprocess
 
 def get_local_version():
     try:
@@ -19,9 +20,6 @@ def get_local_version():
         return None
 
 version = get_local_version()
-
-def callback(event):
-    webbrowser.open_new("https://darkbyte.net")
 
 def about_window(app):
     try:
@@ -61,10 +59,16 @@ def about_window(app):
     website_label = tk.Label(info_frame, text=f"Version: {version}")
     website_label.pack(padx=(0, 10), pady=(20, 0))
     
-    social_label = tk.Label(info_frame, text="darkbyte.net", fg="#FF0055", cursor="hand2")
-    social_label.bind("<Button-1>", callback)
-    social_label.pack(padx=(0, 10), pady=(0, 5))
+    url = "https://darkbyte.net"
+    normal_font = font.Font(family="Lexend", size=15, weight="bold")
+    underlined_font = font.Font(family="Lexend", size=15, weight="bold", underline=True)
     
+    social_label = tk.Label(info_frame, text="darkbyte.net", fg="#FF0055", font=normal_font)
+    social_label.bind("<Button-1>", lambda e: webbrowser.open(url))
+    social_label.bind("<Enter>", lambda e: social_label.config(cursor="hand2", font=underlined_font))
+    social_label.bind("<Leave>", lambda e: social_label.config(cursor="", font=normal_font))
+    social_label.pack(padx=(0, 10), pady=(0, 5))
+
     license_label = tk.Label(info_frame, text="License: GNU GPL v3.0")
     license_label.pack(padx=(0, 10), pady=20)
 

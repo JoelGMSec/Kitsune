@@ -6,12 +6,14 @@
 
 import os
 import re
+import json
 import time
 import random
 import pexpect
+import threading
+import webbrowser
 import tkinter as tk
 from tkinter import ttk
-from threading import Thread
 from modules import custom, dialog
 from modules.session import Session
 from modules.chat import TeamChatTab
@@ -235,7 +237,7 @@ def read_output_pwncat(session_data, command):
 
     if not "not found" in output or not "error" in output:
         lines = output.split("\n")
-        if command.split()[0] in lines[0].strip():
+        if command.split()[0].lower() in lines[0].strip().lower():
             output = "\n".join(lines[1:])  
 
     return output
@@ -357,6 +359,20 @@ def execute_command(app, event):
                         label.config(state="normal")
                         label.delete('1.0', tk.END)
                         label.config(state="disabled")
+
+                        with open('data/sessions.json', 'r') as f:
+                            sessions = json.load(f)
+
+                        session_id = int(session.title.split(' ')[1])  
+                        for session in sessions:
+                            if session['Session'] == session_id:  
+                                session['Commands'] = []
+                                break
+
+                        with open('data/sessions.json', 'w') as f:
+                            json.dump(sessions, f, indent=4)
+
+                        session['Commands'] = []
                     break
 
         else:
@@ -380,125 +396,145 @@ def execute_command(app, event):
                     current_session.label.insert("end", log_text, "color_reset")
                     current_session.label.config(state="disabled")
                     current_session.label.see("end")
+                    custom_command = custom.exec_custom_modules(app, "command", current_tab, command)
                     old_command = command
 
                     def execute_read_output_nonblocking(command, current_session, current_tab):
                         disable_session = False
+                        nonlocal custom_command
                         nonlocal old_command
-                        
-                        try:
-                            if "netexec" in str(current_session.session_data):
-                                if command != "help":
-                                    custom.exec_custom_modules(app, "command", current_session.session_data, command)
-                                    output = execute_command_nxc(app, current_session.session_data, command)
-                            
-                            elif "wmiexec-pro" in str(current_session.session_data):
-                                if command != "help":
-                                    custom.exec_custom_modules(app, "command", current_session.session_data, command)
-                                    current_session.session_data.write(f"powershell '{command}' \n")
-                                    output = read_output_wmiexecpro(current_session.session_data, command)
 
-                            elif "pyshell" in str(current_session.session_data):
-                                if command != "help":
-                                    current_session.session_data.write(command + "\n")  
-                                    output = read_output_nonblocking(current_session.session_data, command)
-                                    command = old_command
+                        if command.startswith("print:"):
+                            output = "".join(command.split("print:")[1:]).replace('"','').replace("'","").strip()
 
-                            elif "dnscat2" in str(current_session.session_data):
-                                if command != "help":
-                                    if command == "id" or command.startswith("ls"):
-                                        command = f"/bin/sh -c \"{command}\""
-                                    custom.exec_custom_modules(app, "command", current_session.session_data, command)
-                                    current_session.session_data.sendline("\n")
-                                    current_session.session_data.sendline(command)
-                                    time.sleep(3)
-                                    output = read_output_dnscat2(current_session.session_data, command)
-                                    command = old_command
-
-                            elif "pwncat-cs" in str(current_session.session_data):
-                                if command != "help":
-                                    if command == "id" or command.startswith("ls"):
-                                        command = f"/bin/sh -c \"{command}\""
-                                    custom.exec_custom_modules(app, "command", current_session.session_data, command)
-                                    current_session.session_data.write(command + "\n")  
-                                    output = read_output_pwncat(current_session.session_data, command)
-                                    command = old_command
-
-                            elif "Villain" in str(current_session.session_data):
-                                if command != "help":
-                                    if command == "upload*":
-                                        current_session.session_data.sendline("exit")
-                                        time.sleep(3)
-                                        current_session.session_data.sendline("sessions")
-                                        current_session.session_data.expect("Windows", timeout=None)
-                                        villain_id = session_data.before.decode()
-                                        current_session.session_data.sendline(command + " " + villain_id)
-                                        time.sleep(3)
-                                        output = read_output_nonblocking(current_session.session_data, command)
-                                        current_session.session_data.sendline(shell + " " + villain_id)
-
-                                    elif command == "kill":
-                                        current_session.session_data.sendline("exit")
-                                        time.sleep(3)
-                                        current_session.session_data.sendline("sessions")
-                                        current_session.session_data.expect("Windows", timeout=None)
-                                        villain_id = session_data.before.decode()
-                                        current_session.session_data.sendline(kill + " " + villain_id)
-                                        time.sleep(3)
-                                        current_session.session_data.sendline("flee")
-                                        output = "Session terminated."
-                                        disable_session = True
-
-                                    else:
+                        if not command.startswith("print:"):                         
+                            try:
+                                if "netexec" in str(current_session.session_data):
+                                    if command != "help":
                                         custom.exec_custom_modules(app, "command", current_session.session_data, command)
+                                        output = execute_command_nxc(app, current_session.session_data, command)
+                                
+                                elif "wmiexec-pro" in str(current_session.session_data):
+                                    if command != "help":
+                                        custom.exec_custom_modules(app, "command", current_session.session_data, command)
+                                        current_session.session_data.write(f"powershell '{command}' \n")
+                                        output = read_output_wmiexecpro(current_session.session_data, command)
+
+                                elif "pyshell" in str(current_session.session_data):
+                                    if command != "help":
                                         current_session.session_data.write(command + "\n")  
                                         output = read_output_nonblocking(current_session.session_data, command)
+                                        command = old_command
 
-                            else:
-                                if command != "help":
-                                    current_session.session_data.write(command + "\n")  
-                                    output = read_output_nonblocking(current_session.session_data, command)
+                                elif "dnscat2" in str(current_session.session_data):
+                                    if command != "help":
+                                        if command == "id" or command.startswith("ls"):
+                                            command = f"/bin/sh -c \"{command}\""
+                                        custom.exec_custom_modules(app, "command", current_session.session_data, command)
+                                        current_session.session_data.sendline("\n")
+                                        current_session.session_data.sendline(command)
+                                        time.sleep(3)
+                                        output = read_output_dnscat2(current_session.session_data, command)
+                                        command = old_command
+
+                                elif "pwncat-cs" in str(current_session.session_data):
+                                    if command != "help":
+                                        if command == "id" or command.startswith("ls"):
+                                            command = f"/bin/sh -c \"{command}\""
+                                        custom.exec_custom_modules(app, "command", current_session.session_data, command)
+                                        current_session.session_data.write(command + "\n")  
+                                        output = read_output_pwncat(current_session.session_data, command)
+                                        command = old_command
+
+                                elif "Villain" in str(current_session.session_data):
+                                    if command != "help":
+                                        if command == "upload*":
+                                            current_session.session_data.sendline("exit")
+                                            time.sleep(3)
+                                            current_session.session_data.sendline("sessions")
+                                            current_session.session_data.expect("Windows", timeout=None)
+                                            villain_id = session_data.before.decode()
+                                            current_session.session_data.sendline(command + " " + villain_id)
+                                            time.sleep(3)
+                                            output = read_output_nonblocking(current_session.session_data, command)
+                                            current_session.session_data.sendline(shell + " " + villain_id)
+
+                                        elif command == "kill":
+                                            current_session.session_data.sendline("exit")
+                                            time.sleep(3)
+                                            current_session.session_data.sendline("sessions")
+                                            current_session.session_data.expect("Windows", timeout=None)
+                                            villain_id = session_data.before.decode()
+                                            current_session.session_data.sendline(kill + " " + villain_id)
+                                            time.sleep(3)
+                                            current_session.session_data.sendline("flee")
+                                            output = "Session terminated."
+                                            disable_session = True
+
+                                        else:
+                                            custom.exec_custom_modules(app, "command", current_session.session_data, command)
+                                            current_session.session_data.write(command + "\n")  
+                                            output = read_output_nonblocking(current_session.session_data, command)
+
+                                else:
+                                    if command != "help":
+                                        current_session.session_data.write(command + "\n")  
+                                        output = read_output_nonblocking(current_session.session_data, command)
+                                
+                                command = old_command
+                                if command.startswith("cd "):
+                                    output = "Changing directory.."
+
+                                if command == "help":
+                                    output = command_help(current_session.session_data)
+                                    custom_output = custom.exec_custom_modules(app, "command", current_session.session_data, command)
+                                    if custom_output:
+                                        output = f"{output}\n\nCustom Modules\n==============\n{custom_output}"
+                                        custom_command = None
+
+                                if command == "kill" or command == "exit":
+                                    output = "Disconnected.."
+                                    disable_session = True
+
+                                if command == "del*" or command == "rm*":
+                                    output = "Success!"
+
+                                if not output and not custom_command:
+                                    output = "Error: No output from command!"
                             
-                            command = old_command
-
-                            if command.startswith("cd "):
-                                output = "Changing directory.."
-
-                            if command == "help":
-                                output = command_help(current_session.session_data)
-                                custom_output = custom.exec_custom_modules(app, "command", current_session.session_data, command)
-                                if custom_output:
-                                    output = f"{output}\n\nCustom Modules\n==============\n{custom_output}"
-
-                            if command == "kill" or command == "exit":
-                                output = "Disconnected.."
-                                disable_session = True
-
-                            if command == "del*" or command == "rm*":
-                                output = "Success!"
-
-                            if not output and not custom_command:
-                                output = "Error: No output from command!"
-                        
-                        except:
-                            if not custom_command:
-                                output = "Error: No response from client!"
-                                disable_session = True
+                            except:
+                                if not custom_command:
+                                    output = "Error: No response from client!"
+                                    disable_session = True
 
                         try:
-                            if output:
+                            if output and not custom_command:
                                 command = old_command
                                 current_session.text_widget = current_session.label
                                 current_session.log.append({"Command": command, "Output": output})
                                 current_session.save_logs()
                                 current_session.label.config(state="normal")
+                                current_session.label.tag_config("color_output", foreground="#00FF99")
+                                current_session.label.tag_config("color_reset", foreground="#FFFFFF")
+                                current_session.label.tag_config("url", foreground="#FFFFFF", underline=True)
                                 log_text = "[>] Output:\n"
                                 current_session.label.insert("end", log_text, "color_output")
-                                current_session.label.config(state="disabled")
-                                current_session.label.see("end")
-                                current_session.label.config(state="normal")
-                                log_text = f"{output}\n\n"
-                                current_session.label.insert("end", log_text, "color_reset")
+
+                                url_pattern = re.compile(r"https?://[^\s]+")
+                                parts = url_pattern.split(output)
+                                urls = url_pattern.findall(output)
+
+                                for i, part in enumerate(parts):
+                                    current_session.label.insert("end", part, "color_reset")
+                                    if i < len(urls):
+                                        url = urls[i]
+                                        start_index = current_session.label.index("end")
+                                        current_session.label.insert("end", url, "url")
+                                        current_session.label.tag_bind("url", "<Button-1>", lambda e, url=url: webbrowser.open(url))
+                                        current_session.label.tag_bind("url", "<Enter>", lambda e: current_session.label.config(cursor="hand2"))
+                                        current_session.label.tag_bind("url", "<Leave>", lambda e: current_session.label.config(cursor="xterm"))
+
+                                current_session.label.insert("end", "\n\n", "color_reset")
                                 current_session.label.config(state="disabled")
                                 current_session.label.see("end")
                                         
@@ -510,32 +546,56 @@ def execute_command(app, event):
                         except:
                             pass
 
-                    custom_command = custom.exec_custom_modules(app, "command", current_tab, command)
-                    if custom_command and command != "help":
-                        output = "Please wait, this can take a while.."
-                        current_session.text_widget = current_session.label
-                        current_session.log.append({"Command": old_command, "Output": output})
-                        current_session.save_logs()
-                        current_session.label.config(state="normal")
-                        log_text = "[>] Output:\n"
-                        current_session.label.insert("end", log_text, "color_output")
-                        current_session.label.config(state="disabled")
-                        current_session.label.see("end")
-                        current_session.label.config(state="normal")
-                        log_text = f"{output}\n\n"
-                        current_session.label.insert("end", log_text, "color_reset")
-                        current_session.label.config(state="disabled")
-                        current_session.label.see("end")
-                        
+                    if custom_command and command != "help":    
                         try:
-                            thread = Thread(target=execute_read_output_nonblocking, args=(custom_command, current_session, current_tab))
-                            thread.start()
+                            output_list = []
+                            current_session.text_widget = current_session.label
+                            current_session.label.config(state="normal")
+                            current_session.label.tag_config("color_output", foreground="#00FF99")
+                            current_session.label.tag_config("color_reset", foreground="#FFFFFF")
+                            current_session.label.tag_config("url", foreground="#FFFFFF", underline=True)
+                            log_text = "[>] Output:\n"
+                            current_session.label.insert("end", log_text, "color_output")
+                            
+                            for cmd in custom_command.split("\n"):
+                                if cmd.startswith("print:"):
+                                    output = cmd[len("remote:"):].strip().replace("'","").replace('"','')
+                                    output_list.append(output)
 
-                        except Exception as e:
-                            print(e)
+                            output = "\n".join(output_list).replace('"','').replace("'","")
+                            url_pattern = re.compile(r"https?://[^\s]+")
+                            parts = url_pattern.split(output)
+                            urls = url_pattern.findall(output)
+
+                            for i, part in enumerate(parts):
+                                current_session.label.insert("end", part, "color_reset")
+                                if i < len(urls):
+                                    url = urls[i]
+                                    start_index = current_session.label.index("end")
+                                    current_session.label.insert("end", url, "url")
+                                    current_session.label.tag_bind("url", "<Button-1>", lambda e, url=url: webbrowser.open(url))
+                                    current_session.label.tag_bind("url", "<Enter>", lambda e: current_session.label.config(cursor="hand2"))
+                                    current_session.label.tag_bind("url", "<Leave>", lambda e: current_session.label.config(cursor="xterm"))
+
+                            current_session.label.insert("end", "\n\n", "color_reset")
+                            current_session.label.config(state="disabled")
+                            current_session.label.see("end")
+                            current_session.log.append({"Command": old_command, "Output": output})
+                            current_session.save_logs()
+
+                            app.notify_command_session(current_session.title)
+  
+                            for cmd in custom_command.split("\n"):
+                                if cmd.startswith("remote:"):
+                                    command = cmd[len("remote:"):].strip()
+                                    thread = threading.Thread(target=execute_read_output_nonblocking, args=(command, current_session, current_tab))
+                                    thread.start()
+
+                        except:
                             pass
+
                     else:
-                        thread = Thread(target=execute_read_output_nonblocking, args=(command, current_session, current_tab))
+                        thread = threading.Thread(target=execute_read_output_nonblocking, args=(command, current_session, current_tab))
                         thread.start()
 
                 app.entry.delete(0, tk.END)

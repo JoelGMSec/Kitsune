@@ -37,18 +37,54 @@ class ResizablePanedWindow(tk.PanedWindow):
             self.paneconfigure(self._drag_data["index"], height=new_height)
 
 class DraggableTabsNotebook(ttk.Notebook):
-    def __init__(self, master=None, **kwargs):
+    def __init__(self, master=None, app=None, **kwargs):
         super().__init__(master, **kwargs)
+        self.app = app
         self._drag_data = {"x": 0, "y": 0, "index": None}
         self._event_viewer_index = None
         self._team_chat_index = None
         self.context_menu = None
+        self.enable_traversal()
 
         self.bind("<Button-3>", self.show_tab_menu)
         self.bind("<ButtonPress-1>", self.on_tab_press)
         self.bind("<B1-Motion>", self.on_tab_drag)
         self.bind("<ButtonRelease-1>", self.on_tab_release)
         self.bind('<Escape>', self.close_current_tab)
+        self.bind('<Up>', self.move_treeview_up)
+        self.bind('<Down>', self.move_treeview_down)
+
+    def get_treeview(self):
+        item = self.app.treeview.selection()
+        if item:
+            items = self.app.treeview.get_children()
+            try:
+                index = items.index(item[0])
+                return index, items
+            except ValueError:
+                return -1, items
+        return -1, []
+
+    def move_treeview_up(self, event):
+        try:
+            index, items = self.get_treeview()
+            if index > 0 and items:
+                previous_index = index - 1
+                previous_item = items[previous_index]
+                self.app.treeview.selection_set(previous_item)
+                self.app.treeview.focus(previous_item)
+        except:
+            pass
+
+    def move_treeview_down(self, event):
+        try:
+            index, items = self.get_treeview()
+            previous_index = index + 1
+            previous_item = items[previous_index]
+            self.app.treeview.selection_set(previous_item)
+            self.app.treeview.focus(previous_item)
+        except:
+            pass
 
     def on_tab_press(self, event):
         try:
@@ -218,6 +254,10 @@ def setup_widgets(root, app):
     app.treeview.dragging = False
     app.treeview.selected_item = None
 
+    def focus_entry(event):
+            app.entry.focus_set()
+            return 'break'
+
     def on_treeview_click(event):
         item = app.treeview.identify('item', event.x, event.y)
         app.treeview.selected_item = item
@@ -270,16 +310,21 @@ def setup_widgets(root, app):
         key = event.keysym
         current_tab = app.notebook.select()
         tabs = app.notebook.tabs()
-
+        current_index = tabs.index(current_tab)
+        
         if key == 'Left':
-            current_index = tabs.index(current_tab)
-            previous_index = (current_index - 1) % len(tabs)
-            app.notebook.select(tabs[previous_index])
-
+            for _ in range(len(tabs)):
+                current_index = (current_index - 1) if current_index > 0 else len(tabs) - 1
+                if app.notebook.tab(tabs[current_index], "state") != "disabled":
+                    app.notebook.select(tabs[current_index])
+                    break
+        
         elif key == 'Right':
-            current_index = tabs.index(current_tab)
-            next_index = (current_index + 1) % len(tabs)
-            app.notebook.select(tabs[next_index])
+            for _ in range(len(tabs)):
+                current_index = (current_index + 1) if current_index < len(tabs) - 1 else 0
+                if app.notebook.tab(tabs[current_index], "state") != "disabled":
+                    app.notebook.select(tabs[current_index])
+                    break
 
     try:
         sessions_data = Session.load_sessions()
@@ -323,6 +368,7 @@ def setup_widgets(root, app):
     app.treeview.bind("<Button-1>", on_treeview_click, add='+')  
     app.treeview.bind('<Return>', app.on_treeview_doubleclick)
     app.treeview.bind('<Escape>', close_current_tab_from_entry)
+    app.treeview.bind('<Tab>', focus_entry)
 
     app.treeview.bind("<Left>", switch_tab)
     app.treeview.bind("<Right>", switch_tab)
@@ -335,7 +381,7 @@ def setup_widgets(root, app):
     separator_paned.add(separator_label)
     separator_paned.pack(pady=(0, 20))
 
-    app.notebook = DraggableTabsNotebook(app.pane_2, height=580)
+    app.notebook = DraggableTabsNotebook(app.pane_2, height=580, app=app)
     app.notebook.pack(fill="both", expand=True)
     app.tab_1 = tk.Frame(app.notebook)
     app.tab_1.config(background="#333333")

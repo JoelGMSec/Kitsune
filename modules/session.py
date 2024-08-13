@@ -4,11 +4,13 @@
 #      darkbyte.net       #
 #=========================#
 
+import re
 import sys
 import time
 import json
 import bisect
 import datetime
+import webbrowser
 import tkinter as tk
 from tkinter import ttk
 from neotermcolor import colored
@@ -70,6 +72,7 @@ class Session(tk.Frame):
         self.label.config(state="normal")
         self.label.delete('1.0', tk.END)
         self.label.config(state="disabled")
+        self.clear_logs()
         return
 
     def add_to_notebook(self, notebook):
@@ -198,6 +201,25 @@ class Session(tk.Frame):
             with open('data/sessions.json', 'w') as f:
                 json.dump(sessions, f, indent=4)
 
+    def clear_logs(self):
+        try:
+            with open('data/sessions.json', 'r') as f:
+                sessions = json.load(f)
+
+            session_id = int(self.title.split(' ')[1])  
+            for session in sessions:
+                if session['Session'] == session_id:  
+                    session['Commands'] = []
+                    break
+
+            with open('data/sessions.json', 'w') as f:
+                json.dump(sessions, f, indent=4)
+
+            self.log = []
+
+        except:
+            pass
+
     def save_logs(self):
         try:
             with open('data/sessions.json', 'r') as f:
@@ -227,7 +249,9 @@ class Session(tk.Frame):
 
     def update_log_display(self):
         self.label.config(state="normal")
-        self.label.delete(1.0, "end")  
+        self.label.delete(1.0, "end")
+
+        url_pattern = re.compile(r"https?://[^\s]+")
         
         for entry in self.log:
             command = entry['Command']
@@ -235,17 +259,35 @@ class Session(tk.Frame):
             self.label.tag_config("color1", foreground="#00AAFF")
             self.label.tag_config("color2", foreground="#00FF99")
             self.label.tag_config("color3", foreground="#FFFFFF")
+            self.label.tag_config("url", foreground="#FFFFFF", underline=True)
+            
             log_text = f"kitsune> "
             self.label.insert("end", log_text, "color1")
             log_text = f"{command}\n"
             self.label.insert("end", log_text, "color3")
             log_text = f"[>] Output:\n"
             self.label.insert("end", log_text, "color2")
-            log_text = f"{output}\n\n"
-            self.label.insert("end", log_text, "color3")
+
+            parts = url_pattern.split(output)
+            urls = url_pattern.findall(output)
             
+            for i, part in enumerate(parts):
+                self.label.insert("end", part, "color3")
+                if i < len(urls):
+                    url = urls[i]
+                    start_index = self.label.index("end")
+                    self.label.insert("end", url, "url")
+                    self.label.tag_bind("url", "<Button-1>", lambda e, url=url: self.open_url(url))
+                    self.label.tag_bind("url", "<Enter>", lambda e: self.label.config(cursor="hand2"))
+                    self.label.tag_bind("url", "<Leave>", lambda e: self.label.config(cursor="xterm"))
+
+            self.label.insert("end", "\n\n", "color3")
+        
         self.label.config(state="disabled")
-        self.label.see("end")  
+        self.label.see("end")
+
+    def open_url(self, url):
+        webbrowser.open(url) 
 
     def load_command_history():
         try:

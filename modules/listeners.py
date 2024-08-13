@@ -11,7 +11,7 @@ from tkinter import ttk
 from modules import controller
 from modules.controller import reload_listener
 
-def validate_entries(entries):
+def validate_entries(app, entries):
     all_valid = True
     for entry in entries:
         if isinstance(entry, ttk.Combobox):
@@ -24,11 +24,15 @@ def validate_entries(entries):
                 entry.configure(foreground="#c0c0c0")
                 entry.state(["invalid"])
                 entry['state'] = 'invalid'
+                app.window_save_button.state(["invalid"])
+                app.window_save_button['state'] = 'invalid'
                 all_valid = False
             elif "Invalid parameter!" in entry.get():
                 entry.configure(foreground="#c0c0c0")
                 entry.state(["invalid"])
                 entry['state'] = 'invalid'
+                app.window_save_button.state(["invalid"])
+                app.window_save_button['state'] = 'invalid'
                 all_valid = False
             else:
                 entry.configure(foreground="#ffffff")
@@ -36,6 +40,8 @@ def validate_entries(entries):
                 entry.state(["readonly"])
                 entry['state'] = '!invalid'
                 entry['state'] = 'readonly'
+                app.window_save_button.state(["!invalid"])
+                app.window_save_button['state'] = '!invalid'
 
         elif isinstance(entry, ttk.Entry):
             if not entry.get().strip() or entry.get() == "":
@@ -43,14 +49,20 @@ def validate_entries(entries):
                 entry.delete(0, tk.END)
                 entry.insert(0, "Invalid parameter!")
                 entry.configure(foreground="#c0c0c0")
+                app.window_save_button.state(["invalid"])
+                app.window_save_button['state'] = 'invalid'
                 all_valid = False
             elif "Invalid parameter!" in entry.get():
                 entry.configure(foreground="#c0c0c0")
                 entry.state(["invalid"])
+                app.window_save_button.state(["invalid"])
+                app.window_save_button['state'] = 'invalid'
                 all_valid = False
             else:
                 entry.configure(foreground="#ffffff")
                 entry.state(["!invalid"])
+                app.window_save_button.state(["!invalid"])
+                app.window_save_button['state'] = '!invalid'
         else:
             pass
             
@@ -169,12 +181,14 @@ def listener_window(app):
         tail_combo.state(["!invalid"])
         tail_combo['state'] = '!invalid'
         tail_combo['state'] = 'readonly'
+        app.window_save_button.state(["!invalid"])
+        app.window_save_button['state'] = '!invalid'
 
     tail_combo.bind("<<ComboboxSelected>>", set_tail)
 
     def on_enter_key(event):
         entries = [name_entry, host_entry, port_entry, proto_combo, tail_combo]
-        if validate_entries(entries):
+        if validate_entries(app, entries):
             add_listeners(app, name_entry.get(), host_entry.get(), port_entry.get(), proto_combo.get(), tail_combo.get())
 
     app.listener_window.bind("<Return>", on_enter_key)
@@ -188,15 +202,17 @@ def listener_window(app):
         event.widget.state(["!invalid"])
         event.widget.delete(0, tk.END)
         event.widget.configure(foreground="white")
+        app.window_save_button.state(["!invalid"])
+        app.window_save_button['state'] = '!invalid'
 
     for entry in (name_entry, host_entry, port_entry):
         entry.bind("<Button-1>", on_click_entry)
 
-    app.listener_window.save_button = ttk.Button(app.listener_window, text="Save", command=lambda: on_enter_key(None))
-    app.listener_window.save_button.grid(row=6, column=0, padx=50, pady=20)
+    app.window_save_button = ttk.Button(app.listener_window, text="Save", command=lambda: on_enter_key(None))
+    app.window_save_button.grid(row=6, column=0, padx=50, pady=20)
 
-    app.listener_window.cancel_button = ttk.Button(app.listener_window, text="Cancel", command=app.listener_window.destroy)
-    app.listener_window.cancel_button.grid(row=6, column=1, padx=20, pady=20)
+    app.window_cancel_button = ttk.Button(app.listener_window, text="Cancel", command=app.listener_window.destroy)
+    app.window_cancel_button.grid(row=6, column=1, padx=20, pady=20)
 
 def show_listeners(app):
     for tab in app.notebook.tabs():
@@ -408,12 +424,14 @@ def edit_listener(app, listener_details):
         tail_combo.state(["!invalid"])
         tail_combo['state'] = '!invalid'
         tail_combo['state'] = 'readonly'
+        app.window_save_button.state(["!invalid"])
+        app.window_save_button['state'] = '!invalid'
 
     tail_combo.bind("<<ComboboxSelected>>", set_tail)
 
     def on_enter_key(event):
         entries = [name_entry, host_entry, port_entry, proto_combo, tail_combo]
-        if validate_entries(entries):
+        if validate_entries(app, entries):
             update_listener(app, listener_details, name_entry.get(), host_entry.get(), port_entry.get(), proto_combo.get(), tail_combo.get())
 
     app.editlist_window.bind("<Return>", on_enter_key)
@@ -427,15 +445,17 @@ def edit_listener(app, listener_details):
         event.widget.state(["!invalid"])
         event.widget.delete(0, tk.END)
         event.widget.configure(foreground="white")
+        app.window_save_button.state(["!invalid"])
+        app.window_save_button['state'] = '!invalid'
 
     for entry in (name_entry, host_entry, port_entry):
         entry.bind("<Button-1>", on_click_entry)
 
-    app.editlist_window.save_button = ttk.Button(app.editlist_window, text="Save", command=lambda: on_enter_key(None))
-    app.editlist_window.save_button.grid(row=6, column=0, padx=50, pady=20)
+    app.window_save_button = ttk.Button(app.editlist_window, text="Save", command=lambda: on_enter_key(None))
+    app.window_save_button.grid(row=6, column=0, padx=50, pady=20)
 
-    app.editlist_window.cancel_button = ttk.Button(app.editlist_window, text="Cancel", command=app.editlist_window.destroy)
-    app.editlist_window.cancel_button.grid(row=6, column=1, padx=20, pady=20)
+    app.window_cancel_button = ttk.Button(app.editlist_window, text="Cancel", command=app.editlist_window.destroy)
+    app.window_cancel_button.grid(row=6, column=1, padx=20, pady=20)
 
 def update_listener(app, old_details, name, host, port, protocol, tail):
     if name and host and port and protocol and tail:
