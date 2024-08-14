@@ -48,6 +48,7 @@ def load_custom_modules(app, reload=False):
                 "description": description
             })
 
+    data["modules"].sort(key=lambda x: x["name"])
     with open(output_file, 'w') as json_file:
         json.dump(data, json_file, indent=4)
 
@@ -136,6 +137,7 @@ def show_current_modules(app, reload):
     if os.path.exists(modules_file):
         with open(modules_file, "r") as file:
             current_modules = json.load(file)
+            current_modules["modules"].sort(key=lambda x: x["name"])
             if current_modules.get("modules"):
                 module_banner = "Custom Modules Loaded\n---------------------\n"
                 display_message(app, module_banner, "#00FF99")

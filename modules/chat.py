@@ -60,95 +60,98 @@ def assign_color(username):
     return user_color_map[username]
 
 def server_loop(app):
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    server_socket.bind((IP, PORT))
-    server_socket.listen()
-    sockets_list = [server_socket]
-    clients = {}
+    try:
+        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        server_socket.bind((IP, PORT))
+        server_socket.listen()
+        sockets_list = [server_socket]
+        clients = {}
 
-    while True:
-        time.sleep(1)
-        read_sockets, _, exception_sockets = select.select(sockets_list, [], sockets_list)
-        for notified_socket in read_sockets:
-            if notified_socket == server_socket:
-                client_socket, client_address = server_socket.accept()
-                user = receive_message(client_socket)
-                if user is False:
-                    continue
-                sockets_list.append(client_socket)
-                clients[client_socket] = user
-                username = user['data'].decode('utf-8')
-                color = assign_color(username)
-                connection_message = f"*{username} has joined #Kitsune"
-                log_entry = {
-                    "text": connection_message,
-                    "tag": "notification",
-                    "color": notification_color
-                }
-                
-                save_message(log_entry)
-                app.team_chat_tab.display_message(connection_message, notification_color)
-                message_header = f"{len(connection_message):<{HEADER_LENGTH}}".encode('utf-8')
-                for client_socket in clients:
-                    client_socket.send(user['header'] + user['data'] + message_header + connection_message.encode('utf-8'))
-            else:
-                message = receive_message(notified_socket)
-                if message is False:
-                    if notified_socket in clients:
-                        username = clients[notified_socket]['data'].decode('utf-8')
-                        disconnection_message = f"*{username} has left #Kitsune"
-                        log_entry = {
-                            "text": disconnection_message,
-                            "tag": "notification",
-                            "color": notification_color
-                        }
-                        save_message(log_entry)
-                        app.team_chat_tab.display_message(disconnection_message, notification_color)
-                        sockets_list.remove(notified_socket)
-                        del clients[notified_socket]
-                        message_header = f"{len(disconnection_message):<{HEADER_LENGTH}}".encode('utf-8')
-                        for client_socket in clients:
-                            client_socket.send(user['header'] + user['data'] + message_header + disconnection_message.encode('utf-8'))
-                    continue
+        while True:
+            time.sleep(1)
+            read_sockets, _, exception_sockets = select.select(sockets_list, [], sockets_list)
+            for notified_socket in read_sockets:
+                if notified_socket == server_socket:
+                    client_socket, client_address = server_socket.accept()
+                    user = receive_message(client_socket)
+                    if user is False:
+                        continue
+                    sockets_list.append(client_socket)
+                    clients[client_socket] = user
+                    username = user['data'].decode('utf-8')
+                    color = assign_color(username)
+                    connection_message = f"*{username} has joined #Kitsune"
+                    log_entry = {
+                        "text": connection_message,
+                        "tag": "notification",
+                        "color": notification_color
+                    }
+                    
+                    save_message(log_entry)
+                    app.team_chat_tab.display_message(connection_message, notification_color)
+                    message_header = f"{len(connection_message):<{HEADER_LENGTH}}".encode('utf-8')
+                    for client_socket in clients:
+                        client_socket.send(user['header'] + user['data'] + message_header + connection_message.encode('utf-8'))
+                else:
+                    message = receive_message(notified_socket)
+                    if message is False:
+                        if notified_socket in clients:
+                            username = clients[notified_socket]['data'].decode('utf-8')
+                            disconnection_message = f"*{username} has left #Kitsune"
+                            log_entry = {
+                                "text": disconnection_message,
+                                "tag": "notification",
+                                "color": notification_color
+                            }
+                            save_message(log_entry)
+                            app.team_chat_tab.display_message(disconnection_message, notification_color)
+                            sockets_list.remove(notified_socket)
+                            del clients[notified_socket]
+                            message_header = f"{len(disconnection_message):<{HEADER_LENGTH}}".encode('utf-8')
+                            for client_socket in clients:
+                                client_socket.send(user['header'] + user['data'] + message_header + disconnection_message.encode('utf-8'))
+                        continue
 
-                user = clients.get(notified_socket)
-                if user is None:
-                    continue
-                username = user['data'].decode('utf-8')
-                message_text = message["data"].decode('utf-8')
-                
-                if message_text.startswith("/nick "):
-                    new_username = message_text.split(" ", 1)[1]
-                    if new_username:
-                        old_username = username
-                        user['data'] = new_username.encode('utf-8')
-                        clients[notified_socket] = user
-                        color = assign_color(new_username)
-                        notification_message = f"*{old_username} is now {new_username}"
-                        log_entry = {
-                            "text": notification_message,
-                            "tag": "notification",
-                            "color": notification_color
-                        }
-                        save_message(log_entry)
-                        app.team_chat_tab.display_message(notification_message, notification_color)
-                        message_header = f"{len(notification_message):<{HEADER_LENGTH}}".encode('utf-8')
-                        for client_socket in clients:
-                            client_socket.send(user['header'] + user['data'] + message_header + notification_message.encode('utf-8'))
-                    continue
-                
-                log_entry = {
-                    "text": f"[{username}] > {message_text}",
-                    "tag": "message",
-                    "color": color
-                }
-                save_message(log_entry)
-                app.notify_team_chat()
-                app.team_chat_tab.display_message(log_entry["text"], log_entry["color"])
-                for client_socket in clients:
-                    if client_socket != notified_socket:
-                        client_socket.send(user['header'] + user['data'] + message['header'] + message['data'])
+                    user = clients.get(notified_socket)
+                    if user is None:
+                        continue
+                    username = user['data'].decode('utf-8')
+                    message_text = message["data"].decode('utf-8')
+                    
+                    if message_text.startswith("/nick "):
+                        new_username = message_text.split(" ", 1)[1]
+                        if new_username:
+                            old_username = username
+                            user['data'] = new_username.encode('utf-8')
+                            clients[notified_socket] = user
+                            color = assign_color(new_username)
+                            notification_message = f"*{old_username} is now {new_username}"
+                            log_entry = {
+                                "text": notification_message,
+                                "tag": "notification",
+                                "color": notification_color
+                            }
+                            save_message(log_entry)
+                            app.team_chat_tab.display_message(notification_message, notification_color)
+                            message_header = f"{len(notification_message):<{HEADER_LENGTH}}".encode('utf-8')
+                            for client_socket in clients:
+                                client_socket.send(user['header'] + user['data'] + message_header + notification_message.encode('utf-8'))
+                        continue
+                    
+                    log_entry = {
+                        "text": f"[{username}] > {message_text}",
+                        "tag": "message",
+                        "color": color
+                    }
+                    save_message(log_entry)
+                    app.notify_team_chat()
+                    app.team_chat_tab.display_message(log_entry["text"], log_entry["color"])
+                    for client_socket in clients:
+                        if client_socket != notified_socket:
+                            client_socket.send(user['header'] + user['data'] + message['header'] + message['data'])
+    except:
+        pass
 
 def start_server(app):
     server_thread = threading.Thread(target=server_loop, args=(app,))

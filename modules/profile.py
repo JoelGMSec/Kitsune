@@ -116,6 +116,7 @@ def import_profile(app):
     name_label.grid(row=1, column=1, padx=(5, 0), pady=(0, 5))
 
     profiles = [name for name in os.listdir("profiles") if os.path.isdir(os.path.join("profiles", name))]
+    profiles = sorted(profiles)
     if not profiles:  
         profiles = ["No profiles found!"]
 

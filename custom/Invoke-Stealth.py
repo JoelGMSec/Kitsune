@@ -12,7 +12,7 @@ import shutil
 import subprocess
 
 def get_description():
-    return "This module automatically obfuscate all compiled payloads in \"Ps1\" format"
+    return "This module automatically obfuscate all scripts in \"Ps1\" format"
 
 def main(app, caller, payload, format):
     if caller == "generate" and "Ps1" in format:

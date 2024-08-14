@@ -9,6 +9,7 @@ import json
 import time
 import base64
 import shutil
+import pdfkit
 import datetime
 import subprocess
 import tkinter as tk
@@ -18,6 +19,15 @@ from modules import dialog
 
 def on_combobox_focus(event):
     event.widget.selection_clear()
+
+def html_to_pdf(html_file_path, pdf_file_path):
+    try:
+        options = {
+            'orientation': 'Landscape'
+        }
+        pdfkit.from_file(html_file_path, pdf_file_path, options=options)
+    except:
+        pass
 
 def export_logs(app):
     try:
@@ -116,7 +126,9 @@ def save_project(app, name_entry):
         try:
             json_file_path = os.path.join(report_path, "sessions.json")
             html_file_path = os.path.join(report_path + "/" + report_name + ".html")
+            pdf_file_path = os.path.join(report_path + "/" + report_name + ".pdf")
             json_to_html(json_file_path, html_file_path)
+            html_to_pdf(html_file_path, pdf_file_path)
 
             for file_name in os.listdir(report_path):
                 if file_name.endswith('.json'):
