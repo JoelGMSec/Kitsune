@@ -143,7 +143,6 @@ def listener_window(app):
 
     tail_combo = ttk.Combobox(app.listener_window, values=["HTTP-Shell", "DnsCat2", "PwnCat-CS", "Villain"], state="readonly")
     tail_combo.grid(row=4, column=1, padx=0, pady=15)
-
     tail_combo.bind("<FocusIn>", on_combobox_focus)
 
     proto_label = ttk.Label(app.listener_window, text="Protocol")
@@ -151,8 +150,14 @@ def listener_window(app):
 
     proto_combo = ttk.Combobox(app.listener_window, values=[""], state="disable")
     proto_combo.grid(row=5, column=1, padx=0, pady=15)
-
     proto_combo.bind("<FocusIn>", on_combobox_focus)
+
+    def to_uppercase(event):
+        current_text = name_entry.get()
+        name_entry.delete(0, tk.END)
+        name_entry.insert(0, current_text.upper())
+
+    app.listener_window.bind("<KeyRelease>", to_uppercase)
 
     def set_tail(event):
         selected_tail = tail_combo.get()

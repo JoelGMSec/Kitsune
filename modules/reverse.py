@@ -137,7 +137,7 @@ def pwncat(app, host, port, name, session, restart):
     pwncat_path = f'/tmp/pwncat'
     os.makedirs(pwncat_path, exist_ok=True)
     
-    session_data = pexpect.spawn(f'python3.11 /usr/local/bin/pwncat-cs 0.0.0.0 {port}', cwd=pwncat_path, echo=False, use_poll=False)  
+    session_data = pexpect.spawn(f'{os.sys.executable} /usr/local/bin/pwncat-cs 0.0.0.0 {port}', cwd=pwncat_path, echo=False, use_poll=False)  
     session_data.timeout = 1
 
     try:
@@ -348,7 +348,7 @@ def villain(app, host, port, name, session, restart):
     villain_id = session_data.before.decode()
     session_data.sendline("shell " + str (villain_id.split()[-2]))
     session_data.sendline("whoami")
-    time.sleep(3)
+    time.sleep(10)
     
     try:
         session_data.sendline("whoami")
@@ -362,8 +362,7 @@ def villain(app, host, port, name, session, restart):
         session_info["User"] = (output.split("\\")[1]).lower().split()[-1].strip()
 
         for cmd in commands:
-            session_data.sendline("$null")
-            session_data.sendline(cmd) ; time.sleep(3)           
+            session_data.sendline(cmd) ; time.sleep(10)           
             output = read_output_nonblocking(session_data, cmd)
             
             if "GetHostByName" in cmd:

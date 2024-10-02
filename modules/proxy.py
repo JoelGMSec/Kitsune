@@ -56,11 +56,9 @@ def set_proxy(app):
     method_combobox.bind("<FocusIn>", on_combobox_focus)
 
     def get_params_and_generate():
-        if tail_entry.get() and params_entry.get() and method_combobox.get():
+        if tail_entry.get() and method_combobox.get():
             app.proxy_status = tail_entry.get() == "Enabled"
-            save_proxy_settings(tail_entry.get(), params_entry.get(), method_combobox.get())
-            app.proxy_window.destroy()
-            dialog.proxy_success(app)
+            save_proxy_settings(app, tail_entry.get(), params_entry.get(), method_combobox.get(), params_entry)
 
     def on_enter_key(event):
         get_params_and_generate()
@@ -72,8 +70,23 @@ def set_proxy(app):
 
     app.proxy_window.bind("<Escape>", on_escape_key)
 
-    save_button = ttk.Button(app.proxy_window, text="Save", command=get_params_and_generate)
-    save_button.grid(row=4, column=0, padx=50, pady=20)
+    def on_focus_entry(event):
+        try:
+            params_entry.configure(state="normal")
+            params_entry.state(["!invalid"])
+            params_entry.delete(0, tk.END)
+            params_entry.configure(foreground="white")
+            app.save_button.state(["!invalid"])
+            app.save_button['state'] = '!invalid'
+        except Exception as e:
+            print (e)
+            pass
+
+    params_entry.bind("<Button-1>", on_focus_entry)
+    params_entry.bind("<FocusIn>", on_focus_entry)
+
+    app.save_button = ttk.Button(app.proxy_window, text="Save", command=get_params_and_generate)
+    app.save_button.grid(row=4, column=0, padx=50, pady=20)
 
     cancel_button = ttk.Button(app.proxy_window, text="Cancel", command=app.proxy_window.destroy)
     cancel_button.grid(row=4, column=1, padx=20, pady=20)
@@ -107,18 +120,32 @@ def load_proxy_settings(app):
         app.proxy_status = False
         return default_values
 
-def save_proxy_settings(status, ip_port, protocol):
-    proxy_settings = {
-        "status": status,
-        "ip_port": ip_port,
-        "protocol": protocol
-    }
-    os.makedirs("data", exist_ok=True)
-    with open("data/proxy.json", "w") as f:
-        json.dump(proxy_settings, f, indent=4)
+def save_proxy_settings(app, status, ip_port, protocol, params_entry):
+    if params_entry.get():
+        if params_entry.get().strip() != "Invalid parameter!":
+            proxy_settings = {
+                "status": status,
+                "ip_port": ip_port,
+                "protocol": protocol
+            }
+            os.makedirs("data", exist_ok=True)
+            with open("data/proxy.json", "w") as f:
+                json.dump(proxy_settings, f, indent=4)
 
-    if status == "Enabled":
-        update_proxychains_conf(protocol, ip_port.split(":")[0], ip_port.split(":")[1])
+            if status == "Enabled":
+                update_proxychains_conf(protocol, ip_port.split(":")[0], ip_port.split(":")[1])
+
+            app.proxy_window.destroy()
+            dialog.proxy_success(app)
+
+    else:
+        params_entry.state(["invalid"])
+        params_entry.delete(0, tk.END)
+        params_entry.insert(0, "Invalid parameter!")
+        params_entry.configure(foreground="#c0c0c0")
+        params_entry.state(["readonly"])
+        app.save_button.state(["invalid"])
+        app.save_button['state'] = 'invalid'
 
 def load_proxy_window(app, tail_entry, params_entry, method_combobox):
     try:
@@ -147,6 +174,11 @@ def update_proxychains_conf(proto, host, port):
         
         if proto.lower() == "socks":
             proto = "socks5"
+        lines[-2] = "\n"
+        lines[-1] = f"{proto.lower()} {host} {port}\n"
+
+        if proto.lower() == "http":
+            proto = "http"
         lines[-2] = "\n"
         lines[-1] = f"{proto.lower()} {host} {port}\n"
 

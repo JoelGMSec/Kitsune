@@ -623,8 +623,12 @@ def netexec_payload(app):
             local_auth_combobox.set("Invalid parameter!")
             local_auth_combobox.configure(foreground="#c0c0c0")
         if validate_entries([ip_entry, user_entry, win_pass, protocol_combobox, tail_entry]):
-            params = str(ip_entry.get() + " -u " + user_entry.get() + " -p " + win_pass.get())
-            if local_auth_combobox.get() == "Yes":
+            if auth_combobox.get() == "Hash":
+                auth = " -H "
+            else:
+                auth = " -p "
+            params = str(ip_entry.get() + " -u " + user_entry.get() + auth + win_pass.get())
+            if local_auth_combobox.get() == "Yes" and not "Evil-WinRM" in tail_entry.get():
                 params += " --local-auth"
             connect_session(app, params, protocol_combobox.get(), app.session_id, tail_entry.get())
             app.winbind_window.destroy()

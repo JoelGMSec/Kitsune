@@ -17,13 +17,6 @@ def callback(event):
 def on_combobox_focus(event):
     event.widget.selection_clear()
 
-def load_settings():
-    try:
-        with open("data/settings.json", "r") as json_file:
-            return json.load(json_file)["settings"]
-    except:
-        pass
-        
 def open_settings(app):
     try:
         if app.settings_window and tk.Toplevel.winfo_exists(app.settings_window):
@@ -32,7 +25,7 @@ def open_settings(app):
     except:
         pass
 
-    settings = load_settings()  
+    settings = app.load_settings()
     app.settings_window = tk.Toplevel(app)
     app.settings_window.geometry("525x255")
     app.settings_window.title("Settings")
@@ -60,7 +53,7 @@ def open_settings(app):
     name_label = tk.Label(settings_frame, text="(a.k.a Nekomancer)", fg="#BABABA")
     name_label.grid(row=1, column=0, padx=(15, 0), pady=(0, 5))
 
-    selected_value = tk.StringVar(value=settings["nekomancer"])  
+    selected_value = tk.StringVar(value=settings.get("nekomancer", "All Sessions"))
 
     nekomancer_combobox = ttk.Combobox(settings_frame, values=["All Sessions", "Bind Only", "Reverse Only", "Disabled"], textvariable=selected_value, state="readonly")
     nekomancer_combobox.grid(row=2, column=0, padx=(15, 0), pady=(20, 0))

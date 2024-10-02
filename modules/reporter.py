@@ -23,7 +23,15 @@ def on_combobox_focus(event):
 def html_to_pdf(html_file_path, pdf_file_path):
     try:
         options = {
-            'orientation': 'Landscape'
+            'orientation': 'Landscape',
+            'dpi': 600,
+            'disable-smart-shrinking': '',
+            'image-quality': 100,
+            'margin-top': '4mm',
+            'margin-right': '2mm',
+            'margin-bottom': '4mm',
+            'margin-left': '2mm',
+            'page-size': 'A4'
         }
         pdfkit.from_file(html_file_path, pdf_file_path, options=options)
     except:

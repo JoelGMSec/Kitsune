@@ -42,15 +42,15 @@ def connect_pwncat(app, params, method, session, restart):
         pasw = method
 
         if app.proxy_status:
-            session_data = pexpect.spawn(f'proxychains4 -q python3.11 /usr/local/bin/pwncat-cs ssh://{user}:{pasw}@{host}', cwd=pwncat_path, echo=False, use_poll=True)  
+            session_data = pexpect.spawn(f'proxychains4 -q {os.sys.executable} /usr/local/bin/pwncat-cs ssh://{user}:{pasw}@{host}', cwd=pwncat_path, echo=False, use_poll=True)  
         else:
-            session_data = pexpect.spawn(f'python3.11 /usr/local/bin/pwncat-cs ssh://{user}:{pasw}@{host}', cwd=pwncat_path, echo=False, use_poll=True)  
+            session_data = pexpect.spawn(f'{os.sys.executable} /usr/local/bin/pwncat-cs ssh://{user}:{pasw}@{host}', cwd=pwncat_path, echo=False, use_poll=True)  
     else:
         session_info["Listener"] = "BIND"
         if app.proxy_status:
-            session_data = pexpect.spawn(f'proxychains4 -q python3.11 /usr/local/bin/pwncat-cs connect://{params}', cwd=pwncat_path, echo=False, use_poll=True)  
+            session_data = pexpect.spawn(f'proxychains4 -q {os.sys.executable} /usr/local/bin/pwncat-cs connect://{params}', cwd=pwncat_path, echo=False, use_poll=True)  
         else:
-            session_data = pexpect.spawn(f'python3.11 /usr/local/bin/pwncat-cs connect://{params}', cwd=pwncat_path, echo=False, use_poll=True)  
+            session_data = pexpect.spawn(f'{os.sys.executable} /usr/local/bin/pwncat-cs connect://{params}', cwd=pwncat_path, echo=False, use_poll=True)  
 
     session_data.timeout = 1
 
@@ -446,7 +446,7 @@ def connect_wmiexecpro(app, params, method, session, restart):
 
     try:
         session_data.expect("execute", timeout=None)  
-        session_data.sendline("sleep 7")
+        session_data.sendline("sleep 10")
         session_data.expect("time", timeout=None)
 
         get_host = "[System.Net.Dns]::GetHostByName($env:computerName).Hostname"

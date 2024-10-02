@@ -1,14 +1,14 @@
-FROM debian:sid-slim
+FROM debian:bookworm-slim
 ENV DISPLAY=:0
-
 LABEL maintainer="@JoelGMSec - https://darkbyte.net"
 
 RUN apt-get update && apt-get install -y sudo git zip wget proxychains4 wkhtmltopdf
+RUN apt-get install -y build-essential gcc-mingw-w64-x86-64-win32 python3-pip python3-tk 
 RUN wget https://archive.kali.org/archive-key.asc -O /etc/apt/trusted.gpg.d/kali-archive-key.asc
 RUN echo "deb [arch=amd64] http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware" >> /etc/apt/sources.list
-RUN apt-get update && apt install -y build-essential gcc-mingw-w64-x86-64-win32 python3-pip python3-tk python3.11 powershell golang
-RUN apt-get update && apt install -y dnscat2 evil-winrm villain
-RUN python3.11 -m pip install pwncat-cs --break-system-packages
+RUN apt-get update && apt install -y dnscat2 evil-winrm villain powershell golang
+RUN dpkg --force-all -r python3-rich
+RUN python3 -m pip install git+https://github.com/calebstewart/pwncat --break-system-packages
 RUN wget https://github.com/Pennyw0rth/NetExec/releases/download/v1.2.0/nxc -O /usr/bin/netexec
 RUN chmod +x /usr/bin/netexec
 RUN cd /opt && git clone https://github.com/JoelGMSec/Kitsune

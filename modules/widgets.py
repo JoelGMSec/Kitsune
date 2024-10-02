@@ -521,7 +521,6 @@ def setup_widgets(root, app):
     app.entry = AutoCompleteEntry(app.master, app.command_history, app.notebook)
     app.entry.pack(side="bottom", fill="x", expand=True, padx=10, pady=10)
     app.entry.config(foreground="#c0c0c0")
-
     app.entry.bind("<FocusIn>", app.on_entry_focus_in)
     app.entry.bind("<FocusOut>", app.on_entry_focus_out)
     app.entry.bind('<Up>', lambda event: on_up(app, event))

@@ -116,6 +116,7 @@ def start_listeners(app, session, reload_listeners=False):
         protocol = listener.get("Protocol")
         tail = listener.get("Tail")
         if not app.fast_mode:
+            time.sleep(0.1)
             print(colored(f"[+] {name} - {host}:{port} - {protocol} - {tail}","green"))
         listener_details = (name, host, port, protocol, tail)
         reload_listener(app, session, listener_details, reload_listeners=False)

@@ -323,7 +323,6 @@ def execute_command(app, event):
         if stripped_command not in ["close", "clear"]:
             app.command_history.append(stripped_command)
             Session.save_command_history(app.command_history)
-
         app.history_index = len(app.command_history)
 
         if command == "exit":

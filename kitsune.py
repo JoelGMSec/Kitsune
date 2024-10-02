@@ -8,6 +8,7 @@ import sys
 sys.dont_write_bytecode = True
 
 import argparse
+import requests
 import tkinter as tk
 import os, time, json, shutil, datetime, threading
 from pathlib import Path
@@ -19,8 +20,8 @@ from modules.listeners import edit_listener
 from modules.controller import reload_listener
 from modules.widgets import setup_widgets
 from modules.widgets import DraggableTabsNotebook
-from modules import delivery, listeners, controller
-from modules import chat, custom, proxy, modules, dialog
+from modules import delivery, listeners, controller, chat
+from modules import custom, proxy, modules, dialog, updater
 
 def typing(text):
     for character in text:
@@ -103,6 +104,20 @@ class App(tk.Frame):
         self.team_chat_tab = chat.TeamChatTab(self.notebook)
         self.team_chat_tab.connect_to_server(self.username, "localhost")
         self.client_socket = self.team_chat_tab.get_socket()
+        threading.Thread(target=self.check_version).start()
+
+    def check_version(self):
+        try:
+            time.sleep(1)
+            response = requests.get("https://raw.githubusercontent.com/JoelGMSec/Kitsune/main/version.txt")
+            response.raise_for_status()  
+            remote_version = response.text.strip()
+            local_version = updater.get_local_version()
+            if remote_version != local_version:
+                dialog.new_version(app)
+
+        except:
+            pass
 
     def load_settings(self):
         default_settings = {
@@ -122,6 +137,9 @@ class App(tk.Frame):
                 json.dump(default_settings, json_file, indent=4)
             self.theme_var = tk.StringVar(value="Blue")
             self.saved_value = "All Sessions"
+            settings = default_settings
+
+        return settings
 
     def listener_window(self):
         return listeners.listener_window(self)
@@ -518,6 +536,7 @@ class App(tk.Frame):
                         session_id = values[0]
                         session_title = "Session " + str(session_id)
                         controller.retry_session(self, session_title)
+                        self.treeview.item(item, tags=('disabled'))
 
         def confirm_remove():
             if dialog.confirm_dialog(self) == "yes":

@@ -67,12 +67,15 @@ def export_profile(app):
     app.export_window.bind("<Escape>", on_escape_key)
 
     def on_focus_entry(event):
-        name_entry.configure(state="normal")
-        name_entry.state(["!invalid"])
-        name_entry.delete(0, tk.END)
-        name_entry.configure(foreground="white")
-        app.save_button.state(["!invalid"])
-        app.save_button['state'] = '!invalid'
+        try:
+            name_entry.configure(state="normal")
+            name_entry.state(["!invalid"])
+            name_entry.delete(0, tk.END)
+            name_entry.configure(foreground="white")
+            app.save_button.state(["!invalid"])
+            app.save_button['state'] = '!invalid'
+        except:
+            pass
 
     name_entry.bind("<Button-1>", on_focus_entry)
     name_entry.bind("<FocusIn>", on_focus_entry)

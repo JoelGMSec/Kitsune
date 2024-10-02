@@ -8,6 +8,7 @@ import os
 import shutil
 import subprocess
 import threading
+import time
 import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
@@ -61,10 +62,10 @@ def update_modules(app):
     app.modules_window.resizable(False, False)
 
     image_frame = tk.Frame(app.modules_window)
-    image_frame.grid(row=0, column=1, padx=(20, 30), pady=(20, 0))
+    image_frame.grid(row=0, column=1, padx=(30, 30), pady=(20, 0))
 
     image = Image.open("./themes/images/Modules.png")
-    resized_image = image.resize((200, 200))  
+    resized_image = image.resize((190, 190))  
 
     photo = ImageTk.PhotoImage(resized_image)
 
@@ -78,16 +79,42 @@ def update_modules(app):
     updates_label = tk.Label(updates_frame, text="Downloading modules..")
     updates_label.grid(row=0, column=0, padx=(20, 0), pady=(20, 0))
 
-    name_label = tk.Label(updates_frame, text="*Please wait*", fg="#00AAFF")
-    name_label.grid(row=1, column=0, padx=(20, 0), pady=10)
+    name_label = tk.Label(updates_frame, text="*Please wait*", fg="#BABABA")
+    name_label.grid(row=1, column=0, padx=(16, 0), pady=10)
 
-    progressbar = ttk.Progressbar(updates_frame, mode="indeterminate", length=200)
-    progressbar.grid(row=2, column=0, pady=(20, 10))
+    progressbar = ttk.Progressbar(updates_frame, mode="indeterminate", length=220)
+    progressbar.grid(row=2, column=0, padx=(16, 0), pady=(20, 10))
     progressbar.start()  
 
-    def clone_repos_thread():
-        clone_repos(name_label)
+    stop_blink_event = threading.Event()
+    def interpolate_color(color1, color2, factor):
+        c1 = [int(color1[i:i+2], 16) for i in (1, 3, 5)]
+        c2 = [int(color2[i:i+2], 16) for i in (1, 3, 5)]
+        c = [int(c1[i] + (c2[i] - c1[i]) * factor) for i in range(3)]
+        return "#%02x%02x%02x" % tuple(c)
 
+    def blink_label(stop_event):
+        step = 0
+        while not stop_event.is_set():
+            factor = abs((step % 200) - 100) / 100.0
+            current_color = interpolate_color("#BABABA", "#444444", factor)
+            app.after(0, name_label.config, {'foreground': current_color})
+            step += 1
+            time.sleep(0.005)
+
+    blink_thread = threading.Thread(target=blink_label, args=(stop_blink_event,))
+    blink_thread.start()
+
+    def clone_repos_thread():
+        try:
+            clone_repos(name_label)
+            stop_blink_event.set()
+            blink_thread.join()
+            if name_label:
+                name_label.config(text="All are up to date!", fg="#00AAFF")
+        except:
+            if name_label:
+                name_label.config(text="Error updating tails!", fg="red")
     threading.Thread(target=clone_repos_thread).start()
 
     def on_enter_key(event):
@@ -101,4 +128,4 @@ def update_modules(app):
     app.modules_window.bind("<Escape>", on_escape_key)
 
     save_button = ttk.Button(updates_frame, text="Close", command=lambda: app.modules_window.destroy())
-    save_button.grid(row=3, column=0, pady=(25, 0))  
+    save_button.grid(row=3, column=0, padx=(16, 0), pady=(25, 0))

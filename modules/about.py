@@ -4,6 +4,8 @@
 #      darkbyte.net       #
 #=========================#
 
+import time
+import threading
 import subprocess
 import webbrowser
 import tkinter as tk
@@ -40,7 +42,6 @@ def about_window(app):
     
     image = Image.open("themes/images/Kitsune.png")
     resized_image = image.resize((200, 200))  
-
     photo = ImageTk.PhotoImage(resized_image)
 
     image_label = tk.Label(image_frame, image=photo)
@@ -53,7 +54,7 @@ def about_window(app):
     kitsune_label = tk.Label(info_frame, text="Kitsune Command & Control")
     kitsune_label.pack(padx=(0, 10), pady=(20, 0))
 
-    name_label = tk.Label(info_frame, text="by @JoelGMSec")
+    name_label = tk.Label(info_frame, text="by @JoelGMSec", fg="#BABABA")
     name_label.pack(padx=(0, 10), pady=(0, 5))
     
     website_label = tk.Label(info_frame, text=f"Version: {version}")
@@ -81,3 +82,44 @@ def about_window(app):
         app.about_window.destroy()
 
     app.about_window.bind("<Escape>", on_escape_key)
+
+    def rotate_image():
+        try:
+            while True:
+                time.sleep(0.8)
+                angle = 0
+                step = -2
+                while angle >= -16:
+                    angle += step
+                    rotated_image = image.rotate(angle, expand=False)
+                    rotated_image = rotated_image.resize((200, 200))
+                    photo = ImageTk.PhotoImage(rotated_image)
+                    image_label.config(image=photo)
+                    image_label.image = photo
+                    time.sleep(0.001)
+
+                step = 2
+                while angle <= 16:
+                    angle += step
+                    rotated_image = image.rotate(angle, expand=False)
+                    rotated_image = rotated_image.resize((200, 200))
+                    photo = ImageTk.PhotoImage(rotated_image)
+                    image_label.config(image=photo)
+                    image_label.image = photo
+                    time.sleep(0.001)
+
+                while angle > 0:
+                    angle -= step
+                    rotated_image = image.rotate(angle, expand=False)
+                    rotated_image = rotated_image.resize((200, 200))
+                    photo = ImageTk.PhotoImage(rotated_image)
+                    image_label.config(image=photo)
+                    image_label.image = photo
+                    time.sleep(0.001)
+                time.sleep(10)
+
+        except:
+            pass
+
+    rotation_thread = threading.Thread(target=rotate_image, daemon=True)
+    rotation_thread.start()

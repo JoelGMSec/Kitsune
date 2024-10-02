@@ -548,6 +548,8 @@ def kill_multiserver(app):
                 stop_multiserver(app)
             except:
                 pass
+    else:
+        dialog.delivery_error(app, "multiserver")
 
 def kill_webserver(app):
     if app.web_delivery_process is not None and app.web_delivery_process.poll() is None:
@@ -559,6 +561,9 @@ def kill_webserver(app):
             new_line = f"[{current_time}] Web Server on port {app.web_delivery_port} was killed!\n"
             app.add_event_viewer_log(new_line, 'color_error', "#FF0055")
             update_webserver_log_tab(app)
+
+    else:
+        dialog.delivery_error(app, "webserver")
 
 def multi_delivery(app):
     try:
