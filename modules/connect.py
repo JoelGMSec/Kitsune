@@ -5,6 +5,7 @@
 #=========================#
 
 import os
+import sys
 import json
 import time
 import pexpect
@@ -13,6 +14,31 @@ from threading import Thread
 from modules import controller
 from modules.session import Session
 from modules.command import execute_command_nxc
+
+def check_user_host(user, hostname):
+    if user in ["Unknown", None, ""]:
+        if "\n" in hostname:
+            parts = hostname.split("\n")
+            user = parts[0].strip()
+            hostname = parts[1].strip()
+        elif "\\" in hostname:
+            parts = hostname.split("\\")
+            user = parts[0].strip()
+            hostname = parts[1].strip()
+    
+    if hostname in ["Unknown", None, ""]:
+        if "\n" in user:
+            parts = user.split("\n")
+            hostname = parts[1].strip()
+            user = parts[0].strip()
+        elif "\\" in user:
+            parts = user.split("\\")
+            hostname = parts[1].strip()
+            user = parts[0].strip()
+    
+    user = user.split("\n")[0].split("\\")[0].strip() if user else "Unknown"
+    hostname = hostname.split("\n")[0].split("\\")[0].strip() if hostname else "Unknown" 
+    return user, hostname
 
 def connect_pwncat(app, params, method, session, restart):
     from modules.command import read_output_pwncat
@@ -42,20 +68,20 @@ def connect_pwncat(app, params, method, session, restart):
         pasw = method
 
         if app.proxy_status:
-            session_data = pexpect.spawn(f'proxychains4 -q {os.sys.executable} /usr/local/bin/pwncat-cs ssh://{user}:{pasw}@{host}', cwd=pwncat_path, echo=False, use_poll=True)  
+            session_data = pexpect.spawn(f'proxychains4 -q {os.sys.executable} /usr/local/bin/pwncat-cs ssh://{user}:{pasw}@{host}', cwd=pwncat_path, echo=False, use_poll=False)  
         else:
-            session_data = pexpect.spawn(f'{os.sys.executable} /usr/local/bin/pwncat-cs ssh://{user}:{pasw}@{host}', cwd=pwncat_path, echo=False, use_poll=True)  
+            session_data = pexpect.spawn(f'{os.sys.executable} /usr/local/bin/pwncat-cs ssh://{user}:{pasw}@{host}', cwd=pwncat_path, echo=False, use_poll=False)  
     else:
         session_info["Listener"] = "BIND"
         if app.proxy_status:
-            session_data = pexpect.spawn(f'proxychains4 -q {os.sys.executable} /usr/local/bin/pwncat-cs connect://{params}', cwd=pwncat_path, echo=False, use_poll=True)  
+            session_data = pexpect.spawn(f'proxychains4 -q {os.sys.executable} /usr/local/bin/pwncat-cs connect://{params}', cwd=pwncat_path, echo=False, use_poll=False)  
         else:
-            session_data = pexpect.spawn(f'{os.sys.executable} /usr/local/bin/pwncat-cs connect://{params}', cwd=pwncat_path, echo=False, use_poll=True)  
+            session_data = pexpect.spawn(f'{os.sys.executable} /usr/local/bin/pwncat-cs connect://{params}', cwd=pwncat_path, echo=False, use_poll=False)  
 
     session_data.timeout = 1
 
     try:
-        session_data.expect("registered", timeout=None)  
+        session_data.expect("registered", timeout=30)  
         session_data.sendline("back")
 
         for cmd in commands:
@@ -84,19 +110,17 @@ def connect_pwncat(app, params, method, session, restart):
             except:
                 pass
 
+        session_info["User"], session_info["Hostname"] = check_user_host(session_info["User"],session_info["Hostname"])
         if session_info["Hostname"] != "Unknown" and session_info["Hostname"]:
-
-            if not restart:
-                session_info["Session"] = app.count_session()
-
+            session_info["Session"] = Session.find_existing_session(app, session_info["User"], session_info["Hostname"], session_info["Listener"], session_info["Tail"])
             title = f"Session {session_info['Session']}"
             current_time = datetime.datetime.now().strftime("%H:%M:%S")  
             new_line = f"[{current_time}] New connection from {session_info['Hostname']} on {title}!\n"
             app.add_event_viewer_log(new_line, 'color_success', "#00FF99")
 
             session_id = session_info["Session"]
-            commands = Session.load_commands_from_session(session_id)
-            Session.save_session(session_info, commands)
+            commands = Session.load_commands_from_session(app, session_id)
+            Session.save_session(app, session_info, commands)
 
             title = f"Session {session_info['Session']}"
             Session.add_session_to_treeview(app, session_info, session_data)
@@ -104,7 +128,7 @@ def connect_pwncat(app, params, method, session, restart):
 
     except (pexpect.EOF, pexpect.TIMEOUT):  
         current_time = datetime.datetime.now().strftime("%H:%M:%S")
-        error_message = f"[{current_time}] Error: Failed connecting via PwnCat-CS!\n"
+        error_message = f"[{current_time}] Error: Failed connecting with PwnCat-CS!\n"
         app.add_event_viewer_log(error_message, 'color_error', "#FF0055")
 
 def pwncat_thread(app, params, method, session, restart):
@@ -115,7 +139,7 @@ def pwncat_thread(app, params, method, session, restart):
             pass
 
     current_time = datetime.datetime.now().strftime("%H:%M:%S")  
-    connecting_line = f"[{current_time}] Connecting via PwnCat-CS to {params}..\n"
+    connecting_line = f"[{current_time}] Connecting with PwnCat-CS to {params}..\n"
     app.add_event_viewer_log(connecting_line, 'color_listen', "#FFCC00")
 
     pwncat_thread = Thread(target=run_pwncat)
@@ -146,12 +170,11 @@ def connect_pyshell(app, params, method, session, restart):
     else:
         command = f"{os.sys.executable} {pyshell_path} {params} {method}"
     
-    session_data = pexpect.spawn(command, echo=False, use_poll=True)
+    session_data = pexpect.spawn(command, echo=False, use_poll=False)
     session_data.timeout = 1
 
     try:
         session_data.expect("PyShell", timeout=None)  
-
         session_data.sendline("whoami")
         output = read_output_nonblocking(session_data, "whoami")
         
@@ -190,19 +213,17 @@ def connect_pyshell(app, params, method, session, restart):
                 else:
                     session_info["Arch"] = "x86"
 
+        session_info["User"], session_info["Hostname"] = check_user_host(session_info["User"],session_info["Hostname"])
         if session_info["Hostname"] != "Unknown" and session_info["Hostname"]:
-
-            if not restart:
-                session_info["Session"] = app.count_session()
-
+            session_info["Session"] = Session.find_existing_session(app, session_info["User"], session_info["Hostname"], session_info["Listener"], session_info["Tail"])
             title = f"Session {session_info['Session']}"
             current_time = datetime.datetime.now().strftime("%H:%M:%S")  
             new_line = f"[{current_time}] New connection from {session_info['Hostname']} on {title}!\n"
             app.add_event_viewer_log(new_line, 'color_success', "#00FF99")
 
             session_id = session_info["Session"]
-            commands = Session.load_commands_from_session(session_id)
-            Session.save_session(session_info, commands)
+            commands = Session.load_commands_from_session(app, session_id)
+            Session.save_session(app, session_info, commands)
 
             title = f"Session {session_info['Session']}"
             Session.add_session_to_treeview(app, session_info, session_data)
@@ -210,7 +231,7 @@ def connect_pyshell(app, params, method, session, restart):
 
     except (pexpect.EOF, pexpect.TIMEOUT):
         current_time = datetime.datetime.now().strftime("%H:%M:%S")
-        error_message = f"[{current_time}] Error: Failed to connect via PyShell!\n"
+        error_message = f"[{current_time}] Error: Failed connecting with PyShell!\n"
         app.add_event_viewer_log(error_message, 'color_error', "#FF0055")
 
 def pyshell_thread(app, params, method, session, restart):
@@ -221,7 +242,7 @@ def pyshell_thread(app, params, method, session, restart):
             pass
 
     current_time = datetime.datetime.now().strftime("%H:%M:%S")  
-    connecting_line = f"[{current_time}] Connecting via PyShell to {params.split()[0]}..\n"
+    connecting_line = f"[{current_time}] Connecting with PyShell to {params.split()[0]}..\n"
     app.add_event_viewer_log(connecting_line, 'color_listen', "#FFCC00")
 
     pyshell_thread = Thread(target=run_pyshell)
@@ -277,28 +298,31 @@ def connect_netexec(app, params, method, session, restart):
                         session_info["Arch"] = "x64"
                     else:
                         session_info["Arch"] = "x86"
-               
+
+        session_info["User"], session_info["Hostname"] = check_user_host(session_info["User"],session_info["Hostname"])
         if session_info["Hostname"] != "Unknown" and session_info["Hostname"]:
-
-            if not restart:
-                session_info["Session"] = app.count_session()
-
+            session_info["Session"] = Session.find_existing_session(app, session_info["User"], session_info["Hostname"], session_info["Listener"], session_info["Tail"])
             title = f"Session {session_info['Session']}"
             current_time = datetime.datetime.now().strftime("%H:%M:%S")  
             new_line = f"[{current_time}] New connection from {session_info['Hostname']} on {title}!\n"
             app.add_event_viewer_log(new_line, 'color_success', "#00FF99")
 
             session_id = session_info["Session"]
-            commands = Session.load_commands_from_session(session_id)
-            Session.save_session(session_info, commands)
+            commands = Session.load_commands_from_session(app, session_id)
+            Session.save_session(app, session_info, commands)
 
             title = f"Session {session_info['Session']}"
             Session.add_session_to_treeview(app, session_info, session_data)
             Session.add_new_session(app, title, session_id, session_info, session_data)
 
+        else:
+            current_time = datetime.datetime.now().strftime("%H:%M:%S")
+            error_message = f"[{current_time}] Error: Failed connecting with NetExec!\n"
+            app.add_event_viewer_log(error_message, 'color_error', "#FF0055")
+
     except (pexpect.EOF, pexpect.TIMEOUT):
         current_time = datetime.datetime.now().strftime("%H:%M:%S")
-        error_message = f"[{current_time}] Error: Failed to connect via NetExec!\n"
+        error_message = f"[{current_time}] Error: Failed connecting with NetExec!\n"
         app.add_event_viewer_log(error_message, 'color_error', "#FF0055")
 
 def netexec_thread(app, params, method, session, restart):
@@ -309,7 +333,7 @@ def netexec_thread(app, params, method, session, restart):
             pass
 
     current_time = datetime.datetime.now().strftime("%H:%M:%S")  
-    connecting_line = f"[{current_time}] Connecting via NetExec to {params.split()[0]}..\n"
+    connecting_line = f"[{current_time}] Connecting with NetExec to {params.split()[0]}..\n"
     app.add_event_viewer_log(connecting_line, 'color_listen', "#FFCC00")
 
     netexec_thread = Thread(target=run_netexec)
@@ -318,7 +342,7 @@ def netexec_thread(app, params, method, session, restart):
     return netexec_thread
 
 def connect_evilwinrm(app, params, method, session, restart):
-    from modules.command import read_output_nonblocking
+    from modules.command import read_evil_output
     method = method.lower()
 
     session_info = {
@@ -338,13 +362,13 @@ def connect_evilwinrm(app, params, method, session, restart):
     os.makedirs(evilwinrm_path, exist_ok=True)
     
     if app.proxy_status:
-        session_data = pexpect.spawn(f'proxychains4 -q evil-winrm -i {params}', cwd=evilwinrm_path, echo=False, use_poll=True)  
+        session_data = pexpect.spawn(f'proxychains4 -q evil-winrm -i {params}', cwd=evilwinrm_path, echo=False, use_poll=False)  
     else:
-        session_data = pexpect.spawn(f'evil-winrm -i {params}', cwd=evilwinrm_path, echo=False, use_poll=True)  
+        session_data = pexpect.spawn(f'evil-winrm -i {params}', cwd=evilwinrm_path, echo=False, use_poll=False)  
     session_data.timeout = 1
 
     try:
-        session_data.expect_exact("*Evil-WinRM*", timeout=None)  
+        session_data.expect_exact("Evil-WinRM", timeout=30)  
         session_data.sendline("\n")
 
         get_host = "[System.Net.Dns]::GetHostByName($env:computerName).Hostname"
@@ -355,7 +379,7 @@ def connect_evilwinrm(app, params, method, session, restart):
 
         for cmd in commands:
             session_data.sendline(cmd) ; time.sleep(0.2)
-            output = read_output_nonblocking(session_data, cmd)
+            output = read_evil_output(session_data, cmd)
 
             if output:
                 if cmd.startswith("whoami"):
@@ -374,19 +398,17 @@ def connect_evilwinrm(app, params, method, session, restart):
                     else:
                         session_info["Arch"] = "x86"
 
+        session_info["User"], session_info["Hostname"] = check_user_host(session_info["User"],session_info["Hostname"])
         if session_info["Hostname"] != "Unknown" and session_info["Hostname"]:
-
-            if not restart:
-                session_info["Session"] = app.count_session()
-
+            session_info["Session"] = Session.find_existing_session(app, session_info["User"], session_info["Hostname"], session_info["Listener"], session_info["Tail"])
             title = f"Session {session_info['Session']}"
             current_time = datetime.datetime.now().strftime("%H:%M:%S")  
             new_line = f"[{current_time}] New connection from {session_info['Hostname']} on {title}!\n"
             app.add_event_viewer_log(new_line, 'color_success', "#00FF99")
 
             session_id = session_info["Session"]
-            commands = Session.load_commands_from_session(session_id)
-            Session.save_session(session_info, commands)
+            commands = Session.load_commands_from_session(app, session_id)
+            Session.save_session(app, session_info, commands)
 
             title = f"Session {session_info['Session']}"
             Session.add_session_to_treeview(app, session_info, session_data)
@@ -394,7 +416,7 @@ def connect_evilwinrm(app, params, method, session, restart):
 
     except (pexpect.EOF, pexpect.TIMEOUT):
         current_time = datetime.datetime.now().strftime("%H:%M:%S")
-        error_message = f"[{current_time}] Error: Failed to connect via Evil-WinRM!\n"
+        error_message = f"[{current_time}] Error: Failed connecting with Evil-WinRM!\n"
         app.add_event_viewer_log(error_message, 'color_error', "#FF0055")
 
 def evilwinrm_thread(app, params, method, session, restart):
@@ -405,7 +427,7 @@ def evilwinrm_thread(app, params, method, session, restart):
             pass
 
     current_time = datetime.datetime.now().strftime("%H:%M:%S")  
-    connecting_line = f"[{current_time}] Connecting via Evil-WinRM to {params.split()[0]}..\n"
+    connecting_line = f"[{current_time}] Connecting with Evil-WinRM to {params.split()[0]}..\n"
     app.add_event_viewer_log(connecting_line, 'color_listen', "#FFCC00")
 
     evilwinrm_thread = Thread(target=run_evilwinrm)
@@ -441,13 +463,13 @@ def connect_wmiexecpro(app, params, method, session, restart):
     else:
         command = f"{os.sys.executable} wmiexec-pro.py '{user_wmi}:{pass_wmi}'@{host_wmi} exec-command -shell"
 
-    session_data = pexpect.spawn(command, cwd=wmiexecpro_path, echo=True, use_poll=True)
+    session_data = pexpect.spawn(command, cwd=wmiexecpro_path, echo=True, use_poll=False)
     session_data.timeout = 1
 
     try:
-        session_data.expect("execute", timeout=None)  
+        session_data.expect("execute", timeout=30)  
         session_data.sendline("sleep 10")
-        session_data.expect("time", timeout=None)
+        session_data.expect("time", timeout=30)
 
         get_host = "[System.Net.Dns]::GetHostByName($env:computerName).Hostname"
         get_ip = "(Get-WmiObject -Class Win32_NetworkAdapterConfiguration | where {$_.DefaultIPGateway -ne $null}).IPAddress | select-object -first 1"
@@ -476,19 +498,17 @@ def connect_wmiexecpro(app, params, method, session, restart):
                     else:
                         session_info["Arch"] = "x86"
 
+        session_info["User"], session_info["Hostname"] = check_user_host(session_info["User"],session_info["Hostname"])
         if session_info["Hostname"] != "Unknown" and session_info["Hostname"]:
-
-            if not restart:
-                session_info["Session"] = app.count_session()
-
+            session_info["Session"] = Session.find_existing_session(app, session_info["User"], session_info["Hostname"], session_info["Listener"], session_info["Tail"])
             title = f"Session {session_info['Session']}"
             current_time = datetime.datetime.now().strftime("%H:%M:%S")  
             new_line = f"[{current_time}] New connection from {session_info['Hostname']} on {title}!\n"
             app.add_event_viewer_log(new_line, 'color_success', "#00FF99")
 
             session_id = session_info["Session"]
-            commands = Session.load_commands_from_session(session_id)
-            Session.save_session(session_info, commands)
+            commands = Session.load_commands_from_session(app, session_id)
+            Session.save_session(app, session_info, commands)
 
             title = f"Session {session_info['Session']}"
             Session.add_session_to_treeview(app, session_info, session_data)
@@ -496,7 +516,7 @@ def connect_wmiexecpro(app, params, method, session, restart):
 
     except (pexpect.EOF, pexpect.TIMEOUT):
         current_time = datetime.datetime.now().strftime("%H:%M:%S")
-        error_message = f"[{current_time}] Error: Failed to connect via WMIexec-Pro!\n"
+        error_message = f"[{current_time}] Error: Failed connecting with WMIexec-Pro!\n"
         app.add_event_viewer_log(error_message, 'color_error', "#FF0055")
 
 def wmiexecpro_thread(app, params, method, session, restart):
@@ -507,7 +527,7 @@ def wmiexecpro_thread(app, params, method, session, restart):
             pass
 
     current_time = datetime.datetime.now().strftime("%H:%M:%S")  
-    connecting_line = f"[{current_time}] Connecting via WMIexec-Pro to {params.split()[0]}..\n"
+    connecting_line = f"[{current_time}] Connecting with WMIexec-Pro to {params.split()[0]}..\n"
     app.add_event_viewer_log(connecting_line, 'color_listen', "#FFCC00")
 
     wmiexecpro_thread = Thread(target=run_wmiexecpro)

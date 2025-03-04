@@ -78,8 +78,7 @@ def set_proxy(app):
             params_entry.configure(foreground="white")
             app.save_button.state(["!invalid"])
             app.save_button['state'] = '!invalid'
-        except Exception as e:
-            print (e)
+        except:
             pass
 
     params_entry.bind("<Button-1>", on_focus_entry)
@@ -142,7 +141,7 @@ def save_proxy_settings(app, status, ip_port, protocol, params_entry):
         params_entry.state(["invalid"])
         params_entry.delete(0, tk.END)
         params_entry.insert(0, "Invalid parameter!")
-        params_entry.configure(foreground="#c0c0c0")
+        params_entry.configure(foreground="#ffffff")
         params_entry.state(["readonly"])
         app.save_button.state(["invalid"])
         app.save_button['state'] = 'invalid'

@@ -41,7 +41,7 @@ def regex_text(text):
     return regex_text
 
 def regex_multi_text(text):
-    dynamic_text = r"^[^:]*:[^:]*:"
+    dynamic_text = r"^[^:]*.:[^:]*.:"
     now = datetime.datetime.now()
     current_time = now.strftime("%H:%M:%S")
     regex_text = []
@@ -50,19 +50,29 @@ def regex_multi_text(text):
     lines = cleaned_text.splitlines()
     for line in lines:
         if line.strip():
-            regex_text.append(f"[{current_time}] {line.strip()}")
+            clean_text = re.sub(dynamic_text, '', line)
+            regex_text.append(f"[{current_time}] {clean_text.strip()}")
 
     return regex_text
 
-def copy_text(app, log_text):
+
+def copy_delivery_text(log_text, event=None):
     try:
         selected_text = log_text.selection_get()
         log_text.clipboard_clear()
         log_text.clipboard_append(selected_text)
         log_text.tag_remove(tk.SEL, "1.0", tk.END)
-    except Exception as e:
-        print(e)
+    except:
         pass
+
+def select_delivery_text(log_text, event=None):
+    log_text.config(state="normal")
+    if log_text.get("1.0", tk.END).strip():
+        log_text.tag_add(tk.SEL, "1.0", tk.END)
+        log_text.mark_set(tk.INSERT, "1.0")
+        log_text.see(tk.END)
+    log_text.config(state="disabled")
+    return "break"
 
 def start_updating_multiserver_log(app):
     def update_loop():
@@ -288,16 +298,17 @@ def open_webserver_log_tab(app):
 
     log_text = tk.Text(
         tab,
+        pady=5,
+        padx=5,
         background="#333333",
         foreground="#FFCC00",
-        padx=5,
-        pady=5,
         wrap="word",
         highlightthickness=0,
         selectbackground="#1B1B1B",
         inactiveselectbackground="#1B1B1B",
         borderwidth=0,
-        yscrollcommand=scrollbar.set
+        yscrollcommand=scrollbar.set,
+        cursor="arrow"
     )
     log_text.pack(fill="both", expand=True)
     scrollbar.config(command=log_text.yview)
@@ -311,9 +322,11 @@ def open_webserver_log_tab(app):
     log_text.tag_configure("color_input", foreground="#00AAFF")
 
     app.delivery_menu = tk.Menu(log_text, tearoff=0)
-    app.delivery_menu.add_command(label="Copy", command=lambda: copy_text(app, log_text))
+    app.delivery_menu.add_command(label="Copy", command=lambda: copy_delivery_text(log_text))
     app.delivery_menu.add_command(label="Clear", command=lambda: app.clear_delivery_logs(log_text, "web"))
     log_text.bind("<Button-3>", app.show_delivery_menu)
+    log_text.bind("<Control-c>", lambda event: copy_delivery_text(log_text))
+    log_text.bind("<Control-a>", lambda event: select_delivery_text(log_text))
 
     if app.web_delivery_process and app.web_delivery_process.poll() is None:
         message = "[>] Web Server is running..\n"
@@ -380,16 +393,17 @@ def open_multiserver_log_tab(app):
 
     log_text = tk.Text(
         tab,
+        pady=5,
+        padx=5,
         background="#333333",
         foreground="#FFCC00",
-        padx=5,
-        pady=5,
         wrap="word",
         highlightthickness=0,
         selectbackground="#1B1B1B",
         inactiveselectbackground="#1B1B1B",
         borderwidth=0,
-        yscrollcommand=scrollbar.set
+        yscrollcommand=scrollbar.set,
+        cursor="arrow"
     )
     log_text.pack(fill="both", expand=True)
     scrollbar.config(command=log_text.yview)
@@ -403,9 +417,11 @@ def open_multiserver_log_tab(app):
     log_text.tag_configure("color_input", foreground="#00AAFF")
 
     app.multi_menu = tk.Menu(log_text, tearoff=0)
-    app.multi_menu.add_command(label="Copy", command=lambda: copy_text(app, log_text))
+    app.multi_menu.add_command(label="Copy", command=lambda: copy_delivery_text(log_text))
     app.multi_menu.add_command(label="Clear", command=lambda: app.clear_delivery_logs(log_text, "multi"))
     log_text.bind("<Button-3>", app.show_multi_menu)
+    log_text.bind("<Control-c>", lambda event: copy_delivery_text(log_text))
+    log_text.bind("<Control-a>", lambda event: select_delivery_text(log_text))
 
     if app.multi_delivery_process and app.multi_delivery_process.is_alive():
         message = "[>] Multi Server is running..\n"
@@ -499,7 +515,7 @@ def server_status(ip, port, protocol, app):
     if process is not None:
         current_time = datetime.datetime.now().strftime("%H:%M:%S")  
         new_line = f"[{current_time}] Web Server is listening on port {port} now..\n"
-        app.add_event_viewer_log(new_line, 'color_login', "#FF00FF")
+        app.add_event_viewer_log(new_line, 'color_input', "#00AAFF")
 
     else:
         current_time = datetime.datetime.now().strftime("%H:%M:%S")  
@@ -517,6 +533,7 @@ def stop_multiserver(app):
                 app.ftp_server_process.close_all()
             elif app.multi_delivery_protocol == "SMB":
                 app.smb_server_process.stop()
+                app.smb_server_process.close()
             elif app.multi_delivery_protocol == "NFS":
                 app.nfs_server_process.stop()
                 app.nfs_server_process.close()
@@ -545,7 +562,10 @@ def kill_multiserver(app):
     if app.multi_delivery_process is not None:
         if dialog.confirm_dialog(app) == "yes":
             try:
-                stop_multiserver(app)
+                thread = threading.Thread(target=stop_multiserver, args=(app,))
+                thread.daemon = True
+                thread.start()
+                atexit.register(stop_multiserver.terminate)
             except:
                 pass
     else:
@@ -673,7 +693,7 @@ def start_ftp_server(ip, port, app):
                 }
 
             for line in new_log_content:
-                if line.strip():
+                if not "DEBUG" in line.strip():
                     clean_data = regex_multi_text(line.strip())
                     clean_data = str(clean_data)
                     clean_data = clean_data.replace("['","").replace("']","")
@@ -737,7 +757,7 @@ def start_smb_server(ip, port, app):
                     }
 
                 for line in new_log_content:
-                    if line.strip():
+                    if not "DEBUG" in line.strip():
                         clean_data = regex_multi_text(line.strip())
                         clean_data = str(clean_data)
                         clean_data = clean_data.replace("['","").replace("']","")
@@ -800,7 +820,7 @@ def start_nfs_server(ip, port, app):
                     }
 
                 for line in new_log_content:
-                    if line.strip():
+                    if not "DEBUG" in line.strip():
                         clean_data = regex_multi_text(line.strip())
                         clean_data = str(clean_data)
                         clean_data = clean_data.replace("['","").replace("']","")
@@ -850,37 +870,43 @@ def start_nfs_server(ip, port, app):
         pass
 
 def start_multi_server(ip, port, protocol, app):
-    stop_multiserver(app)
-    multiserver_file = Path('data/multiserver.json')
-    app.multi_delivery_port = port 
-    if multiserver_file.exists():
-        multiserver_file.unlink()
-    log_data = {
-        "Protocol": protocol,
-        "IP Address": ip,
-        "Listening Port": port,
-        "Path": "../Kitsune/Payloads\n",
-        "Log": []
-    }
+    try:
+        stop_multiserver(app)
+        multiserver_file = Path('data/multiserver.json')
+        app.multi_delivery_port = port 
+        if multiserver_file.exists():
+            multiserver_file.unlink()
+        log_data = {
+            "Protocol": protocol,
+            "IP Address": ip,
+            "Listening Port": port,
+            "Path": "../Kitsune/Payloads",
+            "Log": []
+        }
 
-    with open(multiserver_file, 'w') as f:
-        json.dump(log_data, f, indent=4)
+        with open(multiserver_file, 'w') as f:
+            json.dump(log_data, f, indent=4)
 
-    if protocol == "FTP":
-        app.multi_delivery_process = threading.Thread(target=start_ftp_server, args=(ip, port, app), daemon=True)
-        app.multi_delivery_process.start()
-        app.multi_delivery_protocol = "FTP"
-    elif protocol == "SMB":
-        app.multi_delivery_process = threading.Thread(target=start_smb_server, args=(ip, port, app), daemon=True)
-        app.multi_delivery_process.start()
-        app.multi_delivery_protocol = "SMB"
-    elif protocol == "NFS":
-        app.multi_delivery_process = threading.Thread(target=start_nfs_server, args=(ip, port, app), daemon=True)
-        app.multi_delivery_process.start()
-        app.multi_delivery_protocol = "NFS"
+        if protocol == "FTP":
+            app.multi_delivery_process = threading.Thread(target=start_ftp_server, args=(ip, port, app), daemon=True)
+            app.multi_delivery_process.start()
+            app.multi_delivery_protocol = "FTP"
+        elif protocol == "SMB":
+            app.multi_delivery_process = threading.Thread(target=start_smb_server, args=(ip, port, app), daemon=True)
+            app.multi_delivery_process.start()
+            app.multi_delivery_protocol = "SMB"
+        elif protocol == "NFS":
+            app.multi_delivery_process = threading.Thread(target=start_nfs_server, args=(ip, port, app), daemon=True)
+            app.multi_delivery_process.start()
+            app.multi_delivery_protocol = "NFS"
 
-    current_time = datetime.datetime.now().strftime("%H:%M:%S")  
-    new_line = f"[{current_time}] {protocol} Server is listening on port {port} now..\n"
-    app.add_event_viewer_log(new_line, 'color_login', "#FF00FF")
-    update_multiserver_log_tab(app)
+        current_time = datetime.datetime.now().strftime("%H:%M:%S")  
+        new_line = f"[{current_time}] {protocol} Server is listening on port {port} now..\n"
+        app.add_event_viewer_log(new_line, 'color_input', "#00AAFF")
+        update_multiserver_log_tab(app)
+        data["Log"].clear()
+
+    except:
+        pass
+    
     return app.multi_delivery_process

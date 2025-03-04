@@ -62,10 +62,10 @@ def update_modules(app):
     app.modules_window.resizable(False, False)
 
     image_frame = tk.Frame(app.modules_window)
-    image_frame.grid(row=0, column=1, padx=(30, 30), pady=(20, 0))
+    image_frame.grid(row=0, column=1, padx=(20, 30), pady=(20, 0))
 
     image = Image.open("./themes/images/Modules.png")
-    resized_image = image.resize((190, 190))  
+    resized_image = image.resize((195, 195))  
 
     photo = ImageTk.PhotoImage(resized_image)
 
@@ -85,8 +85,8 @@ def update_modules(app):
     progressbar = ttk.Progressbar(updates_frame, mode="indeterminate", length=220)
     progressbar.grid(row=2, column=0, padx=(16, 0), pady=(20, 10))
     progressbar.start()  
-
     stop_blink_event = threading.Event()
+
     def interpolate_color(color1, color2, factor):
         c1 = [int(color1[i:i+2], 16) for i in (1, 3, 5)]
         c2 = [int(color2[i:i+2], 16) for i in (1, 3, 5)]
@@ -115,6 +115,7 @@ def update_modules(app):
         except:
             if name_label:
                 name_label.config(text="Error updating tails!", fg="red")
+
     threading.Thread(target=clone_repos_thread).start()
 
     def on_enter_key(event):

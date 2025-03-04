@@ -97,7 +97,7 @@ def check_updates(app):
             blink_thread.join()
             
             if app.updates_window and tk.Toplevel.winfo_exists(app.updates_window):
-                if remote_version != version:
+                if remote_version > version:
                     app.after(0, name_label.config, {'text': "New version found!", 'fg': "#00AAFF"})
                     app.after(0, save_button.config, {'text': "Download"})
                 else:

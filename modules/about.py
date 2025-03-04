@@ -89,25 +89,27 @@ def about_window(app):
                 time.sleep(0.8)
                 angle = 0
                 step = -2
-                while angle >= -16:
+                while angle >= -14:
                     angle += step
                     rotated_image = image.rotate(angle, expand=False)
                     rotated_image = rotated_image.resize((200, 200))
                     photo = ImageTk.PhotoImage(rotated_image)
                     image_label.config(image=photo)
                     image_label.image = photo
-                    time.sleep(0.001)
+                    time.sleep(0.002)
 
                 step = 2
-                while angle <= 16:
+                time.sleep(0.2)
+                while angle <= 14:
                     angle += step
                     rotated_image = image.rotate(angle, expand=False)
                     rotated_image = rotated_image.resize((200, 200))
                     photo = ImageTk.PhotoImage(rotated_image)
                     image_label.config(image=photo)
                     image_label.image = photo
-                    time.sleep(0.001)
+                    time.sleep(0.002)
 
+                time.sleep(0.2)
                 while angle > 0:
                     angle -= step
                     rotated_image = image.rotate(angle, expand=False)
@@ -115,8 +117,9 @@ def about_window(app):
                     photo = ImageTk.PhotoImage(rotated_image)
                     image_label.config(image=photo)
                     image_label.image = photo
-                    time.sleep(0.001)
-                time.sleep(10)
+                    time.sleep(0.002)
+
+                time.sleep(4)
 
         except:
             pass

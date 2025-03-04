@@ -31,7 +31,7 @@ else:
         json.dump({"logs": []}, file)
 
 user_colors = ["#00FF99", "#00AAFF", "#FFCC00", "#FF00FF"]
-notification_color = "gray"
+notification_color = "#BABABA"
 warning_color = "#FF0055"
 user_color_map = {}
 
@@ -140,7 +140,7 @@ def server_loop(app):
                         continue
                     
                     log_entry = {
-                        "text": f"[{username}] > {message_text}",
+                        "text": f"<{username}> {message_text}",
                         "tag": "message",
                         "color": color
                     }
@@ -187,12 +187,13 @@ class TeamChatTab():
             yscrollcommand=app.scrollbar.set,
             background="#333333",
             foreground="#FF00FF",
-            padx=5,
             pady=5,
+            padx=5,
             highlightthickness=0,
             selectbackground="#1B1B1B",
             inactiveselectbackground="#1B1B1B",
-            borderwidth=0
+            borderwidth=0,
+            cursor="arrow"
         )
         app.text_area.pack(expand=True, fill='both')
         app.scrollbar.config(command=app.text_area.yview)
@@ -202,8 +203,10 @@ class TeamChatTab():
         app.context_menu.add_command(label="Copy", command=app.copy_chat_text)
         app.context_menu.add_command(label="Clear", command=app.clear_chat_text)
         app.text_area.bind("<Button-3>", app.show_context_menu)
+        app.text_area.bind("<Control-c>", app.copy_chat_text)
+        app.text_area.bind("<Control-a>", app.select_chat_text)
 
-    def copy_chat_text(app):
+    def copy_chat_text(app, event=None):
         try:
             selected_text = app.text_area.selection_get()
             app.text_area.clipboard_clear()
@@ -217,7 +220,16 @@ class TeamChatTab():
         app.text_area.delete('1.0', tk.END)
         app.text_area.config(state="disabled")
         return
-        
+
+    def select_chat_text(self, event=None):
+        self.text_area.config(state="normal")
+        if self.text_area.get("1.0", tk.END).strip():
+            self.text_area.tag_add(tk.SEL, "1.0", tk.END)
+            self.text_area.mark_set(tk.INSERT, "1.0")
+            self.text_area.see(tk.END)
+        self.text_area.config(state="disabled")
+        return "break" 
+
     def show_context_menu(app, event):
         app.context_menu.tk_popup(event.x_root, event.y_root)
 
@@ -308,7 +320,7 @@ class TeamChatTab():
 
                 else:
                     log_entry = {
-                        "text": f"[{username}] > {message}",
+                        "text": f"<{username}> {message}",
                         "tag": "message",
                         "color": color
                     }

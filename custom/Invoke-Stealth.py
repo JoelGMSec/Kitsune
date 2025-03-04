@@ -14,7 +14,7 @@ import subprocess
 def get_description():
     return "This module automatically obfuscate all scripts in \"Ps1\" format"
 
-def main(app, caller, payload, format):
+def main(app, caller, payload, format, title):
     if caller == "generate" and "Ps1" in format:
         tmp_payload = os.path.join("/tmp", os.path.basename(payload))
         payload_obfuscated = str(payload).split(".")[0] + "_obfuscated.ps1"

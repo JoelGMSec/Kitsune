@@ -4,3 +4,4 @@ Kitsune Commands
 - close: Closes the current tab
 - exit: Disconnect current session
 - help: Displays this help message
+- restart: Restart current session

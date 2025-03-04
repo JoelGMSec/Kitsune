@@ -91,46 +91,35 @@ def import_profile(app):
     except:
         pass
 
+    no_profile = False
     app.import_window = tk.Toplevel(app)
     app.import_window.geometry("525x255")
     app.import_window.title("Load Profile")
     app.import_window.focus_force()
     app.import_window.resizable(False, False)
-
     image_frame = tk.Frame(app.import_window)
     image_frame.grid(row=0, column=0, padx=(10, 0), pady=20)
-
     image = Image.open("./themes/images/Folder.png")
     resized_image = image.resize((200, 200))  
-
     photo = ImageTk.PhotoImage(resized_image)
-
     image_label = tk.Label(image_frame, image=photo)
     image_label.image = photo  
     image_label.grid(row=0, column=0)
-
     settings_frame = tk.Frame(app.import_window)
     settings_frame.grid(row=0, column=1, padx=(5, 0), pady=10, sticky="nsew")
-
     export_label = tk.Label(settings_frame, text="Select profile name")
     export_label.grid(row=0, column=1, padx=(5, 0), pady=(20, 0))
-
     name_label = tk.Label(settings_frame, text="*Loaded after restart*", fg="#FFCC00")
     name_label.grid(row=1, column=1, padx=(5, 0), pady=(0, 5))
-
     profiles = [name for name in os.listdir("profiles") if os.path.isdir(os.path.join("profiles", name))]
     profiles = sorted(profiles)
+
     if not profiles:  
-        profiles = ["No profiles found!"]
-
+        profiles = ["No profiles found"]
+        no_profile = True
     selected_value = tk.StringVar(value=profiles[0])
-
     app.profile_combobox = ttk.Combobox(settings_frame, values=profiles, textvariable=selected_value, state="readonly")
     app.profile_combobox.grid(row=2, column=1, padx=(15, 0), pady=(20, 0))
-
-    if selected_value.get() == str("No profiles found!"):
-        app.profile_combobox.configure(state="disabled")
-        app.profile_combobox.configure(foreground="#c0c0c0")
 
     def on_enter_key(event):
         load_and_close(app, selected_value)
@@ -142,9 +131,13 @@ def import_profile(app):
     app.import_window.bind("<Return>", on_enter_key)
     app.profile_combobox.bind("<FocusIn>", on_combobox_focus)
     app.import_window.bind("<Escape>", on_escape_key)
-
     app.save_button = ttk.Button(settings_frame, text="Load", command=lambda: load_and_close(app, selected_value))
     app.save_button.grid(row=3, column=1, pady=(35, 10))  
+
+    if no_profile:
+        app.save_button.config(state="disabled")
+        app.profile_combobox.config(state="disabled")
+        app.profile_combobox.config(foreground="#BABABA")
 
 def delete_profile(app):
     profiles_path = "profiles"
@@ -185,7 +178,7 @@ def save_profile(app, name_entry):
             name_entry.state(["invalid"])
             name_entry.delete(0, tk.END)
             name_entry.insert(0, "Invalid profile name!")
-            name_entry.configure(foreground="#c0c0c0")
+            name_entry.configure(foreground="#ffffff")
             name_entry.state(["readonly"])
             app.save_button.state(["invalid"])
             app.save_button['state'] = 'invalid'
@@ -194,7 +187,7 @@ def save_profile(app, name_entry):
         name_entry.state(["invalid"])
         name_entry.delete(0, tk.END)
         name_entry.insert(0, "Invalid profile name!")
-        name_entry.configure(foreground="#c0c0c0")
+        name_entry.configure(foreground="#ffffff")
         name_entry.state(["readonly"])
         app.save_button.state(["invalid"])
         app.save_button['state'] = 'invalid'

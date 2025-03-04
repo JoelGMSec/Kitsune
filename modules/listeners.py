@@ -21,14 +21,14 @@ def validate_entries(app, entries):
                 except:
                     pass
                 entry.set("Invalid parameter!")
-                entry.configure(foreground="#c0c0c0")
+                entry.configure(foreground="#BABABA")
                 entry.state(["invalid"])
                 entry['state'] = 'invalid'
                 app.window_save_button.state(["invalid"])
                 app.window_save_button['state'] = 'invalid'
                 all_valid = False
             elif "Invalid parameter!" in entry.get():
-                entry.configure(foreground="#c0c0c0")
+                entry.configure(foreground="#BABABA")
                 entry.state(["invalid"])
                 entry['state'] = 'invalid'
                 app.window_save_button.state(["invalid"])
@@ -48,12 +48,12 @@ def validate_entries(app, entries):
                 entry.state(["invalid"])
                 entry.delete(0, tk.END)
                 entry.insert(0, "Invalid parameter!")
-                entry.configure(foreground="#c0c0c0")
+                entry.configure(foreground="#BABABA")
                 app.window_save_button.state(["invalid"])
                 app.window_save_button['state'] = 'invalid'
                 all_valid = False
             elif "Invalid parameter!" in entry.get():
-                entry.configure(foreground="#c0c0c0")
+                entry.configure(foreground="#BABABA")
                 entry.state(["invalid"])
                 app.window_save_button.state(["invalid"])
                 app.window_save_button['state'] = 'invalid'
@@ -61,6 +61,9 @@ def validate_entries(app, entries):
             else:
                 entry.configure(foreground="#ffffff")
                 entry.state(["!invalid"])
+                entry.state(["readonly"])
+                entry['state'] = '!invalid'
+                entry['state'] = 'readonly'
                 app.window_save_button.state(["!invalid"])
                 app.window_save_button['state'] = '!invalid'
         else:
@@ -95,7 +98,7 @@ def add_listeners(app, name, host, port, protocol, tail):
         if app.listener_table.winfo_exists():
             app.listener_table.insert('', 'end', values=(name, host, port, protocol, tail))
 
-        session = Session.load_sessions()
+        session = Session.load_sessions(app)
         app.listeners = listeners
         controller.new_listener(app, session, reload_listeners=False)
         app.listener_window.destroy()
@@ -141,7 +144,7 @@ def listener_window(app):
     tail_label = ttk.Label(app.listener_window, text="Tail")
     tail_label.grid(row=4, column=0, padx=0, pady=15)
 
-    tail_combo = ttk.Combobox(app.listener_window, values=["HTTP-Shell", "DnsCat2", "PwnCat-CS", "Villain"], state="readonly")
+    tail_combo = ttk.Combobox(app.listener_window, values=["DnsCat2", "HTTP-Shell", "PwnCat-CS", "Villain"], state="readonly")
     tail_combo.grid(row=4, column=1, padx=0, pady=15)
     tail_combo.bind("<FocusIn>", on_combobox_focus)
 
@@ -154,8 +157,9 @@ def listener_window(app):
 
     def to_uppercase(event):
         current_text = name_entry.get()
-        name_entry.delete(0, tk.END)
-        name_entry.insert(0, current_text.upper())
+        if not "Invalid parameter!" in current_text:
+            name_entry.delete(0, tk.END)
+            name_entry.insert(0, current_text.upper())
 
     app.listener_window.bind("<KeyRelease>", to_uppercase)
 
@@ -251,6 +255,22 @@ def show_listeners(app):
     app.listener_table_label.configure(padding=-20)
     app.listener_table.pack(fill="both", expand=True)
 
+    app.listener_table.tag_configure("enabled", foreground="#FFFFFF")
+    app.listener_table.tag_configure("disabled", foreground="#868686")
+    app.listener_table.tag_configure("disabled_selected", foreground="#333333")
+
+    def update_listener_selection(event):
+        selected_items = app.listener_table.selection()
+        for item in app.listener_table.get_children():
+            item_info = app.listener_table.item(item)
+            tags = item_info['tags']
+            if "disabled" in tags or "disabled_selected" in tags:
+                if item in selected_items:
+                    app.listener_table.item(item, tags=("disabled_selected",))
+                else:
+                    app.listener_table.item(item, tags=("disabled",))
+
+    app.listener_table.bind("<<TreeviewSelect>>", update_listener_selection)
     app.listener_table.bind("<Double-1>", lambda event: app.on_double_click())
 
     bottom_frame = tk.Frame(listener_tab)
@@ -279,9 +299,13 @@ def show_listeners(app):
             app.confirm_remove("Remove")
 
     def on_enter_key(event):
-        edit_listener()
+        edit_listener(app)
+
+    def on_delete_key(event):
+        remove_listener(app)
 
     app.listener_table.bind("<Return>", on_enter_key)
+    app.listener_table.bind("<Delete>", on_delete_key)
 
     def on_escape_key(event):
         for tab in app.notebook.tabs():
@@ -326,9 +350,6 @@ def show_listeners(app):
             item_id = app.listener_table.insert('', 'end', values=(name, host, port, protocol, tail))
             app.listener_table.item(item_id, tags=(listener["State"],))
 
-        app.listener_table.tag_configure("enabled", foreground="#FFFFFF")
-        app.listener_table.tag_configure("disabled", foreground="gray")
-
     def on_treeview_click(event):
         item = app.listener_table.identify('item', event.x, event.y)
         if not item:  
@@ -337,7 +358,7 @@ def show_listeners(app):
     app.listener_table.bind("<Button-1>", on_treeview_click, add='+')  
     app.listener_table.bind("<Button-3>", app.remove_listener)
 
-    if len(existing_tabs) > 2:
+    if len(existing_tabs) > 3:
         tab_texts = [app.notebook.tab(tab, "text") for tab in existing_tabs]
 
         tab_texts.append("Listeners")
@@ -424,8 +445,8 @@ def edit_listener(app, listener_details):
             proto_combo.set("")
             proto_combo.state(["!invalid"])
             proto_combo['state'] = 'readonly'
-        proto_combo.configure(foreground="#ffffff")
-        tail_combo.configure(foreground="#ffffff")
+        proto_combo.configure(foreground="#BABABA")
+        tail_combo.configure(foreground="#BABABA")
         tail_combo.state(["!invalid"])
         tail_combo['state'] = '!invalid'
         tail_combo['state'] = 'readonly'
@@ -520,7 +541,7 @@ def update_listener(app, old_details, name, host, port, protocol, tail):
                             reload_listener(app, app.session_id, new_details, reload_listeners=True)
 
                 app.listener_table.tag_configure("enabled", foreground="#FFFFFF")  
-                app.listener_table.tag_configure("disabled", foreground="gray")
+                app.listener_table.tag_configure("disabled", foreground="#868686")
                 
                 if selected_id:
                     for item in app.listener_table.get_children():

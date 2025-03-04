@@ -9,6 +9,7 @@ source [file join [file dirname [info script]] red.tcl]
 option add *tearOff 0
 
 proc set_theme {mode} {
+    
 	if {$mode == "blue"} {
 		ttk::style theme use "azure-blue"
 

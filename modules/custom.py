@@ -17,6 +17,7 @@ from modules import dialog
 def load_custom_modules(app, reload=False):
     if reload:
         dialog.reload_success(app)
+
     custom_dir = "custom"
     output_file = "data/modules.json"
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
@@ -26,12 +27,14 @@ def load_custom_modules(app, reload=False):
         "modules": []
     }
 
+    module_names = []
+
     for py_file in py_files:
         script_path = os.path.join(custom_dir, py_file)
         if os.path.isfile(script_path):
             description = ""
             try:
-                module_name = os.path.splitext(py_file)[0]  # Obtener el nombre del módulo sin la extensión .py
+                module_name = os.path.splitext(py_file)[0]
                 spec = importlib.util.spec_from_file_location(module_name, script_path)
                 module_obj = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(module_obj)
@@ -39,6 +42,8 @@ def load_custom_modules(app, reload=False):
                     description = module_obj.get_description()
                 else:
                     description = "No description available"
+
+                module_names.append(module_name)
             except:
                 pass
 
@@ -49,8 +54,12 @@ def load_custom_modules(app, reload=False):
             })
 
     data["modules"].sort(key=lambda x: x["name"])
+    module_names.sort()
+
     with open(output_file, 'w') as json_file:
         json.dump(data, json_file, indent=4)
+
+    return module_names
 
 def open_module_console(app):
     module_console_tab_id = None
@@ -100,7 +109,8 @@ def open_module_console(app):
             highlightthickness=0,
             selectbackground="#1B1B1B",
             inactiveselectbackground="#1B1B1B",
-            borderwidth=0
+            borderwidth=0,
+            cursor="arrow"
         )
         app.module_text.pack(expand=True, fill='both')
         app.scrollbar.config(command=app.module_text.yview)
@@ -109,8 +119,10 @@ def open_module_console(app):
         app.custom_menu.add_command(label="Copy", command=app.copy_custom_text)
         app.custom_menu.add_command(label="Reload", command=lambda: show_current_modules(app, True))
         app.module_text.bind("<Button-3>", app.show_custom_menu)
+        app.module_text.bind("<Control-c>", app.copy_custom_text)
+        app.module_text.bind("<Control-a>", app.select_custom_text)
 
-def display_message(app, message, color):
+def display_message(app, message, color, end="\n"):
     try:
         current_content = app.module_text.get(1.0, tk.END)
         if message in current_content:
@@ -119,10 +131,11 @@ def display_message(app, message, color):
         app.last_displayed_message = {"text": message, "color": color}
         app.module_text.config(font=("Consolas", 18, "bold"))
         app.module_text.config(state='normal')
-        app.module_text.insert(tk.END, f"{message}\n", (color,))
+        app.module_text.insert(tk.END, f"{message}{end}", (color,))
         app.module_text.tag_config(color, foreground=color)
         app.module_text.config(state='disabled')
         app.module_text.see("end")
+
     except:
         pass
 
@@ -130,7 +143,6 @@ def show_current_modules(app, reload):
     open_module_console(app)
     load_custom_modules(app, reload)
     modules_file = "data/modules.json"
-    
     app.module_text.config(state='normal')
     app.module_text.delete(1.0, tk.END)
 
@@ -142,12 +154,19 @@ def show_current_modules(app, reload):
                 module_banner = "Custom Modules Loaded\n---------------------\n"
                 display_message(app, module_banner, "#00FF99")
                 
-                for module in current_modules["modules"]:
-                    module_info = f"[>] {module['name']}"
-                    display_message(app, module_info, "#00AAFF")
-                    module_info = f"{module.get('description')}\n"
-                    display_message(app, module_info, "#FFFFFF")
-
+                modules = current_modules["modules"]
+                if len(modules) > 5:
+                    for module in modules:
+                        module_info = f"> {module['name']}: "
+                        display_message(app, module_info, "#00AAFF", end="")
+                        module_info = f"{module.get('description', 'No description')}\n"
+                        display_message(app, module_info, "#FFFFFF")
+                else:
+                    for module in modules:
+                        module_info = f"> {module['name']}: "
+                        display_message(app, module_info, "#00AAFF")
+                        module_info = f"{module.get('description', 'No description')}\n"
+                        display_message(app, module_info, "#FFFFFF")
             else:
                 module_info = "[!] No custom modules found!"
                 display_message(app, module_info, "#FF0055")
@@ -157,7 +176,7 @@ def show_current_modules(app, reload):
 
     app.module_text.config(state='disabled')
 
-def exec_custom_modules(app, caller, param1, param2):
+def exec_custom_modules(app, caller, param1, param2, param3=None):
     modules_file = "data/modules.json"
     combined_output = []
 
@@ -171,7 +190,7 @@ def exec_custom_modules(app, caller, param1, param2):
                     module_obj = importlib.util.module_from_spec(spec)
                     spec.loader.exec_module(module_obj)
                     if hasattr(module_obj, 'main'):
-                        output = module_obj.main(app, caller, param1, param2)
+                        output = module_obj.main(app, caller, param1, param2, param3)
                         if output:
                             combined_output.append(output)
                             

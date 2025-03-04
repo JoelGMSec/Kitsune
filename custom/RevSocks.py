@@ -10,7 +10,7 @@ sys.dont_write_bytecode = True
 def get_description():
     return "This module adds RevSocks to custom commands"
 
-def main(app, caller, session, command):
+def main(app, caller, session, title, command):
     if caller == "command" and command == "help":
         output = "- revsocks: Execute RevSocks on current session and return SOCKS connection"
         return output

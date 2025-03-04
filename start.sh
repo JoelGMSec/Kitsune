@@ -20,4 +20,4 @@ cp -rf ./themes/fonts/* ~/.local/share/fonts/
 
 # Main Function
 sudo xhost +local: > /dev/null
-sudo docker run -it --rm --net host -v /tmp:/tmp -v "$(pwd):/opt/Kitsune" joelgmsec/kitsune
+sudo docker run -it --rm --net host -v /tmp:/tmp -v /usr/share/icons:/usr/share/icons -v "$(pwd):/opt/Kitsune" joelgmsec/kitsune

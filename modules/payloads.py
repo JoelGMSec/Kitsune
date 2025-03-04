@@ -33,17 +33,16 @@ def validate_entries(entries):
                 except:
                     pass
                 entry.set("Invalid parameter!")
-                entry.configure(foreground="#c0c0c0")
+                entry.configure(foreground="#BABABA")
                 entry.state(["invalid"])
                 entry['state'] = 'invalid'
                 all_valid = False
             elif "Invalid parameter!" in entry.get():
-                entry.configure(foreground="#c0c0c0")
+                entry.configure(foreground="#BABABA")
                 entry.state(["invalid"])
                 entry['state'] = 'invalid'
                 all_valid = False
             else:
-                entry.configure(foreground="#ffffff")
                 entry.state(["!invalid"])
                 entry.state(["readonly"])
                 entry['state'] = '!invalid'
@@ -54,15 +53,18 @@ def validate_entries(entries):
                 entry.state(["invalid"])
                 entry.delete(0, tk.END)
                 entry.insert(0, "Invalid parameter!")
-                entry.configure(foreground="#c0c0c0")
+                entry.configure(foreground="#BABABA")
                 all_valid = False
             elif "Invalid parameter!" in entry.get():
-                entry.configure(foreground="#c0c0c0")
+                entry.configure(foreground="#BABABA")
                 entry.state(["invalid"])
                 all_valid = False
             else:
                 entry.configure(foreground="#ffffff")
                 entry.state(["!invalid"])
+                entry.state(["readonly"])
+                entry['state'] = '!invalid'
+                entry['state'] = 'readonly'
         else:
             pass
 
@@ -103,10 +105,10 @@ def windows_payload(app):
             port_listener_combobox['state'] = '!invalid'
             port_listener_combobox.state(["disabled"])
             port_listener_combobox['state'] = 'disabled'
-            port_listener_combobox.configure(foreground="#c0c0c0")
+            port_listener_combobox.configure(foreground="#BABABA")
 
     ttk.Label(app.winpay_window, text="Tail").grid(row=1, column=0, padx=0, pady=15)
-    windows_tail_entry = ttk.Combobox(app.winpay_window, values=["HTTP-Shell", "DnsCat2", "Villain"], state="readonly", textvariable=selected_tail)
+    windows_tail_entry = ttk.Combobox(app.winpay_window, values=["DnsCat2", "HTTP-Shell", "Villain"], state="readonly", textvariable=selected_tail)
     
     windows_tail_entry.bind("<FocusIn>", on_combobox_focus)
 
@@ -197,13 +199,13 @@ def linux_payload(app):
             port_listener_combobox['state'] = '!invalid'
             port_listener_combobox.state(["disabled"])
             port_listener_combobox['state'] = 'disabled'
-            port_listener_combobox.configure(foreground="#c0c0c0")
+            port_listener_combobox.configure(foreground="#BABABA")
 
     white_label = ttk.Label(app.linrev_window, text="")
     white_label.grid(row=0, column=0, padx=0, pady=0)
 
     ttk.Label(app.linrev_window, text="Tail").grid(row=1, column=0, padx=0, pady=15)
-    linux_tail_entry = ttk.Combobox(app.linrev_window, values=["HTTP-Shell", "DnsCat2", "PwnCat-CS"], state="readonly", textvariable=selected_tail)
+    linux_tail_entry = ttk.Combobox(app.linrev_window, values=["DnsCat2", "HTTP-Shell", "PwnCat-CS"], state="readonly", textvariable=selected_tail)
     linux_tail_entry.grid(row=1, column=1, padx=0, pady=15)
     linux_tail_entry.bind("<<ComboboxSelected>>", update_listener_options)
 
@@ -353,17 +355,15 @@ def webshell_generate(app):
     tail_label.grid(row=1, column=0, padx=0, pady=15)
 
     tail_entry = ttk.Combobox(app.webgen_window, values=["PyShell"], state="disabled")
-    tail_entry.current(0)
     tail_entry.grid(row=1, column=1, padx=0, pady=15)
-
     tail_entry.bind("<FocusIn>", on_combobox_focus)
+    tail_entry.current(0)
 
     params_label = ttk.Label(app.webgen_window, text="Format")
     params_label.grid(row=2, column=0, padx=0, pady=15)
 
     params_entry = ttk.Combobox(app.webgen_window, values=["Asp", "Aspx", "Jsp", "Php", "Python 3", "Shell", "Tomcat", "Wordpress"], state="readonly")
     params_entry.grid(row=2, column=1, padx=0, pady=15)
-
     params_entry.bind("<FocusIn>", on_combobox_focus)
 
     method_label = ttk.Label(app.webgen_window, text="Obfuscate")
@@ -371,7 +371,6 @@ def webshell_generate(app):
 
     method_combobox = ttk.Combobox(app.webgen_window, values=["No", "Yes"], state="readonly")
     method_combobox.grid(row=3, column=1, padx=0, pady=15)
-
     method_combobox.bind("<FocusIn>", on_combobox_focus)
 
     def get_params_and_generate():
@@ -510,11 +509,10 @@ def netexec_payload(app):
     tail_label = ttk.Label(app.winbind_window, text="Tail")
     tail_label.grid(row=1, column=0, padx=0, pady=15)
 
-    tail_entry = ttk.Combobox(app.winbind_window, values=["NetExec", "Evil-WinRM", "WMIexec-Pro"], state="readonly")
-    tail_entry.current(0)
+    tail_entry = ttk.Combobox(app.winbind_window, values=["Evil-WinRM", "NetExec", "WMIexec-Pro"], state="readonly")
     tail_entry.grid(row=1, column=1, padx=0, pady=15)
-
     tail_entry.bind("<FocusIn>", on_combobox_focus)
+    tail_entry.current(0)
 
     ip_label = ttk.Label(app.winbind_window, text="IP Address")
     ip_label.grid(row=2, column=0, padx=0, pady=15)
@@ -533,7 +531,6 @@ def netexec_payload(app):
 
     auth_combobox = ttk.Combobox(app.winbind_window, values=["Hash", "Password"], state="readonly")
     auth_combobox.grid(row=4, column=1, padx=0, pady=15)
-
     auth_combobox.bind("<FocusIn>", on_combobox_focus)
 
     win_pass_label = ttk.Label(app.winbind_window, text="Credential")
@@ -552,23 +549,27 @@ def netexec_payload(app):
         auth_combobox['state'] = '!invalid'
         auth_combobox.state(["readonly"])
         auth_combobox['state'] = 'readonly'
+        auth_combobox.configure(foreground="#ffffff")
 
     auth_combobox.bind("<<ComboboxSelected>>", update_pass)
 
     local_auth_label = ttk.Label(app.winbind_window, text="Local Auth")
     local_auth_label.grid(row=6, column=0, padx=0, pady=15)
 
-    local_auth_combobox = ttk.Combobox(app.winbind_window, values=["No", "Yes"], state="readonly")
+    local_auth_combobox = ttk.Combobox(app.winbind_window, values=["No", "Yes"], state="disabled")
     local_auth_combobox.grid(row=6, column=1, padx=0, pady=15)
-
-    local_auth_combobox.bind("<FocusIn>", on_combobox_focus)
+    local_auth_combobox.set("N/A")
 
     protocol_label = ttk.Label(app.winbind_window, text="Protocol")
     protocol_label.grid(row=7, column=0, padx=0, pady=15)
 
-    protocol_combobox = ttk.Combobox(app.winbind_window, values=["MMSQL", "SMB", "WinRM", "WMI"], state="readonly")
+    protocol_combobox = ttk.Combobox(app.winbind_window, values=["MMSQL", "SMB", "WinRM", "WMI"], state="disabled")
     protocol_combobox.grid(row=7, column=1, padx=0, pady=15)
+    protocol_combobox.set("WinRM")
 
+    local_auth_combobox.configure(foreground="#BABABA")
+    local_auth_combobox.bind("<FocusIn>", on_combobox_focus)
+    protocol_combobox.configure(foreground="#BABABA")
     protocol_combobox.bind("<FocusIn>", on_combobox_focus)
 
     def set_protocol(event):
@@ -583,6 +584,9 @@ def netexec_payload(app):
             local_auth_combobox['state'] = 'disabled'
             protocol_combobox.set("WinRM")
             protocol_combobox['state'] = 'disabled'
+            local_auth_combobox.configure(foreground="#BABABA")
+            protocol_combobox.configure(foreground="#BABABA")
+
         elif selected_tail == "NetExec":
             protocol_combobox.state(["!invalid"])
             protocol_combobox['state'] = '!invalid'
@@ -593,6 +597,9 @@ def netexec_payload(app):
             local_auth_combobox['state'] = 'readonly'
             protocol_combobox.set("")
             protocol_combobox['state'] = 'readonly'
+            local_auth_combobox.configure(foreground="#ffffff")
+            protocol_combobox.configure(foreground="#ffffff")
+
         elif selected_tail == "WMIexec-Pro":
             protocol_combobox.state(["!invalid"])
             protocol_combobox['state'] = '!invalid'
@@ -603,8 +610,9 @@ def netexec_payload(app):
             local_auth_combobox['state'] = 'disabled'
             protocol_combobox.set("WMI")
             protocol_combobox['state'] = 'disabled'
-        tail_entry.configure(foreground="#ffffff")
-        protocol_combobox.configure(foreground="#ffffff")
+            local_auth_combobox.configure(foreground="#BABABA")
+            protocol_combobox.configure(foreground="#BABABA")
+
         tail_entry.state(["!invalid"])
         tail_entry['state'] = '!invalid'
         tail_entry['state'] = 'readonly'
@@ -616,12 +624,12 @@ def netexec_payload(app):
             auth_combobox.state(["invalid"])
             auth_combobox['state'] = 'invalid'
             auth_combobox.set("Invalid parameter!")
-            auth_combobox.configure(foreground="#c0c0c0")
+            auth_combobox.configure(foreground="#BABABA")
         if not local_auth_combobox.get():
             local_auth_combobox.state(["invalid"])
             local_auth_combobox['state'] = 'invalid'
             local_auth_combobox.set("Invalid parameter!")
-            local_auth_combobox.configure(foreground="#c0c0c0")
+            local_auth_combobox.configure(foreground="#BABABA")
         if validate_entries([ip_entry, user_entry, win_pass, protocol_combobox, tail_entry]):
             if auth_combobox.get() == "Hash":
                 auth = " -H "

@@ -83,7 +83,7 @@ def update_tails(app):
     app.tails_window.resizable(False, False)
 
     image_frame = tk.Frame(app.tails_window)
-    image_frame.grid(row=0, column=1, padx=(40, 0), pady=(20, 0))
+    image_frame.grid(row=0, column=1, padx=(40, 0), pady=(15, 0))
 
     image = Image.open("./themes/images/GitHub.png")
     resized_image = image.resize((200, 200))  
@@ -106,8 +106,8 @@ def update_tails(app):
     progressbar = ttk.Progressbar(updates_frame, mode="indeterminate", length=220)
     progressbar.grid(row=2, column=0, padx=(22, 0), pady=(20, 10))
     progressbar.start()
-
     stop_blink_event = threading.Event()
+
     def interpolate_color(color1, color2, factor):
         c1 = [int(color1[i:i+2], 16) for i in (1, 3, 5)]
         c2 = [int(color2[i:i+2], 16) for i in (1, 3, 5)]
@@ -136,6 +136,7 @@ def update_tails(app):
         except:
             if name_label:
                 name_label.config(text="Error updating tails!", fg="red")
+
     threading.Thread(target=clone_repos_thread).start()
 
     def on_enter_key(event):

@@ -126,7 +126,7 @@ def save_project(app, name_entry):
             name_entry.state(["invalid"])
             name_entry.delete(0, tk.END)
             name_entry.insert(0, "Invalid report name!")
-            name_entry.configure(foreground="#c0c0c0")
+            name_entry.configure(foreground="#ffffff")
             name_entry.state(["readonly"])
             app.save_button.state(["invalid"])
             app.save_button['state'] = 'invalid'
@@ -148,7 +148,7 @@ def save_project(app, name_entry):
         name_entry.state(["invalid"])
         name_entry.delete(0, tk.END)
         name_entry.insert(0, "Invalid report name!")
-        name_entry.configure(foreground="#c0c0c0")
+        name_entry.configure(foreground="#ffffff")
         name_entry.state(["readonly"])
         app.save_button.state(["invalid"])
         app.save_button['state'] = 'invalid'
