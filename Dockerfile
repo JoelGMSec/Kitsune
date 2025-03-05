@@ -3,7 +3,7 @@ ENV DISPLAY=:0
 LABEL maintainer="@JoelGMSec - https://darkbyte.net"
 
 RUN apt-get update && apt-get install -y sudo git curl zip wget proxychains4 wkhtmltopdf unzip
-RUN apt-get install -y build-essential gcc gcc-mingw-w64-x86-64-win32 python3-pip python3-tk 
+RUN apt-get install -y build-essential gcc gcc-mingw-w64-x86-64-win32 python3-pip python3-tk lsof
 RUN wget https://archive.kali.org/archive-key.asc -O /etc/apt/trusted.gpg.d/kali-archive-key.asc
 RUN echo "deb [arch=amd64] http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware" >> /etc/apt/sources.list
 RUN apt-get update && apt install -y dnscat2 evil-winrm villain powershell golang python3-impacket python3.12-minimal python3.12-dev
