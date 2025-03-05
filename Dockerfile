@@ -26,7 +26,10 @@ RUN python3.12 -m pip install setuptools==70 --break-system-packages
 RUN python3.12 -m pip install -r /opt/Kitsune/requirements.txt --break-system-packages
 RUN for i in $(find /opt/Kitsune/ -name requirements.txt) ; do cat $i >> /opt/Kitsune/reqs.txt ; done
 RUN for i in $(cat /opt/Kitsune/reqs.txt) ; do python3.12 -m pip install $i --break-system-packages ; done
+RUN apt-get --fix-broken install -y && apt-get install -y ruby3.1
+RUN rm -f /usr/bin/ruby && ln -s /usr/bin/ruby3.1 /usr/bin/ruby && gem install evil-winrm
 RUN rm -f /opt/Kitsune/reqs.txt
 
 WORKDIR /opt/Kitsune
 ENTRYPOINT ["python3.12", "/opt/Kitsune/kitsune.py"]
+CMD []
